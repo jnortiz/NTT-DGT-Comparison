@@ -92,13 +92,23 @@ def dgt_gentlemansande(x):
     assert is_power2(k)
     x = [a if isinstance(a, GaussianInteger) else GaussianInteger(a) for a in x]
     
+    r = PROOTS[p] ## Primitive root of p
+
+    assert (p-1)%k == 0
+    n = (p-1)//k
+
+    g = pow(r, n, p)
+    assert pow(g, k, p) == 1 # k-th primitive root of unity
+    gj = [pow(g, j, p) for j in range(k)]
+
     X = list(x) # Copy because the algorithm is run in-place
     for stride in range(int(log(k,2))):
         m = k // (2<<stride)
 
         for l in range(k // 2):
             j = l//(k//(2*m))
-            a = pow(n_512.gj_512[j], k >> (int(log(k,2)) - stride), p)
+            #a = pow(n_512.gj_512[j], k >> (int(log(k,2)) - stride), p)
+            a = pow(gj[j], k >> (int(log(k,2)) - stride), p)
 
             i = j + (l % (k//(2*m)))*2*m
         
@@ -113,12 +123,24 @@ def idgt_gentlemansande(x):
     assert is_power2(k)
     x = [a if isinstance(a, GaussianInteger) else GaussianInteger(a) for a in x]
 
+    r = PROOTS[p] ## Primitive root of p
+
+    assert (p-1)%k == 0
+    n = (p-1)//k
+
+    g = pow(r, n, p)
+    assert g != 0
+    # print "g: %d" % g
+    assert pow(g, k, p) == 1 # n-th primitive root of unity
+    invgj = [pow(g, (k - j), p) for j in range(k)] # g^-i \equiv g^((k-i) mod k) mod p
+
     X = list(x) # Copy because the algorithm is run in-place
     m = 1
     for stride in range(int(log(k,2))):
         for l in range(k // 2):
             j = l//(k//(2*m))
-            a = pow(n_512.gj_512_inv[j], k >> (stride + 1), p)
+            #a = pow(n_512.gj_512_inv[j], k >> (stride + 1), p)
+            a = pow(invgj[j], k >> (stride + 1), p)
             i = j + (l % (k//(2*m)))*2*m
 
             xi = X[i]
@@ -228,7 +250,7 @@ def mulint(a, b):
 
 class TestDGTGentlemansande(unittest.TestCase):
 
-    def _test_transformation(self):
+    def test_transformation(self):
         # Verifies if iDGT(DGT(x)) == x        
         print("Testing DGT Gentleman-Sande")
         x = [x for x in range(N)]
@@ -257,7 +279,7 @@ class TestDGTGentlemansande(unittest.TestCase):
             mul(a, b)
             )
 
-    def _test_mulint(self):
+    def test_mulint(self):
         # Verifies multiplication in DGT's domain
         print("Multiplication by scalar using DGT Gentleman-Sande")
         a = [x for x in range(N)]
