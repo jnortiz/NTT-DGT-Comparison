@@ -7,7 +7,7 @@ from math import cos, sin, pi
 from gaussian import GaussianInteger
 from math import log
 
-parameter_set = 1
+parameter_set = 5
 ## Valid parameter sets | parameter_sets = ["qTESLA-I":1, "qTESLA-III-speed":2, "qTESLA-III-size":3, "qTESLA-p-I":4, "qTESLA-p-III":5]
 
 if parameter_set == 1:
@@ -118,6 +118,7 @@ def dgt_gentlemansande_mul(a, b):
 
 ## Schoolbook polynomial multiplication in Z_q[x]/<x^N + 1>
 def mul(a, b):
+    
     assert len(a) == len(b)
     N = len(a)
     c = [0]*N
