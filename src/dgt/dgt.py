@@ -3,12 +3,10 @@
 import unittest
 import time
 import random
-from math import cos, sin, pi
 from gaussian import GaussianInteger
 from math import log
 
 parameter_set = 5
-## Valid parameter sets | parameter_sets = ["qTESLA-I":1, "qTESLA-III-speed":2, "qTESLA-III-size":3, "qTESLA-p-I":4, "qTESLA-p-III":5]
 
 if parameter_set == 1:
     import n_512 as roots
@@ -19,7 +17,7 @@ else:
         import n_1024 as roots
         N = 1024
         q = 8404993
-    else: # N = 2048
+    else:
         if parameter_set == 3:
             import n_1024 as roots
             N = 1024
@@ -37,7 +35,7 @@ else:
                 else:
                     raise Exception("Please, choose a valid parameter set.")
 
-p = 0xFFFFFFFF00000001 # 2**64 - 2**32 + 1 | DGT fixed parameter
+p = 0xFFFFFFFF00000001 # 2**64 - 2**32 + 1 | DGT fixed parameter: an 64-bit Mersenne prime
 
 invkmodp = {
     256:-72057594021150720,
@@ -88,6 +86,7 @@ def idgt_gentlemansande(x):
     return [v*inv for v in X]
 
 def dgt_gentlemansande_mul(a, b):    
+    
     N = len(a)
 
     # Initialize
@@ -162,6 +161,18 @@ def mulint(a, b):
     assert type(b) == int
     N = len(a)
     c = [x * b % p for x in a]
+    return c
+
+def gen_polynomial_modq():
+    x = []
+    for i in range(N):
+        x.append(random.randrange(0,q))
+    return x
+
+def test_polynomial_multiplication():
+    a = gen_polynomial_modq()
+    b = gen_polynomial_modq()
+    c = dgt_gentlemansande_mul(a, b)
     return c
 
 class TestDGTGentlemansande(unittest.TestCase):

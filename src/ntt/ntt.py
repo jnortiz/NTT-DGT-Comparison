@@ -1,3 +1,5 @@
+#!/usr/env/python3
+#coding: utf-8
 import sys
 import unittest
 import time
@@ -8,11 +10,8 @@ parameter_set = 5
 
 if parameter_set == 1:
     import qtesla_i as roots
-    #import newhope as roots
-    #q = 12289
     N = 512
     q = 4205569
-    #psi = 742
 else:
     if parameter_set == 2:
         import qtesla_iii_speed as roots
@@ -92,21 +91,26 @@ def mul(a, b):
     return c    
 
 def NTT_Mul(a, b):
-
-    #assert(len(a) == len(b) == N)
-
     a_ntt = ntt_cooley_tukey(a)
-    #assert(intt_gentleman_sande(a_ntt) == a)
-
     b_ntt = ntt_cooley_tukey(b)
-    #assert(intt_gentleman_sande(b_ntt) == b)
 
     for i in range(N):
         c_ntt = [(x*y)%q for x,y in zip(a_ntt, b_ntt)]
 
     c = intt_gentleman_sande(c_ntt) 
-
     return c   
+
+def gen_polynomial_modq():
+    x = []
+    for i in range(N):
+        x.append(random.randrange(0,q))
+    return x
+
+def test_polynomial_multiplication():
+    a = gen_polynomial_modq()
+    b = gen_polynomial_modq()
+    c = NTT_Mul(a, b)
+    return c
 
 class TestNTT(unittest.TestCase):
 
@@ -134,7 +138,6 @@ class TestNTT(unittest.TestCase):
         print("----------", end_time - start_time, "s. ----------")
 
         assert(mul(a,b) == c)
-
 
 if __name__ == '__main__':
     unittest.main()
