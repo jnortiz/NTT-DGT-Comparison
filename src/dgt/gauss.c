@@ -3,17 +3,9 @@
 #include <inttypes.h>
 #include <time.h>
 
-uint64_t p = 0xFFFFFFFF00000001; 
-unsigned __int128 max_128 = ((unsigned __int128)0xFFFFFFFFFFFFFFFFu << 64) + 0xFFFFFFFFFFFFFFFFu;
+#include "gauss.h"
+#include "params.h"
 
-struct gauss {
-	uint64_t re;
-	uint64_t img;
-};
-
-typedef struct gauss gauss_t;
-
-/* "Constructor" for type gauss_t */
 void Gauss(gauss_t *pointer, uint64_t re, uint64_t img) {
 	pointer->re = re;
 	pointer->img = img;
@@ -106,10 +98,6 @@ unsigned __int128 get_uint128_word() {
 }
 
 int main(int argc, char** argv[]) {
-	srand(time(NULL));
-	int i;
-	for(i = 0; i < 128; i++) {
-		printf("%" PRIu64 "\n", mod_uint128(get_uint128_word()));
-	}
+	srand(time(NULL)); /* For generating random 128-bit vectors */
 	return 0;
 }
