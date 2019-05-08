@@ -97,7 +97,7 @@ unsigned __int128 get_uint128_word() {
 	return a;
 }
 
-int main(int argc, char** argv[]) {
-	srand(time(NULL)); /* For generating random 128-bit vectors */
+/*int main(int argc, char** argv[]) {
+	srand(time(NULL)); // For generating random 128-bit vectors
 	return 0;
-}
+}*/

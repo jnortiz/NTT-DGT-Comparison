@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 uint64_t p = 0xFFFFFFFF00000001; 
 int64_t n = 512;
 int64_t q = 4205569;
