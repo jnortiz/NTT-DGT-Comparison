@@ -4,23 +4,28 @@
 #include <time.h>
 
 #include "gauss.h"
-#include "params.h"
 
-void Gauss(gauss_t *pointer, uint64_t re, uint64_t img) {
+uint64_t p = 0xFFFFFFFF00000001; 
+int64_t n = 512;
+int64_t q = 4205569;
+unsigned __int128 max_128 = ((unsigned __int128)0xFFFFFFFFFFFFFFFFu << 64) + 0xFFFFFFFFFFFFFFFFu;
+
+void set_gauss(gauss_t *pointer, uint64_t re, uint64_t img) {
 	pointer->re = re;
 	pointer->img = img;
 }
 
 void print_gauss_t(const gauss_t x) {
 	printf("%" PRId64, x.re);
-	if(x.img >= 0)
+	if(x.img >= 0) {
 		printf("+");
+	}
 	printf("%" PRId64 "i\n", x.img);
 }
 
 gauss_t conjugate(const gauss_t x){
 	gauss_t conj_x;
-	Gauss(&conj_x, x.re, -x.img);
+	set_gauss(&conj_x, x.re, -x.img);
 	return conj_x;
 }
 
@@ -37,7 +42,8 @@ uint64_t select_uint64_t(uint64_t x, uint64_t y, uint64_t bit) {
 
 uint64_t mod_uint64_t(const uint64_t a) {	
 	uint64_t output;
-	output = select_uint64_t(output, output-p, !less_than(output,p));
+	output = a;
+	output = select_uint64_t(output, output-p, !less_than(output,p)); // output >= p
 	return output;
 }
 
@@ -96,8 +102,3 @@ unsigned __int128 get_uint128_word() {
 	a = rand() % max_128;
 	return a;
 }
-
-/*int main(int argc, char** argv[]) {
-	srand(time(NULL)); // For generating random 128-bit vectors
-	return 0;
-}*/
