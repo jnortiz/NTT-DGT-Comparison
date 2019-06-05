@@ -6,7 +6,7 @@ import random
 from gaussian import GaussianInteger
 from math import log
 
-parameter_set = 5
+parameter_set = 1
 
 if parameter_set == 1:
     import n_512 as roots
@@ -36,17 +36,19 @@ else:
                     raise Exception("Please, choose a valid parameter set.")
 
 p = 0xFFFFFFFF00000001 # 2**64 - 2**32 + 1 | DGT fixed parameter: an 64-bit Mersenne prime
+#p = 18446744069414584321
 
 invkmodp = {
-    256:-72057594021150720,
-    512:-36028797010575360,
-    1024:-18014398505287680,
-    2048:-9007199252643840
+    256:18374686475393433601,
+    512:18410715272404008961,
+    1024:18428729670909296641,
+    2048:18437736870161940481
 }
 
 ## In-place DGT via Gentleman-Sande
 def dgt_gentlemansande(x):   
-    k = len(x) # n//2    
+    
+    k = len(x) # n//2 | 256  
     X = list(x)
     
     for stride in range(int(log(k,2))):        
@@ -54,7 +56,7 @@ def dgt_gentlemansande(x):
 
         for l in range(k // 2):
             j = l//(k//(2*m))
-            a = pow(roots.gj[j], k >> (int(log(k,2)) - stride), p)
+            a = roots.gj_powers[j][stride]
             i = j + (l % (k//(2*m)))*2*m
         
             xi = X[i]
@@ -66,14 +68,15 @@ def dgt_gentlemansande(x):
 
 ## In-place IDGT via Cooley-Tukey
 def idgt_gentlemansande(x):
+    
     k = len(x)
     X = list(x)
     
     m = 1
     for stride in range(int(log(k,2))):
         for l in range(k // 2):
-            j = l//(k//(2*m))
-            a = pow(roots.invgj[j], k >> (stride + 1), p)
+            j = l//(k//(2*m))            
+            a = roots.invgj_powers[j][stride]            
             i = j + (l % (k//(2*m)))*2*m
 
             xi = X[i]
@@ -181,8 +184,9 @@ class TestDGTGentlemansande(unittest.TestCase):
         print("\nTesting DGT Gentleman-Sande")
         
         x = []
-        for i in range(N):
-            x.append(random.randrange(0,q))
+        for i in range(N//2):
+            #x.append(random.randrange(0,q))
+            x.append(i)
         x = [a if isinstance(a, GaussianInteger) else GaussianInteger(a) for a in x]
         
         start_time = time.time()
@@ -190,11 +194,14 @@ class TestDGTGentlemansande(unittest.TestCase):
         end_time = time.time()
         print("----------", end_time - start_time, "s. ----------")
 
+        print(x)
+        print(dgt_gentlemansande(x))
+
         self.assertEqual(
             idgt_gentlemansande(dgt_gentlemansande(x)), 
             x)
 
-    def test_mul(self):
+    def _test_mul(self):
         print("\nPolynomial multiplication using DGT Gentleman-Sande")
         
         a = []
@@ -216,7 +223,7 @@ class TestDGTGentlemansande(unittest.TestCase):
             mul(a, b)
             )
 
-    def test_mulint(self):
+    def _test_mulint(self):
         print("\nMultiplication by scalar using DGT Gentleman-Sande")
         
         a = []
@@ -233,7 +240,50 @@ class TestDGTGentlemansande(unittest.TestCase):
         self.assertEqual(
             dgt_gentlemansande_mulscalar(a, b),
             mulint(a, b)
-            )        
+            )     
+
+def gen_powers_of_gj():
+
+    k = len(roots.gj)
+
+    print("{", end = ''),
+    for j in range(k-1): # For each roots.gj[j]
+        print("{", end = ''),
+        for stride in range(int(log(k,2))-1): # Compute its powers mod p
+            a = pow(roots.gj[j], k >> (int(log(k,2)) - stride), p)
+            print(a, end="u, ")
+        a = pow(roots.gj[j], k >> 1, p)
+        print(a, end = 'u')
+        print("},"),
+    
+    print("{", end = ''),
+    for stride in range(int(log(k,2))-1): # Compute its powers mod p
+        a = pow(roots.gj[k-1], k >> (int(log(k,2)) - stride), p)
+        print(a, end="u, ")
+    a = pow(roots.gj[k-1], k >> 1, p)
+    print(a, end = 'u')
+    print("}};")
+
+def gen_powers_of_invgj():
+    k = len(roots.invgj)
+
+    print("{", end = ''),
+    for j in range(k-1): # For each roots.invgj[j]
+        print("{", end = ''),
+        for stride in range(int(log(k,2))-1): # Compute its powers mod p
+            a = pow(roots.invgj[j], k >> (stride + 1), p)
+            print(a, end="u, ")
+        a = pow(roots.invgj[j], k >> (int(log(k,2))), p)
+        print(a, end="u")
+        print("},"),
+    
+    print("{", end = ''),
+    for stride in range(int(log(k,2))-1): # Compute its powers mod p
+        a = pow(roots.invgj[k-1], k >> (stride + 1), p)
+        print(a, end="u, ")
+    a = pow(roots.invgj[k-1], k >> (int(log(k,2))), p)
+    print(a, end="u")
+    print("}};")    
 
 if __name__ == '__main__':
     unittest.main()
