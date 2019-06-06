@@ -5,7 +5,6 @@
 
 extern uint64_t p; 
 extern int64_t n;
-extern unsigned __int128 max_128;
 
 /* Gaussian integer data type */
 struct gauss {
@@ -16,7 +15,7 @@ struct gauss {
 typedef struct gauss gauss_t;
 
 /* Auxiliary functions for gauss_t type */
-void set_gauss(gauss_t*, uint64_t, uint64_t);
+void set_gauss(gauss_t*, const uint64_t, const uint64_t);
 void print_gauss_t(const gauss_t);
 
 /* Reduction mod p = 0xFFFFFFFF00000001 */

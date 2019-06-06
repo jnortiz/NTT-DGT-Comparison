@@ -70,6 +70,7 @@ def dgt_gentlemansande(x):
 def idgt_gentlemansande(x):
     
     k = len(x)
+    print(k)
     X = list(x)
     
     m = 1
@@ -78,14 +79,15 @@ def idgt_gentlemansande(x):
             j = l//(k//(2*m))            
             a = roots.invgj_powers[j][stride]            
             i = j + (l % (k//(2*m)))*2*m
-
             xi = X[i]
             xim = X[i + m]
 
             X[i] = xi + a * xim
+            print(xi, end=",")
             X[i + m] = xi - a * xim
         m = 2 * m
     inv = invkmodp[k]
+
     return [v*inv for v in X]
 
 def dgt_gentlemansande_mul(a, b):    
@@ -190,16 +192,12 @@ class TestDGTGentlemansande(unittest.TestCase):
         x = [a if isinstance(a, GaussianInteger) else GaussianInteger(a) for a in x]
         
         start_time = time.time()
-        idgt_gentlemansande(dgt_gentlemansande(x))
+        y = idgt_gentlemansande(dgt_gentlemansande(x))
         end_time = time.time()
         print("----------", end_time - start_time, "s. ----------")
 
-        print(x)
-        print(dgt_gentlemansande(x))
-
         self.assertEqual(
-            idgt_gentlemansande(dgt_gentlemansande(x)), 
-            x)
+            y,x)
 
     def _test_mul(self):
         print("\nPolynomial multiplication using DGT Gentleman-Sande")

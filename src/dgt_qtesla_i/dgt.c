@@ -548,8 +548,7 @@ uint64_t get_invk_modp(const int dim) {
 }
 
 /* dgt() receives as input a folded signal of n/2 Gaussian integers */
-void dgt(gauss_t *_x, const gauss_t *_input_signal) {
-    
+void dgt(gauss_t *_x, const gauss_t *_input_signal) {    
     uint64_t power;
     int i, j, k, l, m, stride, upperbound;
     gauss_t xi, xim, aux_sub, aux_power;
@@ -566,17 +565,13 @@ void dgt(gauss_t *_x, const gauss_t *_input_signal) {
         m = k/(2 << stride);
         
         for(l = 0; l < k/2; l++) {            
-            j = (int)((2*m*l)/k);
-            power = __gj[j][stride];
-            i = j + (l % (k/(2*m)))*2*m;
+            j = (2*m*l)/k;
+            i = j + (l%(k/(2*m)))*2*m;
 
             set_gauss(&xi, _x[i].re, _x[i].img);
             set_gauss(&xim, _x[i+m].re, _x[i+m].img);
-
-            set_gauss(&aux_power, power, (uint64_t) 0);
-
+            set_gauss(&aux_power, __gj[j][stride], (uint64_t) 0);
             add(&_x[i], xi, xim);
-
             sub(&aux_sub, xi, xim);
             mul(&_x[i+m], aux_power, aux_sub);
         }
@@ -584,48 +579,37 @@ void dgt(gauss_t *_x, const gauss_t *_input_signal) {
 }
 
 void idgt(gauss_t *_output_signal, const gauss_t *_x) {
-
-    uint64_t inv, power;
     int i, j, k, l, m, stride, upperbound;
     gauss_t xi, xim, aux_inv, aux_mul, aux_power;
 
     k = n/2;
     upperbound = (int)(log(k)/log(2));
 
-    gauss_t _copy[k];
-
     for(i = 0; i < k; i++) {
-        set_gauss(&_copy[i], _x[i].re, _x[i].img);
+        set_gauss(&_output_signal[i], _x[i].re, _x[i].img);
     }
 
     m = 1;
     for(stride = 0; stride < upperbound; stride++) {
         for(l = 0; l < k/2; l++) {
-            j = (int)((2*m*l)/k);
-            power = __invgj[j][stride];
-            i = j + (l % ((int)(k/(2*m))))*2*m;
+            j = (2*m*l)/k;
+            i = j + (l % (k/(2*m)))*2*m;
 
-            set_gauss(&xi, _copy[i].re, _copy[i].img);
-            set_gauss(&xim, _copy[i+m].re, _copy[i+m].img);
-
-            set_gauss(&aux_power, power, (uint64_t) 0);
+            set_gauss(&xi, _output_signal[i].re, _output_signal[i].img);
+            set_gauss(&xim, _output_signal[i+m].re, _output_signal[i+m].img);
+            set_gauss(&aux_power, __invgj[j][stride], (uint64_t) 0);
             mul(&aux_mul, aux_power, xim);
-            add(&_copy[i], xi, aux_mul);
-            sub(&_copy[i+m], xi, aux_mul);
-
+            add(&_output_signal[i], xi, aux_mul);
+            sub(&_output_signal[i+m], xi, aux_mul);
         }
         m = 2*m;
     }
 
-    inv = get_invk_modp(k);
-
-    aux_inv.re = inv;
-    aux_inv.img = 0;
+    set_gauss(&aux_inv, get_invk_modp(k), (uint64_t) 0);
 
     for(i = 0; i < k; i++) {
-        mul(&_output_signal[i], _copy[i], aux_inv);
+        mul(&_output_signal[i], _output_signal[i], aux_inv);
     }
-
 }
 
 int is_equal(const gauss_t *_signal_a, const gauss_t *_signal_b) {
@@ -642,27 +626,39 @@ int is_equal(const gauss_t *_signal_a, const gauss_t *_signal_b) {
 }
 
 int test_dgt() {
-
     gauss_t _signal_a[n/2], _signal_b[n/2], _output[n/2];
     int i;
 
     for(i = 0; i < n/2; i++) {
-        set_gauss(&_signal_a[i], (uint64_t)(10), (uint64_t)0);
+        set_gauss(&_signal_a[i], rand() % 18446744073709551615u, 0);
+        //set_gauss(&_signal_a[i], i, 0);
     }
 
-    print_signal(_signal_a, n/2);
     dgt(_output, _signal_a);
     idgt(_signal_b, _output);
-    print_signal(_signal_b, n/2);
+    //print_signal(_output, n/2);    
 
     return is_equal(_signal_a, _signal_b);
 }
 
-int main(int argc, char** argv[]) {
-    
-    //srand(time(NULL)); /* For generating random 128-bit vectors */
+#define MAX_RUN 1000
 
-    printf("%d\n", test_dgt());
+int main(int argc, char** argv[]) {    
+    
+    srand(time(NULL));
+
+    int i, counter = 0;
+
+    for(i = 0; i < MAX_RUN; i++) {
+        if(test_dgt()) {
+            counter++;
+        }
+    }
+
+    if(counter == MAX_RUN) {
+        printf("[!] All tests have succeeded.\n");
+    } else
+    printf("%d tests of %d were successful\n", counter, MAX_RUN);
 
     return 0;
 }
