@@ -31,7 +31,7 @@ uint64_t sub_uint64_t(const uint64_t a, const uint64_t b) {
 uint64_t add_uint64_t(const uint64_t a, const uint64_t b) {
 	uint64_t res;
 	res = a+b;
-	res += (res < a)*4294967295L; // Negative overflow
+	res += (res < a)*gap; // Negative overflow
 	res -= (res > p)*p; // (a+b) > p
 	return res;
 }
@@ -64,11 +64,8 @@ uint64_t mod_uint128(const unsigned __int128 a) {
 	}
 	
 	uint64_t w0, w1, w2, w3;
-	uint64_t W1, W2;
-	uint64_t output, gap;
+	uint64_t W1, W2, output;
 	int negative_overflow, greater_than_p, double_overflow;
-
-	gap = (uint64_t)(4294967295L); // UINT64_MAX-P+1 = 2^{64}-p
 
 	w0 = (uint32_t) a;
 	w1 = (uint32_t)(a >> 32);
