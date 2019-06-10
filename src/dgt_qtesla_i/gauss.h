@@ -19,7 +19,6 @@ void set_gauss(gauss_t*, const uint64_t, const uint64_t);
 void print_gauss_t(const gauss_t);
 
 /* Reduction mod p = 0xFFFFFFFF00000001 */
-uint64_t mod_uint64_t(const uint64_t);
 uint64_t mod_uint128(const unsigned __int128);
 
 /* Operations over Gaussian integers */
