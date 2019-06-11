@@ -4,7 +4,7 @@
 #include <time.h>
 
 extern uint64_t p; 
-extern int64_t n;
+extern int n;
 
 /* Gaussian integer data type */
 struct gauss {

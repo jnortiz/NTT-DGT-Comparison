@@ -549,7 +549,6 @@ uint64_t get_invk_modp(const int dim) {
 
 /* dgt() receives as input a folded signal of n/2 Gaussian integers */
 void dgt(gauss_t *_x, const gauss_t *_input_signal) {    
-    uint64_t power;
     int i, j, k, l, m, stride, upperbound;
     gauss_t xi, xim, aux_sub, aux_power;
 
@@ -599,6 +598,7 @@ void idgt(gauss_t *_output_signal, const gauss_t *_x) {
             set_gauss(&xim, _output_signal[i+m].re, _output_signal[i+m].img);
             set_gauss(&aux_power, __invgj[j][stride], (uint64_t) 0);
             mul(&aux_mul, aux_power, xim);
+
             add(&_output_signal[i], xi, aux_mul);
             sub(&_output_signal[i+m], xi, aux_mul);
         }
@@ -625,40 +625,61 @@ int is_equal(const gauss_t *_signal_a, const gauss_t *_signal_b) {
     return is_equal;
 }
 
-int test_dgt() {
-    gauss_t _signal_a[n/2], _signal_b[n/2], _output[n/2];
-    int i;
+typedef unsigned long long timestamp_t;
 
-    for(i = 0; i < n/2; i++) {
-        set_gauss(&_signal_a[i], rand() % 18446744073709551615u, 0);
-        //set_gauss(&_signal_a[i], i, 0);
-    }
-
-    dgt(_output, _signal_a);
-    idgt(_signal_b, _output);
-    //print_signal(_output, n/2);    
-
-    return is_equal(_signal_a, _signal_b);
+static timestamp_t get_timestamp() {
+    struct timespec now;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now);
+    return now.tv_nsec + (timestamp_t)now.tv_sec * 1000000000.0;
 }
 
-#define MAX_RUN 1000
+#define MAX_RUN 100000
 
-int main(int argc, char** argv[]) {    
+int test_dgt() {
+    gauss_t _signal_a[n/2], _signal_b[n/2], _output[n/2];
+    int i, n_run, counter;
+    timestamp_t ts_start, ts_end, ts_min, ts_max, ts_avg, diff;
+
+    counter = 0;
+    ts_start = 0.0; ts_end = 0.0;
+    ts_min = 10.0; ts_max = 0.0;
+    ts_avg = 0.0; diff = 0.0;
     
-    srand(time(NULL));
-
-    int i, counter = 0;
-
-    for(i = 0; i < MAX_RUN; i++) {
-        if(test_dgt()) {
-            counter++;
+    for(n_run = 0; n_run < MAX_RUN; n_run++) {        
+        for(i = 0; i < n/2; i++) {
+            set_gauss(&_signal_a[i], rand() % 18446744073709551615u, 0);
         }
+
+        ts_start = get_timestamp();    
+        dgt(_output, _signal_a);
+        idgt(_signal_b, _output);
+        ts_end = get_timestamp();
+
+        if(is_equal(_signal_a, _signal_b)) counter++;
+        
+        diff = (ts_end-ts_start);
+
+        ts_avg += diff;
+
+        if(diff < ts_min) ts_min = diff;
+        if(diff > ts_max) ts_max = diff;
     }
+    
+    //printf("Total running time: %.10lf s.\n", (double)(ts_avg)/(double)(1000000000.0));
+    printf("Average running time: %.10lf s.\n", (double)(ts_avg)/(double)(MAX_RUN*1000000000.0));
+    printf("Minimum running time: %.10lf s.\n", (double)(ts_min)/(double)(1000000000.0));
+    printf("Maximum running time: %.10lf s.\n", (double)(ts_max)/(double)(1000000000.0));
 
     if(counter == MAX_RUN) {
-        printf("[!] All tests have succeeded.\n");
+        printf("[!] All %d tests have succeeded.\n", MAX_RUN);
     } else
     printf("%d tests of %d were successful\n", counter, MAX_RUN);
+}
+
+int main(int argc, char** argv[]) {    
+    srand(time(NULL));
+
+    test_dgt();
 
     return 0;
 }

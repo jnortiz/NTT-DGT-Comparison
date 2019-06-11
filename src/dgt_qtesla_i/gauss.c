@@ -17,9 +17,9 @@ void set_gauss(gauss_t *pointer, const uint64_t re, const uint64_t img) {
 void print_gauss_t(const gauss_t x) {
 	printf("%" PRIu64, x.re);
 	if(x.img >= 0) {
-		printf("+");
+		printf(" + ");
 	}
-	printf("%" PRIu64 "i\n", x.img);
+	printf("i%" PRIu64 ", ", x.img);
 }
 
 uint64_t sub_uint64_t(const uint64_t a, const uint64_t b) {
@@ -52,20 +52,9 @@ int overflow(const uint64_t a, const uint64_t b) {
 }
 
 uint64_t mod_uint128(const unsigned __int128 a) {
-	uint64_t high_half;
-	uint64_t low_half;
-	
-	high_half = (uint64_t) (a >> 64);
-	low_half = (uint64_t) (a);
-	
-	/* It covers the case when (a*b) still fits in 64-bit and it is greater than p. */
-	if(high_half == (uint64_t)(0) && low_half > p) {
-		return (low_half-p);
-	}
-	
 	uint64_t w0, w1, w2, w3;
 	uint64_t W1, W2, output;
-	int negative_overflow, greater_than_p, double_overflow;
+	uint8_t negative_overflow, greater_than_p, double_overflow;
 
 	w0 = (uint32_t) a;
 	w1 = (uint32_t)(a >> 32);
@@ -81,7 +70,7 @@ uint64_t mod_uint128(const unsigned __int128 a) {
 	greater_than_p = (output >= p);
 	double_overflow = (overflow(W1,W2) || overflow(W1+W2,w0)) && (W1+W2+w0 > w2+w3);
 
-	output = (p-output)*(negative_overflow)
+	output = (p+output)*(negative_overflow)
 			+ (output-p)*(!negative_overflow && greater_than_p)
 			+ (output+gap)*(!negative_overflow && !greater_than_p && double_overflow)
 		   	+ output*(!negative_overflow && !greater_than_p && !double_overflow);
@@ -102,7 +91,7 @@ void mul(gauss_t *z, const gauss_t x, const gauss_t y) {
 
 	s1 = mul_uint64_t(x.re, y.re);
 	s2 = mul_uint64_t(x.img, y.img);	
-	s3 = mul_uint64_t(add_uint64_t(x.re, x.img),  add_uint64_t(y.re, y.img));
+	s3 = mul_uint64_t(add_uint64_t(x.re, x.img), add_uint64_t(y.re, y.img));
 
 	set_gauss(z, sub_uint64_t(s1,s2), sub_uint64_t(sub_uint64_t(s3,s1),s2));
 }
