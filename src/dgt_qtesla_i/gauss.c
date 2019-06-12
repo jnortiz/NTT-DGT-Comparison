@@ -32,7 +32,7 @@ uint64_t add_uint64_t(const uint64_t a, const uint64_t b) {
 	uint64_t res;
 	res = a+b;
 	res += (res < a)*gap; // Negative overflow
-	res -= (res > p)*p; // (a+b) > p
+	res -= (res >= p)*p; // (a+b) > p
 	return res;
 }
 

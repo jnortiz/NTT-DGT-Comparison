@@ -4,6 +4,7 @@
 #include <time.h>
 
 extern uint64_t p; 
+extern uint64_t gap;
 extern int n;
 
 /* Gaussian integer data type */
@@ -20,6 +21,8 @@ void print_gauss_t(const gauss_t);
 
 /* Reduction mod p = 0xFFFFFFFF00000001 */
 uint64_t mod_uint128(const unsigned __int128);
+uint64_t mul_uint64_t(const uint64_t, const uint64_t);
+uint64_t add_uint64_t(const uint64_t, const uint64_t);
 
 /* Operations over Gaussian integers */
 void add(gauss_t*, const gauss_t, const gauss_t);
