@@ -2,7 +2,7 @@
 #coding: utf-8
 import unittest
 import time
-import random
+from random import randint
 from gauss import GaussianInteger
 from math import log
 from params import *
@@ -45,9 +45,8 @@ def idgt_gentlemansande(x):
             X[i] = xi + a * xim
             X[i + m] = xi - a * xim
         m = 2 * m
-    inv = 18374686475393433601
 
-    return [v*inv for v in X]
+    return [v*invofkmodp for v in X]
 
 def dgt_gentlemansande_mul(a, b):    
     
@@ -66,7 +65,7 @@ def dgt_gentlemansande_mul(a, b):
     b_dgt = dgt_gentlemansande(b_h)
 
     # Point-wise multiplication
-    c_dgt = [(x * y) for x, y in zip(a_dgt, b_dgt)]
+    c_dgt = [(x * y) for x,y in zip(a_dgt, b_dgt)]
 
     # Compute n//2 IDGT
     c_h = idgt_gentlemansande(c_dgt)
@@ -130,105 +129,57 @@ def mulint(a, b):
 def gen_polynomial_modq(length):
     x = []
     for i in range(length):
-        x.append(random.randrange(0,q))
+        x.append(randint(0, p))
     return x
-
-def test_polynomial_multiplication():
-    a = gen_polynomial_modq(N)
-    b = gen_polynomial_modq(N)
-    c = dgt_gentlemansande_mul(a, b)
-    return c
-
-def gen_powers_of_gj():
-    k = len(gj)
-
-    print("{", end = ''),
-    for j in range(k-1): # For each gj[j]
-        print("{", end = ''),
-        for stride in range(int(log(k,2))-1): # Compute its powers mod p
-            a = pow(gj[j], k >> (int(log(k,2)) - stride), p)
-            print(a, end="u, ")
-        a = pow(gj[j], k >> 1, p)
-        print(a, end = 'u')
-        print("},"),
-    
-    print("{", end = ''),
-    for stride in range(int(log(k,2))-1): # Compute its powers mod p
-        a = pow(gj[k-1], k >> (int(log(k,2)) - stride), p)
-        print(a, end="u, ")
-    a = pow(gj[k-1], k >> 1, p)
-    print(a, end = 'u')
-    print("}};")
-
-def gen_powers_of_invgj():
-    k = len(invgj)
-
-    print("{", end = ''),
-    for j in range(k-1): # For each invgj[j]
-        print("{", end = ''),
-        for stride in range(int(log(k,2))-1): # Compute its powers mod p
-            a = pow(invgj[j], k >> (stride + 1), p)
-            print(a, end="u, ")
-        a = pow(invgj[j], k >> (int(log(k,2))), p)
-        print(a, end="u")
-        print("},"),
-    
-    print("{", end = ''),
-    for stride in range(int(log(k,2))-1): # Compute its powers mod p
-        a = pow(invgj[k-1], k >> (stride + 1), p)
-        print(a, end="u, ")
-    a = pow(invgj[k-1], k >> (int(log(k,2))), p)
-    print(a, end="u")
-    print("}};")    
 
 class TestDGTGentlemansande(unittest.TestCase):
 
     def test_transformation(self):
         print("\nTesting DGT Gentleman-Sande")
         
-        x = gen_polynomial_modq(N//2)        
-        x = [a if isinstance(a, GaussianInteger) else GaussianInteger(a) for a in x]
-        
-        start_time = time.time()
-        y = idgt_gentlemansande(dgt_gentlemansande(x))
-        end_time = time.time()
-        print("----------", end_time - start_time, "s. ----------")
+        for _ in range(10**3):        
+            x = gen_polynomial_modq(N//2)        
+            x = [a if isinstance(a, GaussianInteger) else GaussianInteger(a) for a in x]
+            
+            start_time = time.time()
+            y = idgt_gentlemansande(dgt_gentlemansande(x))
+            end_time = time.time()
 
-        self.assertEqual(
-            y,x)
+            # print("----------", end_time - start_time, "s. ----------")
+            
+            self.assertEqual(x, y)      
 
     def test_mul(self):
         print("\nPolynomial multiplication using DGT Gentleman-Sande")
         
-        a = gen_polynomial_modq(N)
-        b = gen_polynomial_modq(N)
+        for _ in range(10**3):    
+            a = gen_polynomial_modq(N)
+            b = gen_polynomial_modq(N)
 
-        start_time = time.time()
-        c = dgt_gentlemansande_mul(a, b)
-        end_time = time.time()
+            start_time = time.time()
+            c = dgt_gentlemansande_mul(a, b)
+            end_time = time.time()
 
-        print("----------", end_time - start_time, "s. ----------")
+            # print("----------", end_time - start_time, "s. ----------")
 
-        self.assertEqual(
-            dgt_gentlemansande_mul(a, b), mul(a,b)
-            )
+            self.assertEqual(
+                c, mul(a,b)
+                )
 
     def test_mulint(self):
         print("\nMultiplication by scalar using DGT Gentleman-Sande")
         
-        a = gen_polynomial_modq(N)
-        b = p//3 # An arbitrary scalar number
+        for _ in range(10**3):
+            a = gen_polynomial_modq(N)
+            b = randint(0, p) # An arbitrary scalar number
 
-        start_time = time.time()
-        dgt_gentlemansande_mulscalar(a, b),
-        end_time = time.time()
+            start_time = time.time()
+            c = dgt_gentlemansande_mulscalar(a, b)
+            end_time = time.time()
 
-        print("----------", end_time - start_time, "s. ----------")
+            # print("----------", end_time - start_time, "s. ----------")
 
-        self.assertEqual(
-            dgt_gentlemansande_mulscalar(a, b),
-            mulint(a, b)
-            )     
+            self.assertEqual(c,mulint(a,b))
 
 if __name__ == '__main__':
     unittest.main()
