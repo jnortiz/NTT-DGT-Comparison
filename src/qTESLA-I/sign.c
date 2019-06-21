@@ -14,7 +14,6 @@
 #include "gauss.h"
 #include "sha3/fips202.h"
 #include "random/random.h"
-#include "dgt.h"
 
 #ifdef DEBUG
 unsigned long long rejwctr;
@@ -22,7 +21,6 @@ unsigned long long rejyzctr;
 unsigned long long ctr_keygen;
 unsigned long long ctr_sign;
 #endif
-
 
 void hash_H(unsigned char *c_bin, poly v, const unsigned char *hm)
 { // Hash-based function H to generate c'

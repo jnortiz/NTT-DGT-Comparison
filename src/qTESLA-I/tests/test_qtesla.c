@@ -110,7 +110,6 @@ int print_accrates()
   return 0;
 }
 
-
 void test_functions()
 {
   unsigned int i;
