@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 from gauss import GaussianInteger
 import sys, traceback
 from random import randint

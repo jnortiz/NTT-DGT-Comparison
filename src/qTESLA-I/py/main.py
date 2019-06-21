@@ -1,15 +1,15 @@
 from dgt import *
 from ntt import *
 
-def compare_ntt_dgt():
-    print("\nComparing DGT and NTT")
- 
-    a = gen_polynomial_modq()
-    b = gen_polynomial_modq()
+N_RUN = 10**3
 
-    c_NTT = NTT_Mul(a, b)
-    c_DGT = dgt_gentlemansande_mul(a, b)
-    
-   assert(c_NTT == c_transf)
+def compare_ntt_dgt():
+    print("Comparing DGT and NTT")
+ 
+    for _ in range(N_RUN):    
+        a = gen_polynomial_modp(N)
+        b = gen_polynomial_modp(N)
+        
+        assert(ntt_mul(a, b) == dgt_gentlemansande_mul(a, b))
 
 compare_ntt_dgt()
