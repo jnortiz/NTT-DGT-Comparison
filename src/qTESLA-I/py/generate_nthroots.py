@@ -89,47 +89,13 @@ def find_residues(p):
     raise Exception("Couldn't find a residue")
 
 def nthroot(n, p): 
-    # 
-    # Let n bt a positive integer. A primitivie nth-rooth of i is an nth root
-    # of i that is not a kth root of i for any positive k < n.
-    # 
-    # if p == (2**64 - 2**32 + 1):
-    #     f0 = GaussianInteger(65536,  4294967295)
-    #     f1 = GaussianInteger(65536, -4294967295)
-    #     invf0Modf1 = GaussianInteger(0, 2147483648)
-    #     invf1Modf0 = GaussianInteger(0,-2147483648)
-    # elif p == 524269:
-    #     f0 = GaussianInteger(262,  675, p)
-    #     f1 = GaussianInteger(262, -675, p)
-    #     invf0Modf1 = GaussianInteger(0, 321940, p)
-    #     invf1Modf0 = GaussianInteger(0,-321940, p)
-    # else:
-        # assert p == 523777
-        # f0 = GaussianInteger(284,  665, p)
-        # f1 = GaussianInteger(284, -665, p)
-        # invf0Modf1 = GaussianInteger(0, 224485, p)
-        # invf1Modf0 = GaussianInteger(0,-224485, p)
-    # assert p % 4 == 1
-    # invf0Modf1 = None
-    # invf1Modf0 = None
-    # f0, f1 = find_residues(p)
-    # try:
-    #     invf0Modf1 = modinv(f0, f1)
-    #     invf1Modf0 = modinv(f1, f0)
-    #     assert f0 * f1 == p
-    #     assert (f0 * invf0Modf1) % f1 == 1
-    #     assert (f1 * invf1Modf0) % f0 == 1
-    #     print("Found: f0, f1 = %s, %s" % (f0, f1))
-    #     print("Found: invf0Modf1, invf1Modf0 = %s, %s" % (invf0Modf1, invf1Modf0))
-    # except Exception as e:
-    #     invf0Modf1 = None
-    #     invf1Modf0 = None
-    #     print("Bad residues.")
-    # if f0 is None or f1 is None or invf0Modf1 is None or invf1Modf0 is None:
-    #     raise Exception("Can't find invertible residues.")
-
+    # First, find the factorization of p using https://www.alpertron.com.ar/GAUSSIAN.HTM
+    # Then, try different combinations of signals and positions, real and imaginary parts, and invf0Modf1 and invf1Modf0 
+    # (usually, the algorithm only find of inverse; the other is the conjugate of the first) in order to find a proper root of i.
+    # Define the values of f0 and f1 below and obtain the generators.
     f0 = GaussianInteger(-1663, 1200)
     f1 = GaussianInteger(-1663, -1200)
+    
     invf0Modf1 = GaussianInteger(-895, -512)
     invf1Modf0 = GaussianInteger(-895, 512)
 

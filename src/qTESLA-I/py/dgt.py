@@ -127,7 +127,7 @@ def mulint(a, b):
 def gen_polynomial_modp(length):
     x = []
     for i in range(length):
-        x.append(1)
+        x.append(randint(0,p))
     return x
 
 class TestDGTGentlemansande(unittest.TestCase):
@@ -141,17 +141,15 @@ class TestDGTGentlemansande(unittest.TestCase):
         y = idgt_gentlemansande(dgt_gentlemansande(x))
         end_time = time.time()
 
-        print(y)
-
         print("----------", end_time - start_time, "s. ----------")
         
         self.assertEqual(x, y)      
 
-    def _test_mul(self):
+    def test_mul(self):
         print("\nPolynomial multiplication using DGT Gentleman-Sande")
         
-        a = gen_polynomial_modq(N)
-        b = gen_polynomial_modq(N)
+        a = gen_polynomial_modp(N)
+        b = gen_polynomial_modp(N)
 
         start_time = time.time()
         c = dgt_gentlemansande_mul(a, b)
@@ -161,10 +159,10 @@ class TestDGTGentlemansande(unittest.TestCase):
 
         self.assertEqual(c, schoolbook_mul(a,b))
 
-    def _test_mulint(self):
+    def test_mulint(self):
         print("\nMultiplication by scalar using DGT Gentleman-Sande")
         
-        a = gen_polynomial_modq(N)
+        a = gen_polynomial_modp(N)
         b = randint(0, p) # An arbitrary scalar number
 
         start_time = time.time()
