@@ -9,9 +9,9 @@ from math import log
 # inverse of g mod p
 #
 
-p = 485978113
-g = 324848141
-g_inv = 259546261
+p = 343576577
+g = 88890923
+g_inv = 261857986
 
 N = 1024
 k = N//2
@@ -59,5 +59,5 @@ def gen_powers_of_invgj():
     a = pow(invgj[k-1], k >> (int(log(k,2))), p)
     print(a, end="]]\n")
 
-gen_powers_of_gj()
-#gen_powers_of_invgj()
+#gen_powers_of_gj()
+gen_powers_of_invgj()

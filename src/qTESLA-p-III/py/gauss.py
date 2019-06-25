@@ -1,7 +1,7 @@
 class GaussianInteger:
     re = 0
     imag = 0
-    p = 1129725953
+    p = 856145921
 
     def __init__(self, re, imag = 0, p = None):
         assert type(re) == int

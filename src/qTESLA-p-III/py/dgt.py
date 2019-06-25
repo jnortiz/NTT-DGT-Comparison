@@ -9,7 +9,7 @@ from params_dgt import *
 
 ## In-place DGT via Gentleman-Sande
 def dgt_gentlemansande(x):   
-    k = len(x) # n//2 | 256  
+    k = len(x)  
     X = list(x)
     
     for stride in range(int(log(k,2))):        

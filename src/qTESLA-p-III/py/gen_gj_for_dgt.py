@@ -1,8 +1,17 @@
 from math import log
 
-p = 1129725953
-g = 304535261
-g_inv = 218930289
+#
+# Generate g using Sage
+# g = GF(p)
+# g.zeta(k)
+#
+# Obtain g_inv sending a query to Wolfram Alpha
+# inverse of g mod p
+#
+
+p = 856145921
+g = 719012196
+g_inv = 123225232
 
 N = 2048
 k = N//2
@@ -48,7 +57,7 @@ def gen_powers_of_invgj():
         a = pow(invgj[k-1], k >> (stride + 1), p)
         print(a, end=", ")
     a = pow(invgj[k-1], k >> (int(log(k,2))), p)
-    print(a, end="]]")
+    print(a, end="]]\n")
 
-#gen_powers_of_gj()
-gen_powers_of_invgj()
+gen_powers_of_gj()
+#gen_powers_of_invgj()
