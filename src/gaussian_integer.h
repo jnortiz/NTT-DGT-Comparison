@@ -15,6 +15,7 @@ int32_t barr_reduce(int32_t);
 
 void set_gauss(gauss_t*, const int32_t, const int32_t);
 void add(gauss_t*, const gauss_t, const gauss_t);
+void add_corrected(gauss_t*, const gauss_t, const gauss_t);
 void sub(gauss_t*, const gauss_t, const gauss_t);
 void mul(gauss_t*, const gauss_t, const gauss_t);
 

@@ -14,7 +14,7 @@ static timestamp_t get_timestamp() {
     return now.tv_nsec + (timestamp_t)now.tv_sec * 1000000000.0;
 }
 
-#define MAX_RUN 5000
+#define MAX_RUN 10
 
 void print_signal(const gauss_t *_signal_a, const int length) {    
     int i;
@@ -70,7 +70,6 @@ void idgt(gauss_t *_output_signal, const gauss_t *_x) {
             set_gauss(&xim, _output_signal[i+m].re, _output_signal[i+m].img);
             set_gauss(&aux_power, __invgj[j][stride], (int32_t) 0);
             mul(&aux_mul, aux_power, xim);
-
             add(&_output_signal[i], xi, aux_mul);
             sub(&_output_signal[i+m], xi, aux_mul);
         }
@@ -182,7 +181,7 @@ int is_equal(const gauss_t *_signal_a, const gauss_t *_signal_b) {
 }
 
 int test_dgt() {
-    printf("\nTesting DGT/IDGT transform\n");
+    printf("Testing DGT/IDGT transform\n");
     gauss_t _signal_a[PARAM_K], _signal_b[PARAM_K], _output[PARAM_K];
     int i, n_run, counter;
     timestamp_t ts_start, ts_end, ts_min, ts_max, ts_avg, diff;
@@ -195,6 +194,7 @@ int test_dgt() {
     srand(time(NULL));
 
     for(n_run = 0; n_run < MAX_RUN; n_run++) {        
+        
         for(i = 0; i < PARAM_K; i++) {
             set_gauss(&_signal_a[i], rand() % PARAM_Q, 0);
         }
