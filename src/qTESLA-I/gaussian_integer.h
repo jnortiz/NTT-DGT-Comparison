@@ -8,8 +8,7 @@ struct gauss {
 
 typedef struct gauss gauss_t;
 
-void add(gauss_t*, const gauss_t, const gauss_t);
-void sub(gauss_t*, const gauss_t, const gauss_t);
+void set_gauss(gauss_t*, const int32_t, const int32_t);
 void mul(gauss_t*, const gauss_t, const gauss_t);
 
 #endif
