@@ -5,6 +5,8 @@
 **************************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
+#include <inttypes.h>
 #include "poly.h"
 #include "sha3/fips202.h"
 #include "api.h"
@@ -25,93 +27,151 @@ int32_t reduce(int64_t a)
   return (int32_t)(a>>32);
 }
 
-void dgt(gauss_t *_x, const gauss_t *_input_signal)
+void dgt(poly _x, const poly _input_signal)
 {    
     int i, index, j, l, m, stride;
-    gauss_t aux_sub;
+    int32_t sub_re, sub_img;
 
-    for(i = 0; i < PARAM_K2; i++) {
-        set_gauss(&_x[i], _input_signal[i].re, _input_signal[i].img);
-    }
+    memcpy(_x, _input_signal, PARAM_N*sizeof(int32_t));
+    // for(i = 0; i < PARAM_K2; i++) {
+    //     set_gauss(&_x[i], _input_signal[i].re, _input_signal[i].img);
+    // }
 
-    m = PARAM_K2;
+    m = PARAM_N;
     index = 0;   
     for(stride = 0; stride < PARAM_K2_LOG; stride++) {        
         m >>= 1;
-        for(l = 0; l < PARAM_K2 >> 1; l++) {            
-            j = m*l >> (PARAM_K2_LOG-1);
-            i = _i_values[index++];            
-            set_gauss(&aux_sub, _x[i].re-_x[i+m].re, _x[i].img-_x[i+m].img);
-            set_gauss(&_x[i], _x[i].re+_x[i+m].re, _x[i].img+_x[i+m].img);
-            set_gauss(&_x[i+m], reduce((int64_t)__gj[j][stride]*aux_sub.re), reduce((int64_t)__gj[j][stride]*aux_sub.img));
+
+        for(l = 0; l < (PARAM_K2 >> 1); l++) {            
+            j = m*l >> (PARAM_K2_LOG);
+            i = _i_values[index++] << 1;
+
+            sub_re = _x[i]-_x[i+m];
+            sub_img = _x[i+1]-_x[i+m+1];
+            //set_gauss(&aux_sub, _x[i].re-_x[i+m].re, _x[i].img-_x[i+m].img);
+            
+            _x[i] = _x[i]+_x[i+m];
+            _x[i+1] = _x[i+1]+_x[i+m+1];
+            //set_gauss(&_x[i], _x[i].re+_x[i+m].re, _x[i].img+_x[i+m].img);
+            
+            _x[i+m] = reduce((int64_t)__gj[j][stride]*sub_re);
+            _x[i+m+1] = reduce((int64_t)__gj[j][stride]*sub_img);
+            // set_gauss(&_x[i+m], 
+            //   reduce((int64_t)__gj[j][stride]*aux_sub.re), 
+            //   reduce((int64_t)__gj[j][stride]*aux_sub.img));
         }
     }
 }
 
-void idgt(gauss_t *_output_signal, const gauss_t *_x)
+void idgt(poly _output_signal, const poly _x)
 {
     int i, index, j, l, m, stride;
-    gauss_t aux_mul;
+    int32_t mul_re, mul_img;
 
-    for(i = 0; i < PARAM_K2; i++) {
-        set_gauss(&_output_signal[i], _x[i].re, _x[i].img);
-    }
+    // for(i = 0; i < PARAM_K2; i++) {
+    //     set_gauss(&_output_signal[i], _x[i].re, _x[i].img);
+    // }
+    memcpy(_output_signal, _x, PARAM_N*sizeof(int32_t));
 
     index = 0;
-    m = 1;
+    m = 1 << 1;
     for(stride = 0; stride < PARAM_K2_LOG; stride++) {
-        for(l = 0; l < PARAM_K2 >> 1; l++) {
-            j = m*l >> (PARAM_K2_LOG-1);
-            i = _idgt_i_values[index++];
+        for(l = 0; l < (PARAM_K2 >> 1); l++) {
+            j = m*l >> (PARAM_K2_LOG);
+            i = _idgt_i_values[index++] << 1;
             
-            set_gauss(&aux_mul, 
-              reduce((int64_t)_output_signal[i+m].re*__invgj[j][stride]), 
-              reduce((int64_t)_output_signal[i+m].img*__invgj[j][stride])
-            );
-            set_gauss(&_output_signal[i+m], _output_signal[i].re-aux_mul.re, _output_signal[i].img-aux_mul.img);
-            set_gauss(&_output_signal[i], _output_signal[i].re+aux_mul.re, _output_signal[i].img+aux_mul.img);            
+            mul_re = reduce((int64_t)_output_signal[i+m]*__invgj[j][stride]);
+            mul_img = reduce((int64_t)_output_signal[i+m+1]*__invgj[j][stride]);
+            // set_gauss(&aux_mul, 
+            //   reduce((int64_t)_output_signal[i+m].re*__invgj[j][stride]), 
+            //   reduce((int64_t)_output_signal[i+m].img*__invgj[j][stride])
+            // );
+            _output_signal[i+m] =  _output_signal[i]-mul_re;
+            _output_signal[i+m+1] = _output_signal[i+1]-mul_img;
+            //set_gauss(&_output_signal[i+m], _output_signal[i].re-aux_mul.re, _output_signal[i].img-aux_mul.img);
+            //set_gauss(&_output_signal[i], _output_signal[i].re+aux_mul.re, _output_signal[i].img+aux_mul.img);
+            _output_signal[i] = _output_signal[i]+mul_re;
+            _output_signal[i+1] = _output_signal[i+1]+mul_img;
         }
         m <<= 1;
     }
 
-    for(i = 0; i < PARAM_K2; i++) {
-      set_gauss(&_output_signal[i], 
-        reduce((int64_t)_output_signal[i].re*invofkmodp), 
-        reduce((int64_t)_output_signal[i].img*invofkmodp)
-      );
+    for(i = 0; i < PARAM_N; i+=2) {
+      _output_signal[i] = reduce((int64_t)_output_signal[i]*invofkmodp);
+      _output_signal[i+1] = reduce((int64_t)_output_signal[i+1]*invofkmodp);
+      // set_gauss(&_output_signal[i], 
+      //   reduce((int64_t)_output_signal[i].re*invofkmodp), 
+      //   reduce((int64_t)_output_signal[i].img*invofkmodp)
+      // );
     }
 }
 
-void poly_mul(int32_t *output, const int32_t * _poly_a, const int32_t *_poly_b)
+void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 {
-    gauss_t _folded_a[PARAM_K2], _folded_b[PARAM_K2];
-    gauss_t _dgt_a[PARAM_K2], _dgt_b[PARAM_K2];
-    gauss_t _mul[PARAM_K2], _output_gaussian[PARAM_K2];
-    gauss_t root;
-    int i;
+    poly _folded_a, _folded_b;
+    poly _dgt_a, _dgt_b;
+    poly _mul, _output_gaussian;
+    int32_t root_re, root_img;
+    int32_t s1, s2, s3;
+    int i, j;
 
-    for(i = 0; i < PARAM_K2; i++) {
-        set_gauss(&root, __nthroots[i][0], __nthroots[i][1]);
-        set_gauss(&_folded_a[i], _poly_a[i], _poly_a[PARAM_K2+i]);
-        mul(&_folded_a[i], _folded_a[i], root);
-        set_gauss(&_folded_b[i], _poly_b[i], _poly_b[PARAM_K2+i]);
-        mul(&_folded_b[i], _folded_b[i], root);
+    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {
+        //set_gauss(&root, __nthroots[i][0], __nthroots[i][1]);        
+        
+        _folded_a[i] = _poly_a[j];
+        _folded_a[i+1] = _poly_a[PARAM_K2+j];
+        //set_gauss(&_folded_a[i], _poly_a[i], _poly_a[PARAM_K2+i]);
+        
+        s1 = reduce((int64_t)_folded_a[i]*__nthroots[j][0]);
+        s2 = reduce((int64_t)_folded_a[i+1]*__nthroots[j][1]);  
+        s3 = reduce((int64_t)(_folded_a[i]+_folded_a[i+1])*(__nthroots[j][0]+__nthroots[j][1]));
+        _folded_a[i] = barr_reduce(s1-s2);
+        _folded_a[i+1] = barr_reduce(s3-s1-s2);        
+        //mul(&_folded_a[i], _folded_a[i], root);
+        
+        _folded_b[i] = _poly_b[j];
+        _folded_b[i+1] = _poly_b[PARAM_K2+j];
+        //set_gauss(&_folded_b[i], _poly_b[i], _poly_b[PARAM_K2+i]);
+        
+        s1 = reduce((int64_t)_folded_b[i]*__nthroots[j][0]);
+        s2 = reduce((int64_t)_folded_b[i+1]*__nthroots[j][1]);  
+        s3 = reduce((int64_t)(_folded_b[i]+_folded_b[i+1])*(__nthroots[j][0]+__nthroots[j][1]));
+        _folded_b[i] = barr_reduce(s1-s2);
+        _folded_b[i+1] = barr_reduce(s3-s1-s2);         
+        //mul(&_folded_b[i], _folded_b[i], root);
     }
 
     dgt(_dgt_a, _folded_a);
     dgt(_dgt_b, _folded_b);
 
-    for(i = 0; i < PARAM_K2; i++) {
-        mul(&_mul[i], _dgt_a[i], _dgt_b[i]);
+    // for(i = 0; i < PARAM_K2; i++) {
+    //   printf("%" PRId32 ", %" PRId32 ", ", _dgt_a[i], _dgt_a[i+1]);
+    // }
+    // printf("\n\n\n");    
+
+    for(i = 0; i < PARAM_N; i+=2) {
+        s1 = reduce((int64_t)_dgt_a[i]* _dgt_b[i]);
+        s2 = reduce((int64_t)_dgt_a[i+1]*_dgt_b[i+1]);  
+        s3 = reduce((int64_t)(_dgt_a[i]+_dgt_a[i+1])*( _dgt_b[i]+ _dgt_b[i+1]));
+        _mul[i] = barr_reduce(s1-s2);
+        _mul[i+1] = barr_reduce(s3-s1-s2);
+        //mul(&_mul[i], _dgt_a[i], _dgt_b[i]);
     }
 
     idgt(_output_gaussian, _mul);
 
-    for(i = 0; i < PARAM_K2; i++) {
-        set_gauss(&root, __invnthroots[i][0], __invnthroots[i][1]);
-        mul(&_output_gaussian[i], _output_gaussian[i], root);
-        output[i] = _output_gaussian[i].re;
-        output[i+PARAM_K2] = _output_gaussian[i].img;
+    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {
+        //set_gauss(&root, __invnthroots[i][0], __invnthroots[i][1]);
+        
+        s1 = reduce((int64_t)_output_gaussian[i]*__invnthroots[j][0]);
+        s2 = reduce((int64_t)_output_gaussian[i+1]*__invnthroots[j][1]);  
+        s3 = reduce((int64_t)(_output_gaussian[i]+_output_gaussian[i+1])*(__invnthroots[j][0]+__invnthroots[j][1]));
+        _output_gaussian[i] = barr_reduce(s1-s2);
+        _output_gaussian[i+1] = barr_reduce(s3-s1-s2);        
+        //mul(&_output_gaussian[i], _output_gaussian[i], root);
+        
+        _output[j] = _output_gaussian[i];
+        _output[j+PARAM_K2] = _output_gaussian[i+1];
     }
 }
 

@@ -1,6 +1,6 @@
 #include <inttypes.h>
 #include "gaussian_integer.h"
-#include "poly.h" //reduce()
+#include "poly.h"
 
 void set_gauss(gauss_t *pointer, const int32_t re, const int32_t img) {
 	pointer->re = re;
