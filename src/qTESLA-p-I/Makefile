@@ -33,16 +33,16 @@ ifeq "$(DEBUG)" "TRUE"
     DFLAG=-DDEBUG
 endif
 
-OBJECTS_I = objs_I/sign.o objs_I/pack.o objs_I/sample.o objs_I/gauss.o objs_I/poly.o objs_I/consts.o objs/fips202.o objs/random.o objs_I/dgt.o objs_I/gaussian_integer.o
+OBJECTS_p_I = objs_p_I/sign.o objs_p_I/pack.o objs_p_I/sample.o objs_p_I/gauss.o objs_p_I/poly.o objs_p_I/consts.o objs/fips202.o objs/random.o objs_p_I/gaussian_integer.o
 SOURCE_TEST = tests/cpucycles.c tests/test_qtesla.c
 SOURCE_KATS_GEN  = tests/rng.c tests/PQCgenKAT_sign.c
 SOURCE_KATS_TEST = tests/rng.c tests/PQCtestKAT_sign.c
 
-all: lib_I tests
+all: lib_p_I tests
 
-objs_I/%.o: %.c
+objs_p_I/%.o: %.c
 	@mkdir -p $(@D)
-	$(CC) -c $(CFLAGS) $(DFLAG) -D _qTESLA_I_ $< -o $@
+	$(CC) -c $(CFLAGS) $(DFLAG) -D _qTESLA_p_I_ $< -o $@
 
 objs/random.o: random/random.c
 	@mkdir -p $(@D)
@@ -52,16 +52,16 @@ objs/fips202.o: sha3/fips202.c
 	@mkdir -p $(@D)
 	$(CC) -c $(CFLAGS) sha3/fips202.c -o objs/fips202.o
 
-lib_I: $(OBJECTS_I)
-	rm -rf lib_I
-	mkdir lib_I
-	$(AR) lib_I/libqtesla.a $^
-	$(RANLIB) lib_I/libqtesla.a
+lib_p_I: $(OBJECTS_p_I)
+	rm -rf lib_p_I
+	mkdir lib_p_I
+	$(AR) lib_p_I/libqtesla.a $^
+	$(RANLIB) lib_p_I/libqtesla.a
 
-tests: lib_I
-	$(CC) $(CFLAGS) -L./lib_I -D _qTESLA_I_ $(SOURCE_TEST) $(DFLAG) -lqtesla $(LDFLAGS) -o test_qtesla-I $(ARM_SETTING)
-	$(CC) $(CFLAGS) -L./lib_I -D _qTESLA_I_ $(SOURCE_KATS_GEN) $(DFLAG) -lqtesla $(LDFLAGS) -o PQCgenKAT_sign-I $(ARM_SETTING)
-	$(CC) $(CFLAGS) -L./lib_I -D _qTESLA_I_ $(SOURCE_KATS_TEST) $(DFLAG) -lqtesla $(LDFLAGS) -o PQCtestKAT_sign-I $(ARM_SETTING)
+tests: lib_p_I
+	$(CC) $(CFLAGS) -L./lib_p_I -D _qTESLA_p_I_ $(SOURCE_TEST) $(DFLAG) -lqtesla $(LDFLAGS) -o test_qtesla-p-I $(ARM_SETTING)
+	$(CC) $(CFLAGS) -L./lib_p_I -D _qTESLA_p_I_ $(SOURCE_KATS_GEN) $(DFLAG) -lqtesla $(LDFLAGS) -o PQCgenKAT_sign-p-I $(ARM_SETTING)
+	$(CC) $(CFLAGS) -L./lib_p_I -D _qTESLA_p_I_ $(SOURCE_KATS_TEST) $(DFLAG) -lqtesla $(LDFLAGS) -o PQCtestKAT_sign-p-I $(ARM_SETTING)
 
 .PHONY: clean
 

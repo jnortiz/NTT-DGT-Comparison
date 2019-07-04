@@ -11,7 +11,7 @@ def compare_ntt_dgt():
         a = gen_polynomial_modp(N)
         b = gen_polynomial_modp(N)
         
-        if(ntt_mul(a, b) != dgt_gentlemansande_mul(a, b))
+        if(ntt_mul(a, b) != dgt_gentlemansande_mul(a, b)):
             status = False
             
     return status

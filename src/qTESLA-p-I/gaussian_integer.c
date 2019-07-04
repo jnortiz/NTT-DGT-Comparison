@@ -1,44 +1,66 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <inttypes.h>
+#include <time.h>
+
 #include "gaussian_integer.h"
 #include "params.h"
-#include "poly.h" //reduce()
+#include "poly.h"
 
 #define RADIX32 32
 
-void set_gauss(gauss_t *pointer, const int32_t re, const int32_t img) {
+void set_gauss(gauss_t *pointer, const int64_t re, const int64_t img) {
 	pointer->re = re;
 	pointer->img = img;
 }
 
-int32_t sub_int32_t(const int32_t a, const int32_t b) {
-	int32_t res;	
-	res = (a-b);
-    res += (res >> (RADIX32-1)) & PARAM_Q;    // If result[i] < 0 then add q
-	return res;
+void print_gauss_t(const gauss_t x) {
+	printf("%" PRIu64, x.re);
+	if(x.img >= 0) {
+		printf(" + ");
+	}
+	printf("i%" PRIu64 ", ", x.img);
 }
 
-int32_t add_int32_t(const int32_t a, const int32_t b) {
-	int32_t res;
+int64_t sub_int64_t(const int64_t a, const int64_t b) {
+	return barr_reduce(a-b);
+}
+
+int64_t add_int64_t(const int64_t a, const int64_t b) {
+	int64_t res;
 	res = a+b;
-	res += (res >> (RADIX32-1)) & PARAM_Q;
 	res -= PARAM_Q;
 	res += (res >> (RADIX32-1)) & PARAM_Q;
 	return res;
 }
 
+int64_t mul_int64_t(const int64_t a, const int64_t b) {
+	// unsigned __int128 x, y;
+	// int64_t res;	
+	// x = (unsigned __int128) a;
+	// y = (unsigned __int128) b;
+	// res = reduce(a*b);	
+	return reduce(a*b);
+}
+
+int overflow(const int64_t a, const int64_t b) {
+	return((a+b) < a);
+}
+
 void add(gauss_t *z, const gauss_t x, const gauss_t y) {
-	set_gauss(z, add_int32_t(x.re,y.re), add_int32_t(x.img,y.img));
+	set_gauss(z, add_int64_t(x.re,y.re), add_int64_t(x.img,y.img));
 }
 
 void sub(gauss_t *z, const gauss_t x, const gauss_t y) {
-	set_gauss(z, sub_int32_t(x.re,y.re), sub_int32_t(x.img,y.img));
+	set_gauss(z, sub_int64_t(x.re,y.re), sub_int64_t(x.img,y.img));
 }
 
 void mul(gauss_t *z, const gauss_t x, const gauss_t y) {	
-	int32_t s1, s2, s3;
+	int64_t s1, s2, s3;
 
-	s1 = reduce((int64_t)x.re*y.re);
-	s2 = reduce((int64_t)x.img*y.img);	
-	s3 = reduce((int64_t)add_int32_t(x.re, x.img)*add_int32_t(y.re, y.img));
-	set_gauss(z, sub_int32_t(s1,s2), sub_int32_t(sub_int32_t(s3,s1),s2));
+	s1 = mul_int64_t(x.re, y.re);
+	s2 = mul_int64_t(x.img, y.img);	
+	s3 = mul_int64_t(add_int64_t(x.re, x.img), add_int64_t(y.re, y.img));
+
+	set_gauss(z, sub_int64_t(s1,s2), sub_int64_t(sub_int64_t(s3,s1),s2));
 }

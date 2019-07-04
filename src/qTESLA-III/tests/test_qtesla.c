@@ -24,7 +24,7 @@
 #endif
 
 #define MLEN 59
-#define NRUNS 10000
+#define NRUNS 5000
 #define NTESTS 100
 
 static int cmp_llu(const void *a, const void*b)
@@ -33,7 +33,6 @@ static int cmp_llu(const void *a, const void*b)
   if (*(unsigned long long *)a > *(unsigned long long *)b) return 1;
   return 0;
 }
-
 
 static unsigned long long median(unsigned long long *l, size_t llen)
 {
@@ -109,6 +108,7 @@ int print_accrates()
  
   return 0;
 }
+
 
 void test_functions()
 {

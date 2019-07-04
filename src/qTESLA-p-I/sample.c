@@ -19,33 +19,20 @@ void sample_y(poly y, const unsigned char *seed, int nonce)
   unsigned char buf[PARAM_N*BPLUS1BYTES];
   unsigned int nbytes = BPLUS1BYTES;
   int16_t dmsp = (int16_t)(nonce<<8);
-  int32_t y_t[4];
     
   cSHAKE((uint8_t*)buf, PARAM_N*nbytes, dmsp++, seed, CRYPTO_RANDOMBYTES);
 
   while (i<PARAM_N) {
-    if (pos >= nblocks*nbytes*4) {
+    if (pos >= nblocks*nbytes) {
       nblocks = NBLOCKS_SHAKE;
       cSHAKE((uint8_t*)buf, SHAKE_RATE, dmsp++, seed, CRYPTO_RANDOMBYTES);
       pos = 0;
     }
-    y_t[0]  = (*(uint32_t*)(buf+pos))          & ((1<<(PARAM_B_BITS+1))-1);
-    y_t[1]  = (*(uint32_t*)(buf+pos+nbytes))   & ((1<<(PARAM_B_BITS+1))-1);
-    y_t[2]  = (*(uint32_t*)(buf+pos+2*nbytes)) & ((1<<(PARAM_B_BITS+1))-1);
-    y_t[3]  = (*(uint32_t*)(buf+pos+3*nbytes)) & ((1<<(PARAM_B_BITS+1))-1);
-    y_t[0] -= PARAM_B;
-    y_t[1] -= PARAM_B;
-    y_t[2] -= PARAM_B;
-    y_t[3] -= PARAM_B;
-    if (y_t[0] != (1<<PARAM_B_BITS))
-      y[i++] = y_t[0];
-    if (i<PARAM_N && y_t[1] != (1<<PARAM_B_BITS))
-      y[i++] = y_t[1];
-    if (i<PARAM_N && y_t[2] != (1<<PARAM_B_BITS))
-      y[i++] = y_t[2];
-    if (i<PARAM_N && y_t[3] != (1<<PARAM_B_BITS))
-      y[i++] = y_t[3];
-    pos += 4*nbytes;
+    y[i]  = (*(uint32_t*)(buf+pos)) & ((1<<(PARAM_B_BITS+1))-1);
+    y[i] -= PARAM_B;
+    if (y[i] != (1<<PARAM_B_BITS))
+      i++;
+    pos += nbytes;
   }
 }
 

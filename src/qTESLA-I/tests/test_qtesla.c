@@ -24,7 +24,7 @@
 #endif
 
 #define MLEN 59
-#define NRUNS 20000
+#define NRUNS 5000
 #define NTESTS 100
 
 static int cmp_llu(const void *a, const void*b)

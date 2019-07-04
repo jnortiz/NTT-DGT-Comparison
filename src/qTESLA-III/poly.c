@@ -8,7 +8,6 @@
 #include "sha3/fips202.h"
 #include "api.h"
 #include "gaussian_integer.h"
-#include "params.h"
 #include "params_dgt.h"
 
 extern poly zeta;
@@ -29,7 +28,7 @@ void dgt(gauss_t *_x, const gauss_t *_input_signal)
     int i, j, k, l, m, stride;
     gauss_t xi, xim, aux_sub, aux_power;
 
-    k = (int)(PARAM_N/2); // 256
+    k = (int)(PARAM_N/2);
 
     for(i = 0; i < k; i++) {
         set_gauss(&_x[i], _input_signal[i].re, _input_signal[i].img);
@@ -87,41 +86,43 @@ void idgt(gauss_t *_output_signal, const gauss_t *_x)
     }
 }
 
-void poly_mul(int32_t *output, const int32_t * _poly_a, const int32_t *_poly_b)
-{
-    int k;
-    k = PARAM_N >> 1;
 
-    gauss_t _folded_a[k], _folded_b[k];
-    gauss_t _dgt_a[k], _dgt_b[k];
-    gauss_t _mul[k], _output_gaussian[k];
-    gauss_t root;
-    int i;
+// void poly_mul(int32_t *output, const int32_t * _poly_a, const int32_t *_poly_b)
+// {
+//     int k;
+//     k = PARAM_N >> 1;
 
-    for(i = 0; i < k; i++) {
-        set_gauss(&root, __nthroots[i][0], __nthroots[i][1]);
-        set_gauss(&_folded_a[i], _poly_a[i], _poly_a[k+i]);
-        mul(&_folded_a[i], _folded_a[i], root);
-        set_gauss(&_folded_b[i], _poly_b[i], _poly_b[k+i]);
-        mul(&_folded_b[i], _folded_b[i], root);
-    }
+//     gauss_t _folded_a[k], _folded_b[k];
+//     gauss_t _dgt_a[k], _dgt_b[k];
+//     gauss_t _mul[k], _output_gaussian[k];
+//     gauss_t root;
+//     int i;
 
-    dgt(_dgt_a, _folded_a);
-    dgt(_dgt_b, _folded_b);
+//     for(i = 0; i < k; i++) {
+//         set_gauss(&root, __nthroots[i][0], __nthroots[i][1]);
+//         set_gauss(&_folded_a[i], _poly_a[i], _poly_a[k+i]);
+//         mul(&_folded_a[i], _folded_a[i], root);
+//         set_gauss(&_folded_b[i], _poly_b[i], _poly_b[k+i]);
+//         mul(&_folded_b[i], _folded_b[i], root);
+//     }
 
-    for(i = 0; i < k; i++) {
-        mul(&_mul[i], _dgt_a[i], _dgt_b[i]);
-    }
+//     dgt(_dgt_a, _folded_a);
+//     dgt(_dgt_b, _folded_b);
 
-    idgt(_output_gaussian, _mul);
+//     for(i = 0; i < k; i++) {
+//         mul(&_mul[i], _dgt_a[i], _dgt_b[i]);
+//     }
 
-    for(i = 0; i < k; i++) {
-        set_gauss(&root, __invnthroots[i][0], __invnthroots[i][1]);
-        mul(&_output_gaussian[i], _output_gaussian[i], root);
-        output[i] = _output_gaussian[i].re;
-        output[i+k] = _output_gaussian[i].img;
-    }
-}
+//     idgt(_output_gaussian, _mul);
+
+//     for(i = 0; i < k; i++) {
+//         set_gauss(&root, __invnthroots[i][0], __invnthroots[i][1]);
+//         mul(&_output_gaussian[i], _output_gaussian[i], root);
+//         output[i] = _output_gaussian[i].re;
+//         output[i+k] = _output_gaussian[i].img;
+//     }
+// }
+
 
 void poly_uniform(poly a, const unsigned char *seed)         
 { // Generation of polynomial "a"
@@ -157,6 +158,7 @@ void poly_uniform(poly a, const unsigned char *seed)
       a[i++] = reduce((int64_t)val4*PARAM_R2_INVN);
   }
 }
+
 
 void ntt(poly a, const poly w)
 { // Forward NTT transform
@@ -217,6 +219,20 @@ static void poly_pointwise(poly result, const poly x, const poly y)
 
   for (int i=0; i<PARAM_N; i++)
     result[i] = reduce((int64_t)x[i]*y[i]);
+}
+
+
+void poly_mul(poly result, const poly x, const poly y)
+{ // Polynomial multiplication result = x*y, with in place reduction for (X^N+1)
+  // The input x is assumed to be in NTT form
+  poly y_ntt;
+    
+  for (int i=0; i<PARAM_N; i++)
+    y_ntt[i] = y[i];
+  
+  ntt(y_ntt, zeta);
+  poly_pointwise(result, x, y_ntt);
+  nttinv(result, zetainv);
 }
 
 void poly_add(poly result, const poly x, const poly y)
