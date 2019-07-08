@@ -5,6 +5,8 @@
 **************************************************************************************/
 
 #include <string.h>
+#include <inttypes.h>
+#include <stdio.h>
 #include "poly.h"
 #include "sha3/fips202.h"
 #include "api.h"
@@ -25,27 +27,25 @@ int32_t reduce(int64_t a)
 }
 
 
-void dgt(poly _x, const poly _input_signal)
+void dgt(poly _x)
 {    
-    int i, index, j, l, m, stride;
+    int i, index, j, l, m, stride, bound;
     int32_t sub_re, sub_img;
 
-    memcpy(_x, _input_signal, PARAM_N*sizeof(int32_t));
-
     m = PARAM_N;
-    index = 0;   
+    index = 0;
+    bound = (PARAM_K2 >> 1);
     for(stride = 0; stride < PARAM_K2_LOG; stride++) {        
         m >>= 1;
-
-        for(l = 0; l < (PARAM_K2 >> 1); l++) {            
-            j = m*l >> (PARAM_K2_LOG);
+        for(l = 0; l < bound; l++) {            
+            j = _j_values[index];
             i = _i_values[index++];
 
             sub_re = _x[i]-_x[i+m];
             sub_img = _x[i+1]-_x[i+m+1];
             
-            _x[i] = _x[i]+_x[i+m];
-            _x[i+1] = _x[i+1]+_x[i+m+1];
+            _x[i] += _x[i+m];
+            _x[i+1] += _x[i+m+1];
             
             _x[i+m] = reduce((int64_t)__gj[j][stride]*sub_re);
             _x[i+m+1] = reduce((int64_t)__gj[j][stride]*sub_img);
@@ -54,18 +54,17 @@ void dgt(poly _x, const poly _input_signal)
 }
 
 
-void idgt(poly _output_signal, const poly _x)
+void idgt(poly _output_signal)
 {
-    int i, index, j, l, m, stride;
+    int i, index, j, l, m, stride, bound;
     int32_t mul_re, mul_img;
-
-    memcpy(_output_signal, _x, PARAM_N*sizeof(int32_t));
 
     index = 0;
     m = 2;
+    bound = (PARAM_K2 >> 1);
     for(stride = 0; stride < PARAM_K2_LOG; stride++) {
-        for(l = 0; l < (PARAM_K2 >> 1); l++) {
-            j = m*l >> (PARAM_K2_LOG);
+        for(l = 0; l < bound; l++) {
+            j = _idgt_j_values[index];
             i = _idgt_i_values[index++];
             
             mul_re = reduce((int64_t)_output_signal[i+m]*__invgj[j][stride]);
@@ -74,74 +73,59 @@ void idgt(poly _output_signal, const poly _x)
             _output_signal[i+m] =  _output_signal[i]-mul_re;
             _output_signal[i+m+1] = _output_signal[i+1]-mul_img;
             
-            _output_signal[i] = _output_signal[i]+mul_re;
-            _output_signal[i+1] = _output_signal[i+1]+mul_img;
+            _output_signal[i] += mul_re;
+            _output_signal[i+1] += mul_img;
         }
         m <<= 1;
     }
-
-    for(i = 0; i < PARAM_N; i+=2) {
-      _output_signal[i] = reduce((int64_t)_output_signal[i]*invofkmodp);
-      _output_signal[i+1] = reduce((int64_t)_output_signal[i+1]*invofkmodp);
-    }
 }
-
 
 void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 {
     poly _folded_a, _folded_b;
-    poly _dgt_b;
     poly _mul, _output_gaussian;
-    int32_t s1, s2, s3;
+    int64_t t1, t2, t3;
     int i, j;
 
-    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {        
-        /* Combining the input coefficientes as Gaussian integers */
-        _folded_a[i] = _poly_a[j];
-        _folded_a[i+1] = _poly_a[PARAM_K2+j];
-        
+    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
         /* Computing the folded signal. The same is done for both input signals */
-        s1 = reduce((int64_t)_folded_a[i]*__nthroots[j][0]);
-        s2 = reduce((int64_t)_folded_a[i+1]*__nthroots[j][1]);  
-        s3 = reduce((int64_t)(_folded_a[i]+_folded_a[i+1])*(__nthroots[j][0]+__nthroots[j][1]));
-        _folded_a[i] = barr_reduce(s1-s2);
-        _folded_a[i+1] = barr_reduce(s3-s1-s2);           
-
-        _folded_b[i] = _poly_b[j];
-        _folded_b[i+1] = _poly_b[PARAM_K2+j];
+        t1 = ((int64_t)_poly_a[j]*__nthroots[i]);
+        t2 = ((int64_t)_poly_a[PARAM_K2+j]*__nthroots[i+1]);  
+        t3 = ((int64_t)(_poly_a[j]+_poly_a[PARAM_K2+j])*(__nthroots[i]+__nthroots[i+1]));
+        _folded_a[i] = reduce(t1-t2);
+        _folded_a[i+1] = reduce(t3-t1-t2);           
         
-        s1 = reduce((int64_t)_folded_b[i]*__nthroots[j][0]);
-        s2 = reduce((int64_t)_folded_b[i+1]*__nthroots[j][1]);  
-        s3 = reduce((int64_t)(_folded_b[i]+_folded_b[i+1])*(__nthroots[j][0]+__nthroots[j][1]));
-        _folded_b[i] = barr_reduce(s1-s2);
-        _folded_b[i+1] = barr_reduce(s3-s1-s2);
+        t1 = ((int64_t)_poly_b[j]*__nthroots[i]);
+        t2 = ((int64_t)_poly_b[PARAM_K2+j]*__nthroots[i+1]);  
+        t3 = ((int64_t)(_poly_b[j]+_poly_b[PARAM_K2+j])*(__nthroots[i]+__nthroots[i+1]));
+        _folded_b[i] = reduce((int64_t)t1-t2);
+        _folded_b[i+1] = reduce((int64_t)t3-t1-t2);
     } 
 
     /* Computing the DGT of signal b. The signal a is assumed to be in the DGT domain */
-    dgt(_dgt_b, _folded_b);
+    dgt(_folded_b);
 
     /* Calculating the point-wise multiplication of input signals */
     for(i = 0; i < PARAM_N; i+=2) {
-        s1 = reduce((int64_t)_folded_a[i]* _dgt_b[i]);
-        s2 = reduce((int64_t)_folded_a[i+1]*_dgt_b[i+1]);  
-        s3 = reduce((int64_t)(_folded_a[i]+_folded_a[i+1])*( _dgt_b[i]+ _dgt_b[i+1]));
-        _mul[i] = barr_reduce(s1-s2);
-        _mul[i+1] = barr_reduce(s3-s1-s2);
+        t1 = ((int64_t)_folded_a[i]* _folded_b[i]);
+        t2 = ((int64_t)_folded_a[i+1]*_folded_b[i+1]);  
+        t3 = ((int64_t)(_folded_a[i]+_folded_a[i+1])*(_folded_b[i]+ _folded_b[i+1]));
+        _mul[i] = reduce(t1-t2);
+        _mul[i+1] = reduce(t3-t1-t2);
     }
 
     /* Recovering the multiplication result in Z[x]/<x^n+1> */
-    idgt(_output_gaussian, _mul);
+    idgt(_mul);
 
-    /* Removing the twisting factors as writing the result from the Gaussian integer to the polynomoial form */
+    /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {
-        s1 = reduce((int64_t)_output_gaussian[i]*__invnthroots[j][0]);
-        s2 = reduce((int64_t)_output_gaussian[i+1]*__invnthroots[j][1]);  
-        s3 = reduce((int64_t)(_output_gaussian[i]+_output_gaussian[i+1])*(__invnthroots[j][0]+__invnthroots[j][1]));
-        _output[j] = barr_reduce(s1-s2);
-        _output[j+PARAM_K2] = barr_reduce(s3-s1-s2);   
+        t1 = ((int64_t)_mul[i]*__invnthroots[i]);
+        t2 = ((int64_t)_mul[i+1]*__invnthroots[i+1]);  
+        t3 = ((int64_t)(_mul[i]+_mul[i+1])*(__invnthroots[i]+__invnthroots[i+1]));
+        _output[j] = reduce(t1-t2);
+        _output[j+PARAM_K2] = reduce(t3-t1-t2);   
     }
 }
-
 
 void poly_uniform(poly a, const unsigned char *seed)         
 { // Generation of polynomial "a"
