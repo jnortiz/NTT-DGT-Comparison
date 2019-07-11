@@ -4,9 +4,6 @@
 * Abstract: NTT, modular reduction and polynomial functions
 **************************************************************************************/
 
-#include <string.h>
-#include <inttypes.h>
-#include <stdio.h>
 #include "poly.h"
 #include "sha3/fips202.h"
 #include "api.h"
@@ -26,63 +23,6 @@ int32_t reduce(int64_t a)
   return (int32_t)(a>>32);
 }
 
-
-// void dgt(poly _x)
-// { /* Following Pedro's source code */
-//     int i, index, j, l, m, stride, bound;
-//     int32_t sub_re, sub_img;
-
-//     m = PARAM_N;
-//     index = 0;
-//     bound = (PARAM_K2 >> 1);
-//     for(stride = 0; stride < PARAM_K2_LOG; stride++) {        
-//         m >>= 1;
-//         for(l = 0; l < bound; l++) {            
-//             j = _j_values[index];
-//             i = _i_values[index++];
-
-//             sub_re = _x[i]-_x[i+m];
-//             sub_img = _x[i+1]-_x[i+m+1];
-            
-//             _x[i] += _x[i+m];
-//             _x[i+1] += _x[i+m+1];
-            
-//             _x[i+m] = reduce((int64_t)__gj[j][stride]*sub_re);
-//             _x[i+m+1] = reduce((int64_t)__gj[j][stride]*sub_img);
-//         }
-//     }
-// }
-
-// void dgt(poly _x)
-// { /* Following the structure of NTT function */
-//   int i, index, j, m, window;
-//   int32_t a, sub_re, sub_img;
-  
-//   index = 0;
-//   m = PARAM_K2;
-//   window = 1;
-
-//   for (; m > 1; m >>= 1) {  
-//     i = 0;
-//     for (j = 0; j < PARAM_N; j = i+m) {      
-//       index = 0;
-//       for (i = j; i < j+m; i+=2) {
-//         a = _gj[index];
-//         index += window;
-
-//         sub_re = (_x[i]-_x[i+m]);
-//         sub_img = (_x[i+1]-_x[i+m+1]);
-        
-//         _x[i] += (_x[i+m]);
-//         _x[i+1] += (_x[i+m+1]);
-        
-//         _x[i+m] = reduce((int64_t)a*sub_re);
-//         _x[i+m+1] = reduce((int64_t)a*sub_img);
-//       }
-//     }
-//     window <<= 1;
-//   }
-// }
 
 void dgt(poly _x)
 {
@@ -111,31 +51,6 @@ void dgt(poly _x)
   }
 }
 
-/*void idgt(poly _output_signal)
-{
-    int i, index, j, l, m, stride, bound;
-    int32_t mul_re, mul_img;
-
-    index = 0;
-    m = 2;
-    bound = (PARAM_K2 >> 1);
-    for(stride = 0; stride < PARAM_K2_LOG; stride++) {
-        for(l = 0; l < bound; l++) {
-            j = _idgt_j_values[index];
-            i = _idgt_i_values[index++];
-            
-            mul_re = reduce((int64_t)_output_signal[i+m]*__invgj[j][stride]);
-            mul_img = reduce((int64_t)_output_signal[i+m+1]*__invgj[j][stride]);
-            
-            _output_signal[i+m] =  _output_signal[i]-mul_re;
-            _output_signal[i+m+1] = _output_signal[i+1]-mul_img;
-            
-            _output_signal[i] += mul_re;
-            _output_signal[i+1] += mul_img;
-        }
-        m <<= 1;
-    }
-}*/
 
 void idgt(poly _output_signal)
 {
@@ -175,15 +90,15 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
         /* Computing the folded signal. The same is done for both input signals */
-        t1 = ((int64_t)_poly_a[j]*__nthroots[i]);
-        t2 = ((int64_t)_poly_a[PARAM_K2+j]*__nthroots[i+1]);  
-        t3 = ((int64_t)(_poly_a[j]+_poly_a[PARAM_K2+j])*(__nthroots[i]+__nthroots[i+1]));
+        t1 = ((int64_t)_poly_a[j]*_nthroots[i]);
+        t2 = ((int64_t)_poly_a[PARAM_K2+j]*_nthroots[i+1]);  
+        t3 = ((int64_t)(_poly_a[j]+_poly_a[PARAM_K2+j])*(_nthroots[i]+_nthroots[i+1]));
         _folded_a[i] = reduce(t1-t2);
         _folded_a[i+1] = reduce(t3-t1-t2);           
         
-        t1 = ((int64_t)_poly_b[j]*__nthroots[i]);
-        t2 = ((int64_t)_poly_b[PARAM_K2+j]*__nthroots[i+1]);  
-        t3 = ((int64_t)(_poly_b[j]+_poly_b[PARAM_K2+j])*(__nthroots[i]+__nthroots[i+1]));
+        t1 = ((int64_t)_poly_b[j]*_nthroots[i]);
+        t2 = ((int64_t)_poly_b[PARAM_K2+j]*_nthroots[i+1]);  
+        t3 = ((int64_t)(_poly_b[j]+_poly_b[PARAM_K2+j])*(_nthroots[i]+_nthroots[i+1]));
         _folded_b[i] = reduce((int64_t)t1-t2);
         _folded_b[i+1] = reduce((int64_t)t3-t1-t2);
     } 
@@ -205,9 +120,9 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 
     /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {
-        t1 = ((int64_t)_mul[i]*__invnthroots[i]);
-        t2 = ((int64_t)_mul[i+1]*__invnthroots[i+1]);  
-        t3 = ((int64_t)(_mul[i]+_mul[i+1])*(__invnthroots[i]+__invnthroots[i+1]));
+        t1 = ((int64_t)_mul[i]*_invnthroots[i]);
+        t2 = ((int64_t)_mul[i+1]*_invnthroots[i+1]);  
+        t3 = ((int64_t)(_mul[i]+_mul[i+1])*(_invnthroots[i]+_invnthroots[i+1]));
         _output[j] = reduce(t1-t2);
         _output[j+PARAM_K2] = reduce(t3-t1-t2);   
     }
