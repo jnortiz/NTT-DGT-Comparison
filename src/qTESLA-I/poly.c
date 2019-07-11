@@ -27,34 +27,91 @@ int32_t reduce(int64_t a)
 }
 
 
+// void dgt(poly _x)
+// { /* Following Pedro's source code */
+//     int i, index, j, l, m, stride, bound;
+//     int32_t sub_re, sub_img;
+
+//     m = PARAM_N;
+//     index = 0;
+//     bound = (PARAM_K2 >> 1);
+//     for(stride = 0; stride < PARAM_K2_LOG; stride++) {        
+//         m >>= 1;
+//         for(l = 0; l < bound; l++) {            
+//             j = _j_values[index];
+//             i = _i_values[index++];
+
+//             sub_re = _x[i]-_x[i+m];
+//             sub_img = _x[i+1]-_x[i+m+1];
+            
+//             _x[i] += _x[i+m];
+//             _x[i+1] += _x[i+m+1];
+            
+//             _x[i+m] = reduce((int64_t)__gj[j][stride]*sub_re);
+//             _x[i+m+1] = reduce((int64_t)__gj[j][stride]*sub_img);
+//         }
+//     }
+// }
+
+// void dgt(poly _x)
+// { /* Following the structure of NTT function */
+//   int i, index, j, m, window;
+//   int32_t a, sub_re, sub_img;
+  
+//   index = 0;
+//   m = PARAM_K2;
+//   window = 1;
+
+//   for (; m > 1; m >>= 1) {  
+//     i = 0;
+//     for (j = 0; j < PARAM_N; j = i+m) {      
+//       index = 0;
+//       for (i = j; i < j+m; i+=2) {
+//         a = _gj[index];
+//         index += window;
+
+//         sub_re = (_x[i]-_x[i+m]);
+//         sub_img = (_x[i+1]-_x[i+m+1]);
+        
+//         _x[i] += (_x[i+m]);
+//         _x[i+1] += (_x[i+m+1]);
+        
+//         _x[i+m] = reduce((int64_t)a*sub_re);
+//         _x[i+m+1] = reduce((int64_t)a*sub_img);
+//       }
+//     }
+//     window <<= 1;
+//   }
+// }
+
 void dgt(poly _x)
-{    
-    int i, index, j, l, m, stride, bound;
-    int32_t sub_re, sub_img;
+{
 
-    m = PARAM_N;
+  int i, index, j, m, window;
+  int32_t a, sub_re, sub_img;
+
+  window = 1;
+  for(m = PARAM_K2; m > 1; m >>= 1) {
     index = 0;
-    bound = (PARAM_K2 >> 1);
-    for(stride = 0; stride < PARAM_K2_LOG; stride++) {        
-        m >>= 1;
-        for(l = 0; l < bound; l++) {            
-            j = _j_values[index];
-            i = _i_values[index++];
-
-            sub_re = _x[i]-_x[i+m];
-            sub_img = _x[i+1]-_x[i+m+1];
-            
-            _x[i] += _x[i+m];
-            _x[i+1] += _x[i+m+1];
-            
-            _x[i+m] = reduce((int64_t)__gj[j][stride]*sub_re);
-            _x[i+m+1] = reduce((int64_t)__gj[j][stride]*sub_img);
-        }
+    for(j = 0; j < m; j += 2) {
+      a = _gj[index];
+      for(i = j; i < PARAM_N; i += (m << 1)) {
+        sub_re = (_x[i]-_x[i+m]);
+        sub_img = (_x[i+1]-_x[i+m+1]);
+        
+        _x[i] += (_x[i+m]);
+        _x[i+1] += (_x[i+m+1]);
+        
+        _x[i+m] = reduce((int64_t)a*sub_re);
+        _x[i+m+1] = reduce((int64_t)a*sub_img);        
+      }
+      index += window;
     }
+    window <<= 1;
+  }
 }
 
-
-void idgt(poly _output_signal)
+/*void idgt(poly _output_signal)
 {
     int i, index, j, l, m, stride, bound;
     int32_t mul_re, mul_img;
@@ -78,6 +135,34 @@ void idgt(poly _output_signal)
         }
         m <<= 1;
     }
+}*/
+
+void idgt(poly _output_signal)
+{
+  int i, index, j, m, window;
+  int32_t a, mul_re, mul_img;
+
+  window = (PARAM_K2 >> 1);
+  for(m = 2; m <= PARAM_K2; m <<= 1) {
+    index = 0;
+
+    for(j = 0; j < m; j += 2) {
+      a = _invgj[index];
+      
+      for(i = j; i < PARAM_N; i += (m << 1)) {
+        mul_re = reduce((int64_t)_output_signal[i+m]*a);
+        mul_img = reduce((int64_t)_output_signal[i+m+1]*a);
+        
+        _output_signal[i+m] =  _output_signal[i]-mul_re;
+        _output_signal[i+m+1] = _output_signal[i+1]-mul_img;
+        
+        _output_signal[i] += mul_re;
+        _output_signal[i+1] += mul_img;        
+      }
+      index += window;
+    }
+    window >>= 1;
+  }
 }
 
 void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
@@ -85,6 +170,7 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
     poly _folded_a, _folded_b;
     poly _mul, _output_gaussian;
     int64_t t1, t2, t3;
+    int32_t root_re, root_img;
     int i, j;
 
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
@@ -168,13 +254,19 @@ void ntt(poly a, const poly w)
   int NumoProblems = PARAM_N>>1, jTwiddle=0;
 
   for (; NumoProblems>0; NumoProblems>>=1) {
+
     int jFirst, j=0;
+    
     for (jFirst=0; jFirst<PARAM_N; jFirst=j+NumoProblems) {
+      
       sdigit_t W = (sdigit_t)w[jTwiddle++];
+      
       for (j=jFirst; j<jFirst+NumoProblems; j++) {
+        
         int32_t temp = reduce((int64_t)W * a[j+NumoProblems]);
         a[j + NumoProblems] = a[j] - temp;
         a[j] = temp + a[j];
+
       }
     }
   }
