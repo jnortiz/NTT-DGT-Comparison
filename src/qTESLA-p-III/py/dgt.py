@@ -127,7 +127,8 @@ def mulint(a, b):
 def gen_polynomial_modp(length):
     x = []
     for i in range(length):
-        x.append(randint(0,p))
+        #x.append(randint(0,p))
+        x.append(1)
     return x
 
 class TestDGTGentlemansande(unittest.TestCase):
@@ -140,6 +141,8 @@ class TestDGTGentlemansande(unittest.TestCase):
         start_time = time.time()
         y = idgt_gentlemansande(dgt_gentlemansande(x))
         end_time = time.time()
+
+        print(y)
 
         print("----------", end_time - start_time, "s. ----------")
         

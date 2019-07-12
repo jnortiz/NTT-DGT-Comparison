@@ -125,19 +125,17 @@ for i in range(k):
     assert(Nthroots[i]*invNthroots[i]%p == GaussianInteger(1,0))
 
 print("\nPowers of the N/2-th root of i\n")
-print("[", end="")
+print("{", end="")
 for i in range(k):
-    print("GaussianInteger(", end="")
-    print(Nthroots[i].re, end=",")
-    print(Nthroots[i].imag, end="), ")
-print("]")
+    print(Nthroots[i].re, end=", ")
+    print(Nthroots[i].imag, end=", ")
+print("};")
 print("-----------------------------------------------")
 
 print("\ninverse of the powers of the N/2-th root of i")
-print("[", end="")
+print("{", end="")
 for i in range(k):
-    print("GaussianInteger(", end="")
-    print(invNthroots[i].re, end=",")
-    print(invNthroots[i].imag, end="), ")
-print("]")
+    print((invNthroots[i].re*855309841)%p, end=", ")
+    print((invNthroots[i].imag*855309841)%p, end=", ")
+print("};")
 print("-----------------------------------------------")
