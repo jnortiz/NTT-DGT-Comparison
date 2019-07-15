@@ -8,7 +8,6 @@
 #define PARAMS_H
 
 #define PARAM_K2 256 // PARAM_N/2
-#define PARAM_K2_LOG 8
 #define PARAM_N 512
 #define PARAM_N_LOG 9
 #define PARAM_SIGMA 22.93

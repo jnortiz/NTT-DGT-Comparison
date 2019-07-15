@@ -101,6 +101,7 @@ void nttinv(poly a, const poly w)
   }
 }
 
+
 void dgt(poly _x)
 {
 
@@ -113,8 +114,27 @@ void dgt(poly _x)
     for(j = 0; j < m; j += 2) {
       a = _gj[index];
       for(i = j; i < PARAM_N; i += (m << 1)) {
-        sub_re = (_x[i]-_x[i+m]);
-        sub_img = (_x[i+1]-_x[i+m+1]);
+        sub_re = _x[i]-_x[i+m];
+        sub_img = _x[i+1]-_x[i+m+1];
+        
+        _x[i] = _x[i]+_x[i+m];
+        _x[i+1] = _x[i+1]+_x[i+m+1];
+        
+        _x[i+m] = reduce((int64_t)a*sub_re);
+        _x[i+m+1] = reduce((int64_t)a*sub_img);        
+      }
+      index += window;
+    }
+    window <<= 1;
+    
+    m >>= 1;
+
+    index = 0;
+    for(j = 0; j < m; j += 2) {
+      a = _gj[index];
+      for(i = j; i < PARAM_N; i += (m << 1)) {
+        sub_re = _x[i]-_x[i+m];
+        sub_img = _x[i+1]-_x[i+m+1];
         
         _x[i] = barr_reduce(_x[i]+_x[i+m]);
         _x[i+1] = barr_reduce(_x[i+1]+_x[i+m+1]);
@@ -148,12 +168,32 @@ void idgt(poly _output_signal)
         _output_signal[i+m] = _output_signal[i]-mul_re;
         _output_signal[i+m+1] = _output_signal[i+1]-mul_img;
         
+        _output_signal[i] = _output_signal[i]+mul_re;
+        _output_signal[i+1] = _output_signal[i+1]+mul_img;        
+      }
+      index += window;
+    }
+    window >>= 1;
+
+    m <<= 1;
+
+    index = 0;
+    for(j = 0; j < m; j += 2) {
+      a = _invgj[index];
+      
+      for(i = j; i < PARAM_N; i += (m << 1)) {
+        mul_re = reduce((int64_t)_output_signal[i+m]*a);
+        mul_img = reduce((int64_t)_output_signal[i+m+1]*a);
+        
+        _output_signal[i+m] = barr_reduce(_output_signal[i]-mul_re);
+        _output_signal[i+m+1] = barr_reduce(_output_signal[i+1]-mul_img);
+        
         _output_signal[i] = barr_reduce(_output_signal[i]+mul_re);
         _output_signal[i+1] = barr_reduce(_output_signal[i+1]+mul_img);        
       }
       index += window;
     }
-    window >>= 1;
+    window >>= 1;    
   }
 }
 
@@ -175,54 +215,51 @@ void poly_ntt(poly x_ntt, const poly x)
 }
 
 
-/*void poly_mul(poly result, const poly x, const poly y)
+void poly_dgt(poly x_dgt, const poly x)
+{
+
+    int64_t t1, t2, t3;
+    int i, j;
+
+    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
+        x_dgt[i] = reduce(
+          (int64_t)x[j] * _nthroots[i] -
+          (int64_t)x[PARAM_K2+j] * _nthroots[i+1]);
+        x_dgt[i+1] = reduce(
+          (int64_t)x[j] * _nthroots[i+1] + 
+          (int64_t)x[PARAM_K2+j] * _nthroots[i]);
+    } 
+
+    dgt(x_dgt);
+}
+
+void poly_mul_ntt(poly result, const poly x, const poly y)
 { // Polynomial multiplication result = x*y, with in place reduction for (X^N+1)
   // The inputs x and y are assumed to be in NTT form
     
   poly_pointwise(result, x, y);
   nttinv(result, zetainv);
-}*/
-
-void poly_dgt(poly _output, const poly _poly_a)
-{
-    int64_t t1, t2, t3;
-    int i, j;
-
-    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
-        t1 = (int64_t)_poly_a[j]*_nthroots[i];
-        t2 = (int64_t)_poly_a[PARAM_K2+j]*_nthroots[i+1];
-        t3 = (int64_t)(_poly_a[j]+_poly_a[PARAM_K2+j])*(_nthroots[i]+_nthroots[i+1]);
-        _output[i] = barr_reduce(reduce(t1-t2));
-        _output[i+1] = barr_reduce(reduce(t3-t1-t2));           
-    } 
-
-    dgt(_output);
 }
 
+
 void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
-{
+{ /* It is assumed that both signals are already in the DGT domain. 
+     The DGT counterpart of poly_b was computed in sign.c. */
+
     poly _folded_a, _folded_b;
     poly _mul, _output_gaussian;
     int64_t aux_sum_1, aux_sum_2, t1, t2, t3;
     int64_t root_re, root_img;
     int i, j;
 
-    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
-        /* Computing the folded signal of poly_a. */
-        t1 = (int64_t)_poly_a[j]*_nthroots[i];
-        t2 = (int64_t)_poly_a[PARAM_K2+j]*_nthroots[i+1];
-        t3 = (int64_t)(_poly_a[j]+_poly_a[PARAM_K2+j])*(_nthroots[i]+_nthroots[i+1]);
-        _folded_a[i] = barr_reduce(reduce(t1-t2));
-        _folded_a[i+1] = barr_reduce(reduce(t3-t1-t2));           
-    } 
-
     /* Calculating the point-wise multiplication of input signals */
-    for(i = 0; i < PARAM_N; i+=2) {
-        t1 = (int64_t)_folded_a[i]*_poly_b[i];
-        t2 = (int64_t)_folded_a[i+1]*_poly_b[i+1];  
-        t3 = (int64_t)(_folded_a[i]+_folded_a[i+1])*(_poly_b[i]+ _poly_b[i+1]);
-        _mul[i] = barr_reduce(reduce(t1-t2));
-        _mul[i+1] = barr_reduce(reduce(t3-t1-t2));
+    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
+        _mul[i] = reduce(
+          (int64_t)_poly_a[j] * _poly_b[i] -
+          (int64_t)_poly_a[j+PARAM_K2] * _poly_b[i+1]);
+        _mul[i+1] = reduce(
+          (int64_t)_poly_a[j] * _poly_b[i+1] + 
+          (int64_t)_poly_a[j+PARAM_K2] * _poly_b[i]);
     }
 
     /* Recovering the multiplication result in Z[x]/<x^n+1> */
@@ -230,11 +267,12 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 
     /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {
-        t1 = (int64_t)_mul[i]*_invnthroots[i];
-        t2 = (int64_t)_mul[i+1]*_invnthroots[i+1];  
-        t3 = (int64_t)(_mul[i]+_mul[i+1])*(_invnthroots[i]+_invnthroots[i+1]);
-        _output[j] = barr_reduce(reduce(t1-t2));
-        _output[j+PARAM_K2] = barr_reduce(reduce(t3-t1-t2));   
+        _output[j] = barr_reduce(reduce(
+          (int64_t)_mul[i] * _invnthroots[i] -
+          (int64_t)_mul[i+1] * _invnthroots[i+1]));
+        _output[j+PARAM_K2] = barr_reduce(reduce(
+          (int64_t)_mul[i] * _invnthroots[i+1] + 
+          (int64_t)_mul[i+1] * _invnthroots[i]));
     }
 }
 

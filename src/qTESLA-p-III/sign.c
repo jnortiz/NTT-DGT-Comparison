@@ -148,7 +148,7 @@ static int check_ES(poly p, unsigned int bound)
 int crypto_sign_keypair(unsigned char *pk, unsigned char *sk)
 {
   unsigned char randomness[CRYPTO_RANDOMBYTES], randomness_extended[(PARAM_K+3)*CRYPTO_SEEDBYTES];
-  poly s, s_ntt;
+  poly s, s_dgt;
   poly_k e, a, t;
   int k, nonce = 0;  // Initialize domain separator for error and secret polynomials
 #ifdef DEBUG
@@ -177,11 +177,11 @@ int crypto_sign_keypair(unsigned char *pk, unsigned char *sk)
 
   // Generate uniform polynomial "a"
   poly_uniform(a, &randomness_extended[(PARAM_K+1)*CRYPTO_SEEDBYTES]);
-  poly_dgt(s_ntt, s);
+  poly_dgt(s_dgt, s);
   
   // Compute the public key t = as+e
   for (k=0; k<PARAM_K; k++) {
-    poly_mul(&t[k*PARAM_N], &a[k*PARAM_N], s_ntt);
+    poly_mul(&t[k*PARAM_N], &a[k*PARAM_N], s_dgt);
     poly_add_correct(&t[k*PARAM_N], &t[k*PARAM_N], &e[k*PARAM_N]);
   }
   
@@ -210,7 +210,7 @@ int crypto_sign(unsigned char *sm, unsigned long long *smlen, const unsigned cha
   unsigned char c[CRYPTO_C_BYTES], randomness[CRYPTO_SEEDBYTES], randomness_input[CRYPTO_RANDOMBYTES+CRYPTO_SEEDBYTES+HM_BYTES];
   uint32_t pos_list[PARAM_H];
   int16_t sign_list[PARAM_H];
-  poly y, y_ntt, Sc, z; 
+  poly y, y_dgt, Sc, z; 
   poly_k v, Ec, a;
   unsigned int k;
   int rsp, nonce = 0;  // Initialize domain separator for sampling y 
@@ -233,9 +233,9 @@ int crypto_sign(unsigned char *sm, unsigned long long *smlen, const unsigned cha
   ctr_sign++;
 #endif
     sample_y(y, randomness, ++nonce);           // Sample y uniformly at random from [-B,B]
-    poly_dgt (y_ntt, y);
+    poly_dgt (y_dgt, y);
     for (k=0; k<PARAM_K; k++)
-      poly_mul(&v[k*PARAM_N], &a[k*PARAM_N], y_ntt);
+      poly_mul(&v[k*PARAM_N], &a[k*PARAM_N], y_dgt);
     hash_H(c, v, randomness_input+CRYPTO_RANDOMBYTES+CRYPTO_SEEDBYTES);
     encode_c(pos_list, sign_list, c);           // Generate c = Enc(c'), where c' is the hashing of v together with m
     sparse_mul8(Sc, sk, pos_list, sign_list);
@@ -294,7 +294,7 @@ int crypto_sign_open(unsigned char *m, unsigned long long *mlen, const unsigned 
   int32_t pk_t[PARAM_N*PARAM_K];
   unsigned int k;
   poly_k w, a, Tc;
-  poly z, z_ntt;
+  poly z, z_dgt;
 
   if (smlen < CRYPTO_BYTES) return -1;
 
@@ -303,10 +303,10 @@ int crypto_sign_open(unsigned char *m, unsigned long long *mlen, const unsigned 
   decode_pk(pk_t, seed, pk);
   poly_uniform(a, seed);
   encode_c(pos_list, sign_list, c);
-  poly_dgt(z_ntt, z);
+  poly_dgt(z_dgt, z);
 
   for (k=0; k<PARAM_K; k++) {      // Compute w = az - tc
-    poly_mul(&w[k*PARAM_N], &a[k*PARAM_N], z_ntt);
+    poly_mul(&w[k*PARAM_N], &a[k*PARAM_N], z_dgt);
     sparse_mul32(&Tc[k*PARAM_N], pk_t+(k*PARAM_N), pos_list, sign_list);
     poly_sub(&w[k*PARAM_N], &w[k*PARAM_N], &Tc[k*PARAM_N]);
   }    

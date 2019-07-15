@@ -23,7 +23,7 @@
 #endif
 
 #define MLEN 59
-#define NRUNS 500
+#define NRUNS 20000
 #define NTESTS 100
 
 
@@ -110,6 +110,22 @@ int print_accrates()
   return 0;
 }
 
+void test_functions()
+{
+  unsigned int i;
+  unsigned long long cycles0[NRUNS];
+  poly t, a;
+ 
+  for (i = 0; i < NRUNS; i++) {
+    cycles0[i] = cpucycles();
+    poly_mul(t, a, t);
+    cycles0[i] = cpucycles() - cycles0[i];
+  }
+  print_results("Poly mul: ", cycles0, NRUNS);
+
+  printf("\n");
+}
+
 #endif
 
 
@@ -131,6 +147,7 @@ int main(void)
 
 #ifdef DEBUG  
   print_accrates();
+  test_functions();
 #endif
 
   for (i = 0; i < NRUNS; i++) {

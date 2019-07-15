@@ -3,7 +3,8 @@
 *
 * Abstract: NTT, modular reduction and polynomial functions
 **************************************************************************************/
-
+#include <stdio.h>
+#include <inttypes.h>
 #include "poly.h"
 #include "sha3/fips202.h"
 #include "api.h"
@@ -89,13 +90,6 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
     int i, j;
 
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
-        /* Computing the folded signal. The same is done for both input signals */
-        t1 = ((int64_t)_poly_a[j]*_nthroots[i]);
-        t2 = ((int64_t)_poly_a[PARAM_K2+j]*_nthroots[i+1]);  
-        t3 = ((int64_t)(_poly_a[j]+_poly_a[PARAM_K2+j])*(_nthroots[i]+_nthroots[i+1]));
-        _folded_a[i] = reduce(t1-t2);
-        _folded_a[i+1] = reduce(t3-t1-t2);           
-        
         t1 = ((int64_t)_poly_b[j]*_nthroots[i]);
         t2 = ((int64_t)_poly_b[PARAM_K2+j]*_nthroots[i+1]);  
         t3 = ((int64_t)(_poly_b[j]+_poly_b[PARAM_K2+j])*(_nthroots[i]+_nthroots[i+1]));
@@ -107,10 +101,10 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
     dgt(_folded_b);
 
     /* Calculating the point-wise multiplication of input signals */
-    for(i = 0; i < PARAM_N; i+=2) {
-        t1 = ((int64_t)_folded_a[i]* _folded_b[i]);
-        t2 = ((int64_t)_folded_a[i+1]*_folded_b[i+1]);  
-        t3 = ((int64_t)(_folded_a[i]+_folded_a[i+1])*(_folded_b[i]+ _folded_b[i+1]));
+    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
+        t1 = ((int64_t)_poly_a[j]* _folded_b[i]);
+        t2 = ((int64_t)_poly_a[j+PARAM_K2]*_folded_b[i+1]);  
+        t3 = ((int64_t)(_poly_a[j]+_poly_a[j+PARAM_K2])*(_folded_b[i]+ _folded_b[i+1]));
         _mul[i] = reduce(t1-t2);
         _mul[i+1] = reduce(t3-t1-t2);
     }
@@ -187,7 +181,7 @@ void ntt(poly a, const poly w)
   }
 }
 
-//#if !defined(_qTESLA_I_)
+#if !defined(_qTESLA_I_)
 
 int32_t barr_reduce(int32_t a)
 { // Barrett reduction
@@ -195,7 +189,7 @@ int32_t barr_reduce(int32_t a)
   return a - (int32_t)u*PARAM_Q;
 }
 
-//#endif
+#endif
 
 void nttinv(poly a, const poly w)
 { // Inverse NTT transform
@@ -206,14 +200,7 @@ void nttinv(poly a, const poly w)
       sdigit_t W = (sdigit_t)w[jTwiddle++];
       for (j=jFirst; j<jFirst+NumoProblems; j++) {
         int32_t temp = a[j];
-#if defined(_qTESLA_I_)
         a[j] = temp + a[j + NumoProblems];
-#else
-        if (NumoProblems == 16) 
-          a[j] = barr_reduce(temp + a[j + NumoProblems]);
-        else
-          a[j] = temp + a[j + NumoProblems];
-#endif
         a[j + NumoProblems] = reduce((int64_t)W * (temp - a[j + NumoProblems]));
       }
     }
