@@ -218,7 +218,6 @@ void poly_ntt(poly x_ntt, const poly x)
 void poly_dgt(poly x_dgt, const poly x)
 {
 
-    int64_t t1, t2, t3;
     int i, j;
 
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
@@ -246,10 +245,7 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 { /* It is assumed that both signals are already in the DGT domain. 
      The DGT counterpart of poly_b was computed in sign.c. */
 
-    poly _folded_a, _folded_b;
-    poly _mul, _output_gaussian;
-    int64_t aux_sum_1, aux_sum_2;
-    int64_t root_re, root_img;
+    poly _folded_b, _mul;
     int i, j;
 
     /* Calculating the point-wise multiplication of input signals */
