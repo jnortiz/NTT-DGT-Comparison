@@ -222,12 +222,12 @@ void poly_dgt(poly x_dgt, const poly x)
     int i, j;
 
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
-        x_dgt[i] = reduce(
+        x_dgt[i] = barr_reduce(reduce(
           (int64_t)x[j] * _nthroots[i] -
-          (int64_t)x[PARAM_K2+j] * _nthroots[i+1]);
-        x_dgt[i+1] = reduce(
+          (int64_t)x[PARAM_K2+j] * _nthroots[i+1]));
+        x_dgt[i+1] = barr_reduce(reduce(
           (int64_t)x[j] * _nthroots[i+1] + 
-          (int64_t)x[PARAM_K2+j] * _nthroots[i]);
+          (int64_t)x[PARAM_K2+j] * _nthroots[i]));
     } 
 
     dgt(x_dgt);
@@ -248,7 +248,7 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 
     poly _folded_a, _folded_b;
     poly _mul, _output_gaussian;
-    int64_t aux_sum_1, aux_sum_2, t1, t2, t3;
+    int64_t aux_sum_1, aux_sum_2;
     int64_t root_re, root_img;
     int i, j;
 

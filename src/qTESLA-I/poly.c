@@ -34,17 +34,19 @@ void dgt(poly _x)
   window = 1;
   for(m = PARAM_K2; m > 1; m >>= 1) {
     index = 0;
+
     for(j = 0; j < m; j += 2) {
       a = _gj[index];
+
       for(i = j; i < PARAM_N; i += (m << 1)) {
-        sub_re = (_x[i]-_x[i+m]);
-        sub_img = (_x[i+1]-_x[i+m+1]);
+        sub_re = _x[i] - _x[i+m];
+        sub_img = _x[i+1] - _x[i+m+1];
         
-        _x[i] += (_x[i+m]);
-        _x[i+1] += (_x[i+m+1]);
+        _x[i] += _x[i+m];
+        _x[i+1] += _x[i+m+1];
         
-        _x[i+m] = reduce((int64_t)a*sub_re);
-        _x[i+m+1] = reduce((int64_t)a*sub_img);        
+        _x[i+m] = reduce((int64_t)a * sub_re);
+        _x[i+m+1] = reduce((int64_t)a * sub_img);        
       }
       index += window;
     }
@@ -66,11 +68,11 @@ void idgt(poly _output_signal)
       a = _invgj[index];
       
       for(i = j; i < PARAM_N; i += (m << 1)) {
-        mul_re = reduce((int64_t)_output_signal[i+m]*a);
-        mul_img = reduce((int64_t)_output_signal[i+m+1]*a);
+        mul_re = reduce((int64_t)_output_signal[i+m] * a);
+        mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
         
-        _output_signal[i+m] =  _output_signal[i]-mul_re;
-        _output_signal[i+m+1] = _output_signal[i+1]-mul_img;
+        _output_signal[i+m] =  _output_signal[i] - mul_re;
+        _output_signal[i+m+1] = _output_signal[i+1] - mul_img;
         
         _output_signal[i] += mul_re;
         _output_signal[i+1] += mul_img;        
@@ -85,16 +87,18 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 {
     poly _folded_a, _folded_b;
     poly _mul, _output_gaussian;
-    int64_t t1, t2, t3;
     int32_t root_re, root_img;
     int i, j;
 
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
-        t1 = ((int64_t)_poly_b[j]*_nthroots[i]);
-        t2 = ((int64_t)_poly_b[PARAM_K2+j]*_nthroots[i+1]);  
-        t3 = ((int64_t)(_poly_b[j]+_poly_b[PARAM_K2+j])*(_nthroots[i]+_nthroots[i+1]));
-        _folded_b[i] = reduce((int64_t)t1-t2);
-        _folded_b[i+1] = reduce((int64_t)t3-t1-t2);
+        _folded_b[i] = reduce(
+          (int64_t)_poly_b[j] * _nthroots[i] -
+          (int64_t)_poly_b[PARAM_K2+j] * _nthroots[i+1]
+          );
+        _folded_b[i+1] = reduce(
+          (int64_t)_poly_b[j] * _nthroots[i+1] + 
+          (int64_t)_poly_b[PARAM_K2+j] * _nthroots[i]
+          );
     } 
 
     /* Computing the DGT of signal b. The signal a is assumed to be in the DGT domain */
@@ -102,11 +106,14 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 
     /* Calculating the point-wise multiplication of input signals */
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
-        t1 = ((int64_t)_poly_a[j]* _folded_b[i]);
-        t2 = ((int64_t)_poly_a[j+PARAM_K2]*_folded_b[i+1]);  
-        t3 = ((int64_t)(_poly_a[j]+_poly_a[j+PARAM_K2])*(_folded_b[i]+ _folded_b[i+1]));
-        _mul[i] = reduce(t1-t2);
-        _mul[i+1] = reduce(t3-t1-t2);
+        _mul[i] = reduce(
+          (int64_t)_poly_a[j] *  _folded_b[i] -
+          (int64_t)_poly_a[j+PARAM_K2] * _folded_b[i+1]
+          );
+        _mul[i+1] = reduce(
+          (int64_t)_poly_a[j] * _folded_b[i+1] +
+          (int64_t)_poly_a[j+PARAM_K2] * _folded_b[i]
+          );
     }
 
     /* Recovering the multiplication result in Z[x]/<x^n+1> */
@@ -114,11 +121,14 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 
     /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {
-        t1 = ((int64_t)_mul[i]*_invnthroots[i]);
-        t2 = ((int64_t)_mul[i+1]*_invnthroots[i+1]);  
-        t3 = ((int64_t)(_mul[i]+_mul[i+1])*(_invnthroots[i]+_invnthroots[i+1]));
-        _output[j] = reduce(t1-t2);
-        _output[j+PARAM_K2] = reduce(t3-t1-t2);   
+        _output[j] = reduce(
+          (int64_t)_mul[i] * _invnthroots[i] - 
+          (int64_t)_mul[i+1] * _invnthroots[i+1]
+          );
+        _output[j+PARAM_K2] = reduce(
+          (int64_t)_mul[i] * _invnthroots[i+1] +
+          (int64_t)_mul[i+1] * _invnthroots[i]
+          );
     }
 }
 
