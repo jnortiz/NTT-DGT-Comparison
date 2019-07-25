@@ -109,9 +109,69 @@ void dgt(poly _x)
   int64_t a, sub_re, sub_img;
 
   window = 1;
-  for(m = PARAM_K2; m > 1; m >>= 1) {
+  for(m = PARAM_K2; m >= 64; m >>= 1) {
     index = 0;
 
+    for(j = 0; j < m; j += 2) {
+      a = _gj[index];
+
+      for(i = j; i < PARAM_N; i += (m << 1)) {
+        sub_re = _x[i] + (2LL*PARAM_Q - _x[i+m]);
+        sub_img = _x[i+1] + (2LL*PARAM_Q - _x[i+m+1]);
+        
+        _x[i] = _x[i] + _x[i+m];
+        _x[i+1] = _x[i+1] + _x[i+m+1];
+        
+        _x[i+m] = reduce((int64_t)a * sub_re);
+        _x[i+m+1] = reduce((int64_t)a * sub_img);        
+      }
+      index += window;
+    }
+    window <<= 1;
+
+    m >>= 1;
+
+    index = 0;
+    for(j = 0; j < m; j += 2) {
+      a = _gj[index];
+
+      for(i = j; i < PARAM_N; i += (m << 1)) {
+        sub_re = _x[i] + (2LL*PARAM_Q - _x[i+m]);
+        sub_img = _x[i+1] + (2LL*PARAM_Q - _x[i+m+1]);
+        
+        _x[i] = _x[i] + _x[i+m];
+        _x[i+1] = _x[i+1] + _x[i+m+1];
+        
+        _x[i+m] = reduce((int64_t)a * sub_re);
+        _x[i+m+1] = reduce((int64_t)a * sub_img);        
+      }
+      index += window;
+    }
+    window <<= 1; 
+
+    m >>= 1;
+
+    index = 0;
+    for(j = 0; j < m; j += 2) {
+      a = _gj[index];
+
+      for(i = j; i < PARAM_N; i += (m << 1)) {
+        sub_re = _x[i] + (2LL*PARAM_Q - _x[i+m]);
+        sub_img = _x[i+1] + (2LL*PARAM_Q - _x[i+m+1]);
+        
+        _x[i] = _x[i] + _x[i+m];
+        _x[i+1] = _x[i+1] + _x[i+m+1];
+        
+        _x[i+m] = reduce((int64_t)a * sub_re);
+        _x[i+m+1] = reduce((int64_t)a * sub_img);        
+      }
+      index += window;
+    }
+    window <<= 1;         
+
+    m >>= 1;
+
+    index = 0;
     for(j = 0; j < m; j += 2) {
       a = _gj[index];
 
@@ -122,31 +182,128 @@ void dgt(poly _x)
         _x[i] = barr_reduce(_x[i] + _x[i+m]);
         _x[i+1] = barr_reduce(_x[i+1] + _x[i+m+1]);
         
-        _x[i+m] = barr_reduce(reduce((int64_t)a * sub_re));
-        _x[i+m+1] = barr_reduce(reduce((int64_t)a * sub_img));        
+        _x[i+m] = (reduce((int64_t)a * sub_re));
+        _x[i+m+1] = (reduce((int64_t)a * sub_img));        
       }
       index += window;
     }
-    window <<= 1;
+    window <<= 1;  
+  }
+
+  index = 0;
+  for(j = 0; j < m; j += 2) {
+    a = _gj[index];
+
+    for(i = j; i < PARAM_N; i += (m << 1)) {
+      sub_re = _x[i] + (2LL*PARAM_Q - _x[i+m]);
+      sub_img = _x[i+1] + (2LL*PARAM_Q - _x[i+m+1]);
+      
+      _x[i] = _x[i] + _x[i+m];
+      _x[i+1] = _x[i+1] + _x[i+m+1];
+      
+      _x[i+m] = reduce((int64_t)a * sub_re);
+      _x[i+m+1] = reduce((int64_t)a * sub_img);        
+    }
+    index += window;
+  }
+  window <<= 1;         
+
+  m >>= 1;
+
+  index = 0;
+  for(j = 0; j < m; j += 2) {
+    a = _gj[index];
+
+    for(i = j; i < PARAM_N; i += (m << 1)) {
+      sub_re = _x[i] + (2LL*PARAM_Q - _x[i+m]);
+      sub_img = _x[i+1] + (2LL*PARAM_Q - _x[i+m+1]);
+      
+      _x[i] = _x[i] + _x[i+m];
+      _x[i+1] = _x[i+1] + _x[i+m+1];
+      
+      _x[i+m] = reduce((int64_t)a * sub_re);
+      _x[i+m+1] = reduce((int64_t)a * sub_img);        
+    }
+    index += window;
   }
 }
 
-
 void idgt(poly _output_signal)
 {
+
   int i, index, j, m, window;
   int64_t a, mul_re, mul_img;
 
   window = (PARAM_K2 >> 1);
-  for(m = 2; m <= PARAM_K2; m <<= 1) {
+  for(m = 2; m <= 32; m <<= 1) {
     index = 0;
 
     for(j = 0; j < m; j += 2) {
       a = _invgj[index];
       
       for(i = j; i < PARAM_N; i += (m << 1)) {
-        mul_re = barr_reduce(reduce((int64_t)_output_signal[i+m] * a));
-        mul_img = barr_reduce(reduce((int64_t)_output_signal[i+m+1] * a));
+        mul_re = reduce((int64_t)_output_signal[i+m] * a);
+        mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
+        
+        _output_signal[i+m] = _output_signal[i] + (2LL*PARAM_Q - mul_re);
+        _output_signal[i+m+1] = _output_signal[i+1] + (2LL*PARAM_Q - mul_img);
+        
+        _output_signal[i] = _output_signal[i] + mul_re;
+        _output_signal[i+1] = _output_signal[i+1] + mul_img;        
+      }
+      index += window;
+    }
+    window >>= 1;  
+
+    m <<= 1;
+
+    index = 0;
+    for(j = 0; j < m; j += 2) {
+      a = _invgj[index];
+      
+      for(i = j; i < PARAM_N; i += (m << 1)) {
+        mul_re = reduce((int64_t)_output_signal[i+m] * a);
+        mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
+        
+        _output_signal[i+m] = _output_signal[i] + (2LL*PARAM_Q - mul_re);
+        _output_signal[i+m+1] = _output_signal[i+1] + (2LL*PARAM_Q - mul_img);
+        
+        _output_signal[i] = _output_signal[i] + mul_re;
+        _output_signal[i+1] = _output_signal[i+1] + mul_img;        
+      }
+      index += window;
+    }
+    window >>= 1; 
+
+    m <<= 1;
+
+    index = 0;
+    for(j = 0; j < m; j += 2) {
+      a = _invgj[index];
+      
+      for(i = j; i < PARAM_N; i += (m << 1)) {
+        mul_re = reduce((int64_t)_output_signal[i+m] * a);
+        mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
+        
+        _output_signal[i+m] = _output_signal[i] + (2LL*PARAM_Q - mul_re);
+        _output_signal[i+m+1] = _output_signal[i+1] + (2LL*PARAM_Q - mul_img);
+        
+        _output_signal[i] = _output_signal[i] + mul_re;
+        _output_signal[i+1] = _output_signal[i+1] + mul_img;        
+      }
+      index += window;
+    }
+    window >>= 1;
+
+    m <<= 1;
+
+    index = 0;
+    for(j = 0; j < m; j += 2) {
+      a = _invgj[index];
+      
+      for(i = j; i < PARAM_N; i += (m << 1)) {
+        mul_re = reduce((int64_t)_output_signal[i+m] * a);
+        mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
         
         _output_signal[i+m] = barr_reduce(_output_signal[i] + (2LL*PARAM_Q - mul_re));
         _output_signal[i+m+1] = barr_reduce(_output_signal[i+1] + (2LL*PARAM_Q - mul_img));
@@ -156,7 +313,44 @@ void idgt(poly _output_signal)
       }
       index += window;
     }
-    window >>= 1;    
+    window >>= 1; 
+  }
+
+  index = 0;
+  for(j = 0; j < m; j += 2) {
+    a = _invgj[index];
+    
+    for(i = j; i < PARAM_N; i += (m << 1)) {
+      mul_re = reduce((int64_t)_output_signal[i+m] * a);
+      mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
+      
+      _output_signal[i+m] = _output_signal[i] + (2LL*PARAM_Q - mul_re);
+      _output_signal[i+m+1] = _output_signal[i+1] + (2LL*PARAM_Q - mul_img);
+      
+      _output_signal[i] = _output_signal[i] + mul_re;
+      _output_signal[i+1] = _output_signal[i+1] + mul_img;        
+    }
+    index += window;
+  }
+  window >>= 1;
+
+  m <<= 1;
+
+  index = 0;
+  for(j = 0; j < m; j += 2) {
+    a = _invgj[index];
+    
+    for(i = j; i < PARAM_N; i += (m << 1)) {
+      mul_re = reduce((int64_t)_output_signal[i+m] * a);
+      mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
+      
+      _output_signal[i+m] = _output_signal[i] + (2LL*PARAM_Q - mul_re);
+      _output_signal[i+m+1] = _output_signal[i+1] + (2LL*PARAM_Q - mul_img);
+      
+      _output_signal[i] = _output_signal[i] + mul_re;
+      _output_signal[i+1] = _output_signal[i+1] + mul_img;        
+    }
+    index += window;
   }
 }
 
@@ -181,21 +375,17 @@ void poly_ntt(poly x_ntt, const poly x)
 void poly_dgt(poly x_dgt, const poly x)
 {
 
-    int i, j;
+  int i, j;
 
-    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
-        x_dgt[i] = barr_reduce(
-          reduce((int64_t)x[j] * _nthroots[i]) + 
-          barr_reduce((2LL*PARAM_Q - barr_reduce(reduce((int64_t)x[PARAM_K2+j] * _nthroots[i+1]))))
-        );
-        
-        x_dgt[i+1] = barr_reduce(
-          reduce((int64_t)x[j] * _nthroots[i+1]) + 
-          reduce((int64_t)x[PARAM_K2+j] * _nthroots[i])
-        );
-    } 
+  for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
+      x_dgt[i] = reduce((int64_t)x[j] * _nthroots[i]) + 
+        (2LL*PARAM_Q - reduce((int64_t)x[PARAM_K2+j] * _nthroots[i+1]));
+      
+      x_dgt[i+1] = reduce((int64_t)x[j] * _nthroots[i+1]) + 
+        reduce((int64_t)x[PARAM_K2+j] * _nthroots[i]);
+  } 
 
-    dgt(x_dgt);
+  dgt(x_dgt);
 }
 
 void poly_mul_ntt(poly result, const poly x, const poly y)
@@ -210,36 +400,32 @@ void poly_mul_ntt(poly result, const poly x, const poly y)
 void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 { /* It is assumed that both signals are already in the DGT domain. 
      The DGT counterpart of poly_b was computed in sign.c. */
+  
+  poly _folded_b, _mul;
+  int i, j;
 
-    poly _folded_b, _mul;
-    int i, j;
+  /* Calculating the point-wise multiplication of input signals */
+  for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
+    _mul[i] = reduce((int64_t)_poly_a[j] * _poly_b[i]) +
+      (2LL*PARAM_Q - reduce((int64_t)_poly_a[j+PARAM_K2] * _poly_b[i+1]));
+    _mul[i+1] = reduce((int64_t)_poly_a[j] * _poly_b[i+1]) + 
+      reduce((int64_t)_poly_a[j+PARAM_K2] * _poly_b[i]);
+  }
 
-    /* Calculating the point-wise multiplication of input signals */
-    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
-        _mul[i] = barr_reduce(
-          reduce((int64_t)_poly_a[j] * _poly_b[i]) +
-          barr_reduce((2LL*PARAM_Q - barr_reduce(reduce((int64_t)_poly_a[j+PARAM_K2] * _poly_b[i+1]))))
-        );
-        _mul[i+1] = barr_reduce(
-          reduce((int64_t)_poly_a[j] * _poly_b[i+1]) + 
-          reduce((int64_t)_poly_a[j+PARAM_K2] * _poly_b[i])
-          );
-    }
+  /* Recovering the multiplication result in Z[x]/<x^n+1> */
+  idgt(_mul);
 
-    /* Recovering the multiplication result in Z[x]/<x^n+1> */
-    idgt(_mul);
-
-    /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
-    for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {
-        _output[j] = barr_reduce(
-          reduce((int64_t)_mul[i] * _invnthroots[i]) +
-          barr_reduce(2LL*PARAM_Q - barr_reduce(reduce((int64_t)_mul[i+1] * _invnthroots[i+1])))
-        );
-        _output[j+PARAM_K2] = barr_reduce(
-          reduce((int64_t)_mul[i] * _invnthroots[i+1]) + 
-          reduce((int64_t)_mul[i+1] * _invnthroots[i])
-        );
-    }
+  /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
+  for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {
+      _output[j] = barr_reduce(
+        reduce((int64_t)_mul[i] * _invnthroots[i]) +
+        (2LL*PARAM_Q - (reduce((int64_t)_mul[i+1] * _invnthroots[i+1])))
+      );
+      _output[j+PARAM_K2] = barr_reduce(
+        reduce((int64_t)_mul[i] * _invnthroots[i+1]) + 
+        reduce((int64_t)_mul[i+1] * _invnthroots[i])
+      );
+  }
 }
 
 void poly_add(poly result, const poly x, const poly y)
