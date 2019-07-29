@@ -182,8 +182,8 @@ void dgt(poly _x)
         _x[i] = barr_reduce(_x[i] + _x[i+m]);
         _x[i+1] = barr_reduce(_x[i+1] + _x[i+m+1]);
         
-        _x[i+m] = (reduce((int64_t)a * sub_re));
-        _x[i+m+1] = (reduce((int64_t)a * sub_img));        
+        _x[i+m] = reduce((int64_t)a * sub_re);
+        _x[i+m+1] = reduce((int64_t)a * sub_img);        
       }
       index += window;
     }
