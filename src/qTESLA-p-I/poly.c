@@ -82,11 +82,11 @@ void dgt(poly _x)
       a = _gj[index];
 
       for(i = j; i < PARAM_N; i += (m << 1)) {
-        sub_re = (_x[i] + (2LL*PARAM_Q - _x[i+m]));
-        sub_img = (_x[i+1] + (2LL*PARAM_Q - _x[i+m+1]));
+        sub_re = _x[i] - _x[i+m];
+        sub_img = _x[i+1] - _x[i+m+1];
         
-        _x[i] = (_x[i] + _x[i+m]);
-        _x[i+1] = (_x[i+1] + _x[i+m+1]);
+        _x[i] += _x[i+m];
+        _x[i+1] += _x[i+m+1];
         
         _x[i+m] = reduce((int64_t)a * sub_re);
         _x[i+m+1] = reduce((int64_t)a * sub_img);        
@@ -94,163 +94,21 @@ void dgt(poly _x)
       index += window;
     }
     window <<= 1;
-  }
-
-  // m >>= 1;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _gj[index];
-
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     sub_re = (_x[i] + (2LL*PARAM_Q - _x[i+m]));
-  //     sub_img = (_x[i+1] + (2LL*PARAM_Q - _x[i+m+1]));
-      
-  //     _x[i] = (_x[i] + _x[i+m]);
-  //     _x[i+1] = (_x[i+1] + _x[i+m+1]);
-      
-  //     _x[i+m] = (reduce((int64_t)a * sub_re));
-  //     _x[i+m+1] = (reduce((int64_t)a * sub_img));        
-  //   }
-  //   index += window;
-  // }
-  // window <<= 1;
-
-  // m >>= 1;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _gj[index];
-
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     sub_re = (_x[i] + (2LL*PARAM_Q - _x[i+m]));
-  //     sub_img = (_x[i+1] + (2LL*PARAM_Q - _x[i+m+1]));
-      
-  //     _x[i] = (_x[i] + _x[i+m]);
-  //     _x[i+1] = (_x[i+1] + _x[i+m+1]);
-      
-  //     _x[i+m] = (reduce((int64_t)a * sub_re));
-  //     _x[i+m+1] = (reduce((int64_t)a * sub_img));        
-  //   }
-  //   index += window;
-  // }
-  // window <<= 1;
-
-  // m >>= 1;        
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _gj[index];
-
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     sub_re = (_x[i] + (2LL*PARAM_Q - _x[i+m]));
-  //     sub_img = (_x[i+1] + (2LL*PARAM_Q - _x[i+m+1]));
-      
-  //     _x[i] = (_x[i] + _x[i+m]);
-  //     _x[i+1] = (_x[i+1] + _x[i+m+1]);
-      
-  //     _x[i+m] = (reduce((int64_t)a * sub_re));
-  //     _x[i+m+1] = (reduce((int64_t)a * sub_img));        
-  //   }
-  //   index += window;
-  // }
-  // window <<= 1;
-
-  // m >>= 1;      
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _gj[index];
-
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     sub_re = (_x[i] + (2LL*PARAM_Q - _x[i+m]));
-  //     sub_img = (_x[i+1] + (2LL*PARAM_Q - _x[i+m+1]));
-      
-  //     _x[i] = (_x[i] + _x[i+m]);
-  //     _x[i+1] = (_x[i+1] + _x[i+m+1]);
-      
-  //     _x[i+m] = (reduce((int64_t)a * sub_re));
-  //     _x[i+m+1] = (reduce((int64_t)a * sub_img));        
-  //   }
-  //   index += window;
-  // }
-  // window <<= 1;  
-
-  // m >>= 1;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _gj[index];
-
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     sub_re = (_x[i] + (2LL*PARAM_Q - _x[i+m]));
-  //     sub_img = (_x[i+1] + (2LL*PARAM_Q - _x[i+m+1]));
-      
-  //     _x[i] = (_x[i] + _x[i+m]);
-  //     _x[i+1] = (_x[i+1] + _x[i+m+1]);
-      
-  //     _x[i+m] = (reduce((int64_t)a * sub_re));
-  //     _x[i+m+1] = (reduce((int64_t)a * sub_img));        
-  //   }
-  //   index += window;
-  // }
-  // window <<= 1;  
-
-  // m >>= 1;      
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _gj[index];
-
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     sub_re = (_x[i] + (2LL*PARAM_Q - _x[i+m]));
-  //     sub_img = (_x[i+1] + (2LL*PARAM_Q - _x[i+m+1]));
-      
-  //     _x[i] = (_x[i] + _x[i+m]);
-  //     _x[i+1] = (_x[i+1] + _x[i+m+1]);
-      
-  //     _x[i+m] = (reduce((int64_t)a * sub_re));
-  //     _x[i+m+1] = (reduce((int64_t)a * sub_img));        
-  //   }
-  //   index += window;
-  // }  
-  // window <<= 1;  
-
-  // m >>= 1;      
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _gj[index];
-
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     sub_re = (_x[i] + (2LL*PARAM_Q - _x[i+m]));
-  //     sub_img = (_x[i+1] + (2LL*PARAM_Q - _x[i+m+1]));
-      
-  //     _x[i] = (_x[i] + _x[i+m]);
-  //     _x[i+1] = (_x[i+1] + _x[i+m+1]);
-      
-  //     _x[i+m] = (reduce((int64_t)a * sub_re));
-  //     _x[i+m+1] = (reduce((int64_t)a * sub_img));        
-  //   }
-  //   index += window;
-  // }  
-  // window <<= 1;  
-
-  // m >>= 1;      
+  }      
 
   index = 0;
   for(j = 0; j < m; j += 2) {
     a = _gj[index];
 
     for(i = j; i < PARAM_N; i += (m << 1)) {
-      sub_re = barr_reduce(_x[i] + (2LL*PARAM_Q - _x[i+m]));
-      sub_img = barr_reduce(_x[i+1] + (2LL*PARAM_Q - _x[i+m+1]));
+      sub_re = _x[i] - _x[i+m];
+      sub_img = _x[i+1] - _x[i+m+1];
       
       _x[i] = barr_reduce(_x[i] + _x[i+m]);
       _x[i+1] = barr_reduce(_x[i+1] + _x[i+m+1]);
       
-      _x[i+m] = (reduce((int64_t)a * sub_re));
-      _x[i+m+1] = (reduce((int64_t)a * sub_img));        
+      _x[i+m] = reduce((int64_t)a * sub_re);
+      _x[i+m+1] = reduce((int64_t)a * sub_img);        
     }
     index += window;
   }  
@@ -264,9 +122,9 @@ void idgt(poly _output_signal)
   int64_t a, mul_re, mul_img;
 
   window = (PARAM_K2 >> 1);
-
   for(m = 2; m <= PARAM_K2; m <<= 1) {
     index = 0;
+
     for(j = 0; j < m; j += 2) {
       a = _invgj[index];
       
@@ -274,196 +132,16 @@ void idgt(poly _output_signal)
         mul_re = reduce((int64_t)_output_signal[i+m] * a);
         mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
         
-        _output_signal[i+m] = (_output_signal[i] + (2LL*PARAM_Q - mul_re));
-        _output_signal[i+m+1] = (_output_signal[i+1] + (2LL*PARAM_Q - mul_img));
+        _output_signal[i+m] = _output_signal[i] - mul_re;
+        _output_signal[i+m+1] = _output_signal[i+1] - mul_img;
         
-        _output_signal[i] = (_output_signal[i] + mul_re);
-        _output_signal[i+1] = (_output_signal[i+1] + mul_img);        
+        _output_signal[i] += mul_re;
+        _output_signal[i+1] += mul_img;        
       }
       index += window;
     }
     window >>= 1; 
-  }
-
-  // m = 2;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _invgj[index];
-    
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     mul_re = reduce((int64_t)_output_signal[i+m] * a);
-  //     mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
-      
-  //     _output_signal[i+m] = (_output_signal[i] + (2LL*PARAM_Q - mul_re));
-  //     _output_signal[i+m+1] = (_output_signal[i+1] + (2LL*PARAM_Q - mul_img));
-      
-  //     _output_signal[i] = (_output_signal[i] + mul_re);
-  //     _output_signal[i+1] = (_output_signal[i+1] + mul_img);        
-  //   }
-  //   index += window;
-  // }
-  // window >>= 1; 
-
-  // m <<= 1;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _invgj[index];
-    
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     mul_re = reduce((int64_t)_output_signal[i+m] * a);
-  //     mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
-      
-  //     _output_signal[i+m] = (_output_signal[i] + (2LL*PARAM_Q - mul_re));
-  //     _output_signal[i+m+1] = (_output_signal[i+1] + (2LL*PARAM_Q - mul_img));
-      
-  //     _output_signal[i] = (_output_signal[i] + mul_re);
-  //     _output_signal[i+1] = (_output_signal[i+1] + mul_img);        
-  //   }
-  //   index += window;
-  // }
-  // window >>= 1; 
-
-  // m <<= 1;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _invgj[index];
-    
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     mul_re = reduce((int64_t)_output_signal[i+m] * a);
-  //     mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
-      
-  //     _output_signal[i+m] = (_output_signal[i] + (2LL*PARAM_Q - mul_re));
-  //     _output_signal[i+m+1] = (_output_signal[i+1] + (2LL*PARAM_Q - mul_img));
-      
-  //     _output_signal[i] = (_output_signal[i] + mul_re);
-  //     _output_signal[i+1] = (_output_signal[i+1] + mul_img);        
-  //   }
-  //   index += window;
-  // }
-  // window >>= 1; 
-
-  // m <<= 1;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _invgj[index];
-    
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     mul_re = reduce((int64_t)_output_signal[i+m] * a);
-  //     mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
-      
-  //     _output_signal[i+m] = (_output_signal[i] + (2LL*PARAM_Q - mul_re));
-  //     _output_signal[i+m+1] = (_output_signal[i+1] + (2LL*PARAM_Q - mul_img));
-      
-  //     _output_signal[i] = (_output_signal[i] + mul_re);
-  //     _output_signal[i+1] = (_output_signal[i+1] + mul_img);        
-  //   }
-  //   index += window;
-  // }
-  // window >>= 1; 
-
-  // m <<= 1;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _invgj[index];
-    
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     mul_re = reduce((int64_t)_output_signal[i+m] * a);
-  //     mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
-      
-  //     _output_signal[i+m] = (_output_signal[i] + (2LL*PARAM_Q - mul_re));
-  //     _output_signal[i+m+1] = (_output_signal[i+1] + (2LL*PARAM_Q - mul_img));
-      
-  //     _output_signal[i] = (_output_signal[i] + mul_re);
-  //     _output_signal[i+1] = (_output_signal[i+1] + mul_img);        
-  //   }
-  //   index += window;
-  // }
-  // window >>= 1; 
-
-  // m <<= 1;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _invgj[index];
-    
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     mul_re = reduce((int64_t)_output_signal[i+m] * a);
-  //     mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
-      
-  //     _output_signal[i+m] = (_output_signal[i] + (2LL*PARAM_Q - mul_re));
-  //     _output_signal[i+m+1] = (_output_signal[i+1] + (2LL*PARAM_Q - mul_img));
-      
-  //     _output_signal[i] = (_output_signal[i] + mul_re);
-  //     _output_signal[i+1] = (_output_signal[i+1] + mul_img);        
-  //   }
-  //   index += window;
-  // }
-  // window >>= 1; 
-
-  // m <<= 1;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _invgj[index];
-    
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     mul_re = reduce((int64_t)_output_signal[i+m] * a);
-  //     mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
-      
-  //     _output_signal[i+m] = (_output_signal[i] + (2LL*PARAM_Q - mul_re));
-  //     _output_signal[i+m+1] = (_output_signal[i+1] + (2LL*PARAM_Q - mul_img));
-      
-  //     _output_signal[i] = (_output_signal[i] + mul_re);
-  //     _output_signal[i+1] = (_output_signal[i+1] + mul_img);        
-  //   }
-  //   index += window;
-  // }
-  // window >>= 1; 
-
-  // m <<= 1;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _invgj[index];
-    
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     mul_re = reduce((int64_t)_output_signal[i+m] * a);
-  //     mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
-      
-  //     _output_signal[i+m] = (_output_signal[i] + (2LL*PARAM_Q - mul_re));
-  //     _output_signal[i+m+1] = (_output_signal[i+1] + (2LL*PARAM_Q - mul_img));
-      
-  //     _output_signal[i] = (_output_signal[i] + mul_re);
-  //     _output_signal[i+1] = (_output_signal[i+1] + mul_img);        
-  //   }
-  //   index += window;
-  // }
-  // window >>= 1; 
-
-  // m <<= 1;
-
-  // index = 0;
-  // for(j = 0; j < m; j += 2) {
-  //   a = _invgj[index];
-    
-  //   for(i = j; i < PARAM_N; i += (m << 1)) {
-  //     mul_re = reduce((int64_t)_output_signal[i+m] * a);
-  //     mul_img = reduce((int64_t)_output_signal[i+m+1] * a);
-      
-  //     _output_signal[i+m] = (_output_signal[i] + (2LL*PARAM_Q - mul_re));
-  //     _output_signal[i+m+1] = (_output_signal[i+1] + (2LL*PARAM_Q - mul_img));
-      
-  //     _output_signal[i] = (_output_signal[i] + mul_re);
-  //     _output_signal[i+1] = (_output_signal[i+1] + mul_img);        
-  //   }
-  //   index += window;
-  // }            
-
+  }    
 }
 
 
@@ -476,15 +154,9 @@ void ntt(poly a, const poly w)
     for (jFirst=0; jFirst<PARAM_N; jFirst=j+NumoProblems) {
       sdigit_t W = (sdigit_t)w[jTwiddle++];
       for (j=jFirst; j<jFirst+NumoProblems; j++) {
-#if defined(_qTESLA_p_I_)
         int64_t temp = reduce((int64_t)W * a[j+NumoProblems]);
         a[j + NumoProblems] = a[j] + (PARAM_Q - temp);
         a[j] = temp + a[j];
-#else
-        int64_t temp = barr_reduce(reduce((int64_t)W* a[j + NumoProblems]));
-        a[j + NumoProblems] = barr_reduce(a[j] +(2LL*PARAM_Q - temp));
-        a[j] = barr_reduce(temp + a[j]);
-#endif
       }
     }
   }
@@ -500,7 +172,6 @@ void nttinv(poly a, const poly w)
       sdigit_t W = (sdigit_t)w[jTwiddle++];
       for (j=jFirst; j<jFirst+NumoProblems; j++) {
         int64_t temp = a[j];
-#if defined(_qTESLA_p_I_)
         a[j] = (temp + a[j + NumoProblems]);
         a[j + NumoProblems] = reduce((int64_t)W * (temp + (2*PARAM_Q - a[j + NumoProblems])));
       }
@@ -512,10 +183,6 @@ void nttinv(poly a, const poly w)
         int64_t temp = a[j];
         a[j] = barr_reduce(temp + a[j + NumoProblems]);
         a[j + NumoProblems] = reduce((int64_t)W * (temp + (2*PARAM_Q - a[j + NumoProblems])));
-#else
-        a[j] = barr_reduce((temp + a[j + NumoProblems]));
-        a[j + NumoProblems] = barr_reduce(reduce((int64_t)W * (temp + (2LL*PARAM_Q - a[j + NumoProblems]))));
-#endif
       }
     }
   }
@@ -546,12 +213,14 @@ void poly_dgt(poly x_dgt, const poly x)
 
   for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
       x_dgt[i] = reduce(
-        ((int64_t)x[j] * _nthroots[i]) + 
-        (2LL*PARAM_Q - ((int64_t)x[PARAM_K2+j] * _nthroots[i+1])));
+        (int64_t)x[j] * _nthroots[i] - 
+        (int64_t)x[PARAM_K2+j] * _nthroots[i+1]
+      );
       
       x_dgt[i+1] = reduce(
-        ((int64_t)x[j] * _nthroots[i+1]) + 
-        ((int64_t)x[PARAM_K2+j] * _nthroots[i]));
+        (int64_t)x[j] * _nthroots[i+1] + 
+        (int64_t)x[PARAM_K2+j] * _nthroots[i]
+      );
   } 
 
   dgt(x_dgt);
@@ -576,12 +245,14 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
   /* Calculating the point-wise multiplication of input signals */
   for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
     _mul[i] = reduce(
-      ((int64_t)_poly_a[j] * _poly_b[i]) +
-      (2LL*PARAM_Q - ((int64_t)_poly_a[j+PARAM_K2] * _poly_b[i+1])));
+      (int64_t)_poly_a[j] * _poly_b[i] -
+      (int64_t)_poly_a[j+PARAM_K2] * _poly_b[i+1]
+    );
 
     _mul[i+1] = reduce(
-      ((int64_t)_poly_a[j] * _poly_b[i+1]) + 
-      ((int64_t)_poly_a[j+PARAM_K2] * _poly_b[i]));
+      (int64_t)_poly_a[j] * _poly_b[i+1] + 
+      (int64_t)_poly_a[j+PARAM_K2] * _poly_b[i]
+    );
   }
 
   /* Recovering the multiplication result in Z[x]/<x^n+1> */
