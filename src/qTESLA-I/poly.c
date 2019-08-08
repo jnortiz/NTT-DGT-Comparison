@@ -86,7 +86,6 @@ void idgt(poly _output_signal)
 void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 {
     poly _folded_b, _mul;
-    int32_t root_re, root_img;
     int i, j;
 
     for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             

@@ -73,8 +73,6 @@ void dgt(poly _x)
   int64_t a, sub_re, sub_img;
 
   window = 1;
-  m = PARAM_K2;
-
   for(m = PARAM_K2; m >= 4; m >>= 1) {
     index = 0;
 
@@ -262,8 +260,9 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
   for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {
       _output[j] = barr_reduce(
         reduce((int64_t)_mul[i] * _invnthroots[i]) +
-        (2LL*PARAM_Q - (reduce((int64_t)_mul[i+1] * _invnthroots[i+1])))
+        (2LL*PARAM_Q - reduce((int64_t)_mul[i+1] * _invnthroots[i+1]))
       );
+
       _output[j+PARAM_K2] = barr_reduce(
         reduce((int64_t)_mul[i] * _invnthroots[i+1]) + 
         reduce((int64_t)_mul[i+1] * _invnthroots[i])
