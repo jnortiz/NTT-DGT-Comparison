@@ -1,10 +1,10 @@
 from math import log
 
 p = 8404993
-g = 4704222
-g_inv = 2619638
+g = 5763158
+g_inv = 125596
 
-N = 128
+N = 18
 k = N//2
 
 def gen_powers_of_gj():    
