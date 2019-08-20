@@ -94,7 +94,7 @@ def nthroot(n, p):
     print("Failure!")
 
 p = 8404993
-n = 18
+n = 128
 k = n//2
 
 nth_root = None
@@ -125,36 +125,18 @@ for i in range(k):
     invNthroots.append(pow(inv_nth_root, i) % p)
     assert(nthroots[i]*invNthroots[i]%p == GaussianInteger(1,0))
 
-# print("\nPowers of the n/2-th root of i\n")
-# print("{", end="")
-# for i in range(k):
-#     print(nthroots[i].re, end=", ")
-#     print(nthroots[i].imag, end=", ")
-# print("};")
-# print("-----------------------------------------------")
-
-# print("\nInverse of the powers of the n/2-th root of i")
-# print("{", end="")
-# for i in range(k):
-#     print(invNthroots[i].re, end=", ")
-#     print(invNthroots[i].imag, end=", ")
-# print("};")
-# print("-----------------------------------------------")
-
 print("\nPowers of the n/2-th root of i\n")
-print("[", end="")
+print("{", end="")
 for i in range(k):
-    print("GaussianInteger(", end="")
-    print(nthroots[i].re, end=",")
-    print(nthroots[i].imag, end="), ")
-print("]")
+    print(nthroots[i].re, end=", ")
+    print(nthroots[i].imag, end=", ")
+print("};")
 print("-----------------------------------------------")
 
 print("\nInverse of the powers of the n/2-th root of i")
-print("[", end="")
+print("{", end="")
 for i in range(k):
-    print("GaussianInteger(", end="")
-    print(invNthroots[i].re, end=",")
-    print(invNthroots[i].imag, end="), ")
-print("]")
+    print(invNthroots[i].re, end=", ")
+    print(invNthroots[i].imag, end=", ")
+print("};")
 print("-----------------------------------------------")
