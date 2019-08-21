@@ -7,11 +7,11 @@
 #include "poly.h"
 #include "sha3/fips202.h"
 #include "api.h"
-#include "params.h"
 #include "params_dgt.h"
 
 extern poly zeta;
 extern poly zetainv;
+
 
 void poly_uniform(poly_k a, const unsigned char *seed)         
 { // Generation of polynomials "a_i"
@@ -64,41 +64,6 @@ int64_t barr_reduce(int64_t a)
 { // Barrett reduction
   int64_t u = (a*PARAM_BARR_MULT)>>PARAM_BARR_DIV;
   return a - u*PARAM_Q;
-}
-
-
-void ntt(poly a, const poly w)
-{ // Forward NTT transform
-  int NumoProblems = PARAM_N>>1, jTwiddle=0;
-
-  for (; NumoProblems>0; NumoProblems>>=1) {
-    int jFirst, j=0;
-    for (jFirst=0; jFirst<PARAM_N; jFirst=j+NumoProblems) {
-      sdigit_t W = (sdigit_t)w[jTwiddle++];
-      for (j=jFirst; j<jFirst+NumoProblems; j++) {
-        int64_t temp = barr_reduce(reduce((int64_t)W* a[j + NumoProblems]));
-        a[j + NumoProblems] = barr_reduce(a[j] +(2LL*PARAM_Q - temp));
-        a[j] = barr_reduce(temp + a[j]);
-      }
-    }
-  }
-}
-
-
-void nttinv(poly a, const poly w)
-{ // Inverse NTT transform
-  int NumoProblems = 1, jTwiddle=0;
-  for (NumoProblems=1; NumoProblems<PARAM_N; NumoProblems*=2) {
-    int jFirst, j=0;
-    for (jFirst = 0; jFirst<PARAM_N; jFirst=j+NumoProblems) {
-      sdigit_t W = (sdigit_t)w[jTwiddle++];
-      for (j=jFirst; j<jFirst+NumoProblems; j++) {
-        int64_t temp = a[j];
-        a[j] = barr_reduce((temp + a[j + NumoProblems]));
-        a[j + NumoProblems] = barr_reduce(reduce((int64_t)W * (temp + (2LL*PARAM_Q - a[j + NumoProblems]))));
-      }
-    }
-  }
 }
 
 
@@ -363,15 +328,6 @@ void poly_pointwise(poly result, const poly x, const poly y)
 }
 
 
-void poly_ntt(poly x_ntt, const poly x)
-{ // Call to NTT function. Avoids input destruction 
-
-  for (int i=0; i<PARAM_N; i++)
-    x_ntt[i] = x[i];
-  ntt(x_ntt, zeta);
-}
-
-
 void poly_dgt(poly x_dgt, const poly x)
 {
 
@@ -386,14 +342,6 @@ void poly_dgt(poly x_dgt, const poly x)
   } 
 
   dgt(x_dgt);
-}
-
-void poly_mul_ntt(poly result, const poly x, const poly y)
-{ // Polynomial multiplication result = x*y, with in place reduction for (X^N+1)
-  // The inputs x and y are assumed to be in NTT form
-    
-  poly_pointwise(result, x, y);
-  nttinv(result, zetainv);
 }
 
 
@@ -427,6 +375,7 @@ void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
       );
   }
 }
+
 
 void poly_add(poly result, const poly x, const poly y)
 { // Polynomial addition result = x+y

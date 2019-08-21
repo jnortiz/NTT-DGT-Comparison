@@ -12,6 +12,7 @@
 extern poly zeta;
 extern poly zetainv;
 
+
 void poly_uniform(poly_k a, const unsigned char *seed)         
 { // Generation of polynomials "a_i"
   unsigned int pos=0, i=0, nbytes = (PARAM_Q_LOG+7)/8;
@@ -113,6 +114,7 @@ void dgt(poly _x)
 
 }
 
+
 void idgt(poly _output_signal)
 {
 
@@ -143,64 +145,11 @@ void idgt(poly _output_signal)
 }
 
 
-void ntt(poly a, const poly w)
-{ // Forward NTT transform
-  int NumoProblems = PARAM_N>>1, jTwiddle=0;
-
-  for (; NumoProblems>0; NumoProblems>>=1) {
-    int jFirst, j=0;
-    for (jFirst=0; jFirst<PARAM_N; jFirst=j+NumoProblems) {
-      sdigit_t W = (sdigit_t)w[jTwiddle++];
-      for (j=jFirst; j<jFirst+NumoProblems; j++) {
-        int64_t temp = reduce((int64_t)W * a[j+NumoProblems]);
-        a[j + NumoProblems] = a[j] + (PARAM_Q - temp);
-        a[j] = temp + a[j];
-      }
-    }
-  }
-}
-
-
-void nttinv(poly a, const poly w)
-{ // Inverse NTT transform
-  int NumoProblems = 1, jTwiddle=0;
-  for (NumoProblems=1; NumoProblems<PARAM_N; NumoProblems*=2) {
-    int jFirst, j=0;
-    for (jFirst = 0; jFirst<PARAM_N; jFirst=j+NumoProblems) {
-      sdigit_t W = (sdigit_t)w[jTwiddle++];
-      for (j=jFirst; j<jFirst+NumoProblems; j++) {
-        int64_t temp = a[j];
-        a[j] = (temp + a[j + NumoProblems]);
-        a[j + NumoProblems] = reduce((int64_t)W * (temp + (2*PARAM_Q - a[j + NumoProblems])));
-      }
-    }
-    NumoProblems*=2;
-    for (jFirst = 0; jFirst<PARAM_N; jFirst=j+NumoProblems) {
-      sdigit_t W = (sdigit_t)w[jTwiddle++];
-      for (j=jFirst; j<jFirst+NumoProblems; j++) {
-        int64_t temp = a[j];
-        a[j] = barr_reduce(temp + a[j + NumoProblems]);
-        a[j + NumoProblems] = reduce((int64_t)W * (temp + (2*PARAM_Q - a[j + NumoProblems])));
-      }
-    }
-  }
-}
-
-
 void poly_pointwise(poly result, const poly x, const poly y)
 { // Pointwise polynomial multiplication result = x.y
 
   for (int i=0; i<PARAM_N; i++)
     result[i] = reduce(x[i]*y[i]);
-}
-
-
-void poly_ntt(poly x_ntt, const poly x)
-{ // Call to NTT function. Avoids input destruction 
-
-  for (int i=0; i<PARAM_N; i++)
-    x_ntt[i] = x[i];
-  ntt(x_ntt, zeta);
 }
 
 
@@ -224,14 +173,6 @@ void poly_dgt(poly x_dgt, const poly x)
   dgt(x_dgt);
 }
 
-
-void poly_mul_ntt(poly result, const poly x, const poly y)
-{ // Polynomial multiplication result = x*y, with in place reduction for (X^N+1)
-  // The inputs x and y are assumed to be in NTT form
-    
-  poly_pointwise(result, x, y);
-  nttinv(result, zetainv);
-}
 
 void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 { /* It is assumed that both signals are already in the DGT domain. 
