@@ -10,4 +10,4 @@ PQCgenKAT_kem: $(SOURCES) $(HEADERS)
 .PHONY: clean
 
 clean:
-	-rm PQCgenKAT_kem
+	-rm PQCgenKAT_kem PQCkemKAT_1888.req PQCkemKAT_1888.rsp
