@@ -27,19 +27,20 @@ void dgt(uint16_t *poly)
       a = gj[index];
       for(i = j; i < NEWHOPE_N; i += (m << 1)) 
       {
-        sub_re = (poly[i] + (3*NEWHOPE_Q - poly[i+m])) % NEWHOPE_Q;
-        sub_img = (poly[i+1] + (3*NEWHOPE_Q - poly[i+m+1])) % NEWHOPE_Q;
+        sub_re = (poly[i] + (3*NEWHOPE_Q - poly[i+m]));
+        sub_img = (poly[i+1] + (3*NEWHOPE_Q - poly[i+m+1]));
         
         poly[i] = (poly[i] + poly[i+m]) % NEWHOPE_Q;
         poly[i+1] = (poly[i+1] + poly[i+m+1]) % NEWHOPE_Q;
         
-        poly[i+m] = (montgomery_reduce((uint32_t)a * sub_re)) % NEWHOPE_Q;
-        poly[i+m+1] = (montgomery_reduce((uint32_t)a * sub_img)) % NEWHOPE_Q;        
+        poly[i+m] = (montgomery_reduce((uint32_t)a * sub_re));
+        poly[i+m+1] = (montgomery_reduce((uint32_t)a * sub_img));        
       }
       index += window;
     }
     window <<= 1;
   }
+
 }
 
 
@@ -58,8 +59,8 @@ void idgt(uint16_t *poly)
       a = invgj[index];
       for(i = j; i < NEWHOPE_N; i += (m << 1)) 
       {
-        mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a)) % NEWHOPE_Q;
-        mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a)) % NEWHOPE_Q;
+        mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
+        mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
         
         poly[i+m] = (poly[i] + (3*NEWHOPE_Q - mul_re)) % NEWHOPE_Q;
         poly[i+m+1] = (poly[i+1] + (3*NEWHOPE_Q - mul_img)) % NEWHOPE_Q;
