@@ -5,6 +5,7 @@
 //  Created by Bassham, Lawrence E (Fed) on 8/29/17.
 //  Copyright © 2017 Bassham, Lawrence E (Fed). All rights reserved.
 //
+#include "cpucycles.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +13,7 @@
 #include "rng.h"
 #include "api.h"
 
+#define NRUNS 20000
 #define	MAX_MARKER_LEN		50
 #define KAT_SUCCESS          0
 #define KAT_FILE_OPEN_ERROR -1
@@ -21,6 +23,39 @@
 int		FindMarker(FILE *infile, const char *marker);
 int		ReadHex(FILE *infile, unsigned char *A, int Length, char *str);
 void	fprintBstr(FILE *fp, char *S, unsigned char *A, unsigned long long L);
+
+static int cmp_llu(const void *a, const void*b)
+{
+  if (*(unsigned long long *)a < *(unsigned long long *)b) return -1;
+  if (*(unsigned long long *)a > *(unsigned long long *)b) return 1;
+  return 0;
+}
+
+static unsigned long long median(unsigned long long *l, size_t llen)
+{
+  qsort(l,llen,sizeof(unsigned long long),cmp_llu);
+
+  if (llen%2) return l[llen/2];
+  else return (l[llen/2-1]+l[llen/2])/2;
+}
+
+static unsigned long long average(unsigned long long *t, size_t tlen)
+{
+  unsigned long long acc=0;
+  size_t i;
+  for (i=0; i<tlen; i++)
+    acc += t[i];
+  return acc/(tlen);
+}
+
+static void print_results(const char *s, unsigned long long *t, size_t tlen)
+{
+  printf("%s", s);
+  printf("\n");
+  printf("median:  %llu ", median(t, tlen));  print_unit; printf("\n");
+  printf("average: %llu ", average(t, tlen-1));  print_unit; printf("\n");
+  printf("\n");
+}
 
 int
 main()
@@ -34,7 +69,9 @@ main()
     int                 done;
     unsigned char       pk[CRYPTO_PUBLICKEYBYTES], sk[CRYPTO_SECRETKEYBYTES];
     int                 ret_val;
-    
+    unsigned long long cycles0[NRUNS], cycles1[NRUNS], cycles2[NRUNS];
+    size_t nruns_counter;
+
     // Create the REQUEST file
     sprintf(fn_req, "PQCkemKAT_%d.req", CRYPTO_SECRETKEYBYTES);
     if ( (fp_req = fopen(fn_req, "w")) == NULL ) {
@@ -51,7 +88,7 @@ main()
         entropy_input[i] = i;
 
     randombytes_init(entropy_input, NULL, 256);
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<NRUNS; i++) {
         fprintf(fp_req, "count = %d\n", i);
         randombytes(seed, 48);
         fprintBstr(fp_req, "seed = ", seed, 48);
@@ -70,6 +107,8 @@ main()
     
     fprintf(fp_rsp, "# %s\n\n", CRYPTO_ALGNAME);
     done = 0;
+    nruns_counter = 0;
+
     do {
         if ( FindMarker(fp_req, "count = ") )
             fscanf(fp_req, "%d", &count);
@@ -88,14 +127,23 @@ main()
         randombytes_init(seed, NULL, 256);
         
         // Generate the public/private keypair
-        if ( (ret_val = crypto_kem_keypair(pk, sk)) != 0) {
+        cycles0[nruns_counter] = cpucycles();
+        ret_val = crypto_kem_keypair(pk, sk);
+        cycles0[nruns_counter] = cpucycles() - cycles0[nruns_counter];
+
+        if (ret_val != 0) {
             printf("crypto_kem_keypair returned <%d>\n", ret_val);
             return KAT_CRYPTO_FAILURE;
         }
+
         fprintBstr(fp_rsp, "pk = ", pk, CRYPTO_PUBLICKEYBYTES);
         fprintBstr(fp_rsp, "sk = ", sk, CRYPTO_SECRETKEYBYTES);
         
-        if ( (ret_val = crypto_kem_enc(ct, ss, pk)) != 0) {
+        cycles1[nruns_counter] = cpucycles();
+        ret_val = crypto_kem_enc(ct, ss, pk);
+        cycles1[nruns_counter] = cpucycles() - cycles1[nruns_counter];
+
+        if (ret_val != 0) {
             printf("crypto_kem_enc returned <%d>\n", ret_val);
             return KAT_CRYPTO_FAILURE;
         }
@@ -103,8 +151,12 @@ main()
         fprintBstr(fp_rsp, "ss = ", ss, CRYPTO_BYTES);
         
         fprintf(fp_rsp, "\n");
-        
-        if ( (ret_val = crypto_kem_dec(ss1, ct, sk)) != 0) {
+
+        cycles2[nruns_counter] = cpucycles();
+        ret_val = crypto_kem_dec(ss1, ct, sk);
+        cycles2[nruns_counter] = cpucycles() - cycles2[nruns_counter];
+
+        if (ret_val != 0) {
             printf("crypto_kem_dec returned <%d>\n", ret_val);
             return KAT_CRYPTO_FAILURE;
         }
@@ -114,10 +166,18 @@ main()
             return KAT_CRYPTO_FAILURE;
         }
 
+        nruns_counter++;
+
     } while ( !done );
     
     fclose(fp_req);
     fclose(fp_rsp);
+
+    if(!KAT_SUCCESS) {
+        print_results("Keygen: ", cycles0, NRUNS);
+        print_results("Encryption: ", cycles1, NRUNS);
+        print_results("Decryption: ", cycles2, NRUNS);
+    }
 
     return KAT_SUCCESS;
 }

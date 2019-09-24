@@ -1,4 +1,4 @@
-/*************************************************************************************
+s/*************************************************************************************
 * qTESLA: an efficient post-quantum signature scheme based on the R-LWE problem
 *
 * Abstract: testing and benchmarking code
@@ -25,7 +25,6 @@
 #define MLEN 59
 #define NRUNS 20000
 #define NTESTS 10000
-
 
 static int cmp_llu(const void *a, const void*b)
 {

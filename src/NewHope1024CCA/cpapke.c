@@ -110,12 +110,12 @@ void cpapke_keypair(unsigned char *pk,
   gen_a(&ahat, publicseed);
 
   poly_sample(&shat, noiseseed, 0);
-  poly_ntt(&shat);
+  poly_dgt(&shat);
 
   poly_sample(&ehat, noiseseed, 1);
-  poly_ntt(&ehat);
+  poly_dgt(&ehat);
 
-  poly_mul_pointwise(&ahat_shat, &shat, &ahat);
+  poly_mul(&ahat_shat, &shat, &ahat);
   poly_add(&bhat, &ehat, &ahat_shat);
 
   poly_tobytes(sk, &shat);
@@ -152,14 +152,14 @@ void cpapke_enc(unsigned char *c,
   poly_sample(&eprime, coin, 1);
   poly_sample(&eprimeprime, coin, 2);
 
-  poly_ntt(&sprime);
-  poly_ntt(&eprime);
+  poly_dgt(&sprime);
+  poly_dgt(&eprime);
 
-  poly_mul_pointwise(&uhat, &ahat, &sprime);
+  poly_mul(&uhat, &ahat, &sprime);
   poly_add(&uhat, &uhat, &eprime);
 
-  poly_mul_pointwise(&vprime, &bhat, &sprime);
-  poly_invntt(&vprime);
+  poly_mul(&vprime, &bhat, &sprime);
+  poly_invdgt(&vprime);
 
   poly_add(&vprime, &vprime, &eprimeprime);
   poly_add(&vprime, &vprime, &v); // add message
@@ -188,8 +188,8 @@ void cpapke_dec(unsigned char *m,
   poly_frombytes(&shat, sk);
 
   decode_c(&uhat, &vprime, c);
-  poly_mul_pointwise(&tmp, &shat, &uhat);
-  poly_invntt(&tmp);
+  poly_mul(&tmp, &shat, &uhat);
+  poly_invdgt(&tmp);
 
   poly_sub(&tmp, &tmp, &vprime);
 
