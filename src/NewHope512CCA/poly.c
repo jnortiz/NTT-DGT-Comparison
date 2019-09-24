@@ -367,11 +367,11 @@ void poly_mul(poly *r, const poly *a, const poly *b)
 
   for(i = 0; i < NEWHOPE_N; i += 2) 
   {             
-    r->coeffs[i]   = (montgomery_reduce((uint32_t)copy[i] * b->coeffs[i]) +
-                     (3*NEWHOPE_Q - montgomery_reduce((uint32_t)copy[i+1] * b->coeffs[i+1])));
+    r->coeffs[i]   = montgomery_reduce((uint32_t)copy[i] * b->coeffs[i]) +
+                     (NEWHOPE_3Q - montgomery_reduce((uint32_t)copy[i+1] * b->coeffs[i+1]));
 
-    r->coeffs[i+1] = (montgomery_reduce((uint32_t)copy[i] * b->coeffs[i+1]) + 
-                      montgomery_reduce((uint32_t)copy[i+1] * b->coeffs[i]));
+    r->coeffs[i+1] = montgomery_reduce((uint32_t)copy[i] * b->coeffs[i+1]) + 
+                      montgomery_reduce((uint32_t)copy[i+1] * b->coeffs[i]);
   }  
 }
 
@@ -404,7 +404,7 @@ void poly_sub(poly *r, const poly *a, const poly *b)
 {
   int i;
   for(i=0;i<NEWHOPE_N;i++)
-    r->coeffs[i] = (a->coeffs[i] + 3*NEWHOPE_Q - b->coeffs[i]) % NEWHOPE_Q;
+    r->coeffs[i] = (a->coeffs[i] + NEWHOPE_3Q - b->coeffs[i]) % NEWHOPE_Q;
 }
 
 /*************************************************
@@ -447,11 +447,11 @@ void poly_dgt(poly *r)
   for(i = 0; i < NEWHOPE_N; i += 2) 
   {
       // The nthroots are already multiplied by the Montgomery constant R
-      r->coeffs[i]   = (montgomery_reduce((uint32_t)copy[j] * nthroots[i]) + 
-                     (3*NEWHOPE_Q - montgomery_reduce((uint32_t)copy[NEWHOPE_K2+j] * nthroots[i+1])));
+      r->coeffs[i]   = montgomery_reduce((uint32_t)copy[j] * nthroots[i]) + 
+                     (NEWHOPE_3Q - montgomery_reduce((uint32_t)copy[NEWHOPE_K2+j] * nthroots[i+1]));
       
-      r->coeffs[i+1] = (montgomery_reduce((uint32_t)copy[j] * nthroots[i+1]) + 
-                       montgomery_reduce((uint32_t)copy[NEWHOPE_K2+j] * nthroots[i]));
+      r->coeffs[i+1] = montgomery_reduce((uint32_t)copy[j] * nthroots[i+1]) + 
+                       montgomery_reduce((uint32_t)copy[NEWHOPE_K2+j] * nthroots[i]);
 
       j++;
   } 
@@ -505,7 +505,7 @@ void poly_invdgt(poly *r)
   {
     r->coeffs[j] = 
       (montgomery_reduce((uint32_t)copy[i] * invnthroots[i]) + 
-      (3*NEWHOPE_Q - montgomery_reduce((uint32_t)copy[i+1] * invnthroots[i+1])));
+      (NEWHOPE_3Q - montgomery_reduce((uint32_t)copy[i+1] * invnthroots[i+1])));
 
     r->coeffs[j+NEWHOPE_K2] = 
       (montgomery_reduce((uint32_t)copy[i] * invnthroots[i+1]) + 
