@@ -1,7 +1,7 @@
 /*************************************************************************************
 * qTESLA: an efficient post-quantum signature scheme based on the R-LWE problem
 *
-* Abstract: NTT, modular reduction and polynomial functions
+* Abstract: DGT
 **************************************************************************************/
 
 #include "dgt.h"
@@ -27,8 +27,29 @@ void dgt(uint16_t *poly)
       a = gj[index];
       for(i = j; i < NEWHOPE_N; i += (m << 1)) 
       {
-        sub_re = (poly[i] + (3*NEWHOPE_Q - poly[i+m]));
-        sub_img = (poly[i+1] + (3*NEWHOPE_Q - poly[i+m+1]));
+        sub_re = (poly[i] + (NEWHOPE_3Q - poly[i+m]));
+        sub_img = (poly[i+1] + (NEWHOPE_3Q - poly[i+m+1]));
+        
+        poly[i] = (poly[i] + poly[i+m]) % NEWHOPE_Q;
+        poly[i+1] = (poly[i+1] + poly[i+m+1]) % NEWHOPE_Q;
+        
+        poly[i+m] = (montgomery_reduce((uint32_t)a * sub_re)) % NEWHOPE_Q;
+        poly[i+m+1] = (montgomery_reduce((uint32_t)a * sub_img)) % NEWHOPE_Q;        
+      }
+      index += window;
+    }
+    window <<= 1;
+
+    m >>= 1;
+
+    index = 0;
+    for(j = 0; j < m; j += 2) 
+    {
+      a = gj[index];
+      for(i = j; i < NEWHOPE_N; i += (m << 1)) 
+      {
+        sub_re = (poly[i] + (NEWHOPE_3Q - poly[i+m]));
+        sub_img = (poly[i+1] + (NEWHOPE_3Q - poly[i+m+1]));
         
         poly[i] = (poly[i] + poly[i+m]) % NEWHOPE_Q;
         poly[i+1] = (poly[i+1] + poly[i+m+1]) % NEWHOPE_Q;
@@ -39,8 +60,28 @@ void dgt(uint16_t *poly)
       index += window;
     }
     window <<= 1;
-  }
 
+    m >>= 1;
+
+    index = 0;
+    for(j = 0; j < m; j += 2) 
+    {
+      a = gj[index];
+      for(i = j; i < NEWHOPE_N; i += (m << 1)) 
+      {
+        sub_re = (poly[i] + (NEWHOPE_3Q - poly[i+m]));
+        sub_img = (poly[i+1] + (NEWHOPE_3Q - poly[i+m+1]));
+        
+        poly[i] = (poly[i] + poly[i+m]);
+        poly[i+1] = (poly[i+1] + poly[i+m+1]);
+        
+        poly[i+m] = (montgomery_reduce((uint32_t)a * sub_re));
+        poly[i+m+1] = (montgomery_reduce((uint32_t)a * sub_img));        
+      }
+      index += window;
+    }
+    window <<= 1;
+  }
 }
 
 
@@ -51,25 +92,213 @@ void idgt(uint16_t *poly)
   uint32_t a, mul_re, mul_img;
 
   window = (NEWHOPE_K2 >> 1);
-  for(m = 2; m <= NEWHOPE_K2; m <<= 1) 
+  m = 2;
+
+  index = 0;
+  for(j = 0; j < m; j += 2) 
   {
-    index = 0;
-    for(j = 0; j < m; j += 2) 
+    a = invgj[index];
+    for(i = j; i < NEWHOPE_N; i += (m << 1)) 
     {
-      a = invgj[index];
-      for(i = j; i < NEWHOPE_N; i += (m << 1)) 
-      {
-        mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
-        mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
-        
-        poly[i+m] = (poly[i] + (3*NEWHOPE_Q - mul_re)) % NEWHOPE_Q;
-        poly[i+m+1] = (poly[i+1] + (3*NEWHOPE_Q - mul_img)) % NEWHOPE_Q;
-        
-        poly[i] = (poly[i] + mul_re) % NEWHOPE_Q;
-        poly[i+1] = (poly[i+1] + mul_img) % NEWHOPE_Q;        
-      }
-      index += window;
+      mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
+      mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
+      
+      poly[i+m] = (poly[i] + (NEWHOPE_3Q - mul_re)) % NEWHOPE_Q;
+      poly[i+m+1] = (poly[i+1] + (NEWHOPE_3Q - mul_img)) % NEWHOPE_Q;
+      
+      poly[i] = (poly[i] + mul_re) % NEWHOPE_Q;
+      poly[i+1] = (poly[i+1] + mul_img) % NEWHOPE_Q;        
     }
-    window >>= 1; 
-  }    
+    index += window;
+  }
+  window >>= 1;
+
+  m <<= 1;
+
+  index = 0;
+  for(j = 0; j < m; j += 2) 
+  {
+    a = invgj[index];
+    for(i = j; i < NEWHOPE_N; i += (m << 1)) 
+    {
+      mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
+      mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
+      
+      poly[i+m] = (poly[i] + (NEWHOPE_3Q - mul_re));
+      poly[i+m+1] = (poly[i+1] + (NEWHOPE_3Q - mul_img));
+      
+      poly[i] = (poly[i] + mul_re);
+      poly[i+1] = (poly[i+1] + mul_img);        
+    }
+    index += window;
+  }
+  window >>= 1;  
+
+  m <<= 1;
+
+  index = 0;
+  for(j = 0; j < m; j += 2) 
+  {
+    a = invgj[index];
+    for(i = j; i < NEWHOPE_N; i += (m << 1)) 
+    {
+      mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
+      mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
+      
+      poly[i+m] = (poly[i] + (NEWHOPE_3Q - mul_re)) % NEWHOPE_Q;
+      poly[i+m+1] = (poly[i+1] + (NEWHOPE_3Q - mul_img)) % NEWHOPE_Q;
+      
+      poly[i] = (poly[i] + mul_re) % NEWHOPE_Q;
+      poly[i+1] = (poly[i+1] + mul_img) % NEWHOPE_Q;        
+    }
+    index += window;
+  }
+  window >>= 1;
+
+  m <<= 1;
+
+  index = 0;
+  for(j = 0; j < m; j += 2) 
+  {
+    a = invgj[index];
+    for(i = j; i < NEWHOPE_N; i += (m << 1)) 
+    {
+      mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
+      mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
+      
+      poly[i+m] = (poly[i] + (NEWHOPE_3Q - mul_re));
+      poly[i+m+1] = (poly[i+1] + (NEWHOPE_3Q - mul_img));
+      
+      poly[i] = (poly[i] + mul_re);
+      poly[i+1] = (poly[i+1] + mul_img);        
+    }
+    index += window;
+  }
+  window >>= 1;
+
+  m <<= 1;
+
+  index = 0;
+  for(j = 0; j < m; j += 2) 
+  {
+    a = invgj[index];
+    for(i = j; i < NEWHOPE_N; i += (m << 1)) 
+    {
+      mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
+      mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
+      
+      poly[i+m] = (poly[i] + (NEWHOPE_3Q - mul_re)) % NEWHOPE_Q;
+      poly[i+m+1] = (poly[i+1] + (NEWHOPE_3Q - mul_img)) % NEWHOPE_Q;
+      
+      poly[i] = (poly[i] + mul_re) % NEWHOPE_Q;
+      poly[i+1] = (poly[i+1] + mul_img) % NEWHOPE_Q;        
+    }
+    index += window;
+  }
+  window >>= 1;
+
+  m <<= 1;
+
+  index = 0;
+  for(j = 0; j < m; j += 2) 
+  {
+    a = invgj[index];
+    for(i = j; i < NEWHOPE_N; i += (m << 1)) 
+    {
+      mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
+      mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
+      
+      poly[i+m] = (poly[i] + (NEWHOPE_3Q - mul_re));
+      poly[i+m+1] = (poly[i+1] + (NEWHOPE_3Q - mul_img));
+      
+      poly[i] = (poly[i] + mul_re);
+      poly[i+1] = (poly[i+1] + mul_img);        
+    }
+    index += window;
+  }
+  window >>= 1;
+
+  m <<= 1;
+
+  index = 0;
+  for(j = 0; j < m; j += 2) 
+  {
+    a = invgj[index];
+    for(i = j; i < NEWHOPE_N; i += (m << 1)) 
+    {
+      mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
+      mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
+      
+      poly[i+m] = (poly[i] + (NEWHOPE_3Q - mul_re)) % NEWHOPE_Q;
+      poly[i+m+1] = (poly[i+1] + (NEWHOPE_3Q - mul_img)) % NEWHOPE_Q;
+      
+      poly[i] = (poly[i] + mul_re) % NEWHOPE_Q;
+      poly[i+1] = (poly[i+1] + mul_img) % NEWHOPE_Q;        
+    }
+    index += window;
+  }
+  window >>= 1;
+
+  m <<= 1;
+
+  index = 0;
+  for(j = 0; j < m; j += 2) 
+  {
+    a = invgj[index];
+    for(i = j; i < NEWHOPE_N; i += (m << 1)) 
+    {
+      mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
+      mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
+      
+      poly[i+m] = (poly[i] + (NEWHOPE_3Q - mul_re));
+      poly[i+m+1] = (poly[i+1] + (NEWHOPE_3Q - mul_img));
+      
+      poly[i] = (poly[i] + mul_re);
+      poly[i+1] = (poly[i+1] + mul_img);        
+    }
+    index += window;
+  }
+  window >>= 1;
+
+  m <<= 1;
+
+  index = 0;
+  for(j = 0; j < m; j += 2) 
+  {
+    a = invgj[index];
+    for(i = j; i < NEWHOPE_N; i += (m << 1)) 
+    {
+      mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
+      mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
+      
+      poly[i+m] = (poly[i] + (NEWHOPE_3Q - mul_re)) % NEWHOPE_Q;
+      poly[i+m+1] = (poly[i+1] + (NEWHOPE_3Q - mul_img)) % NEWHOPE_Q;
+      
+      poly[i] = (poly[i] + mul_re) % NEWHOPE_Q;
+      poly[i+1] = (poly[i+1] + mul_img) % NEWHOPE_Q;        
+    }
+    index += window;
+  }
+
+  // for(m = 2; m <= NEWHOPE_K2; m <<= 1) 
+  // {
+  //   index = 0;
+  //   for(j = 0; j < m; j += 2) 
+  //   {
+  //     a = invgj[index];
+  //     for(i = j; i < NEWHOPE_N; i += (m << 1)) 
+  //     {
+  //       mul_re = (montgomery_reduce((uint32_t)poly[i+m] * a));
+  //       mul_img = (montgomery_reduce((uint32_t)poly[i+m+1] * a));
+        
+  //       poly[i+m] = (poly[i] + (NEWHOPE_3Q - mul_re)) % NEWHOPE_Q;
+  //       poly[i+m+1] = (poly[i+1] + (NEWHOPE_3Q - mul_img)) % NEWHOPE_Q;
+        
+  //       poly[i] = (poly[i] + mul_re) % NEWHOPE_Q;
+  //       poly[i+1] = (poly[i+1] + mul_img) % NEWHOPE_Q;        
+  //     }
+  //     index += window;
+  //   }
+  //   window >>= 1; 
+  // }    
 }

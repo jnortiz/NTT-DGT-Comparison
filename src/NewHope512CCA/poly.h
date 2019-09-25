@@ -17,6 +17,7 @@ typedef struct {
 
 void poly_uniform(poly *a, const unsigned char *seed);
 void poly_sample(poly *r, const unsigned char *seed, unsigned char nonce);
+void poly_sample_dgt(poly *r, const unsigned char *seed, unsigned char nonce);
 void poly_add(poly *r, const poly *a, const poly *b);
 
 void poly_dgt(poly*);
