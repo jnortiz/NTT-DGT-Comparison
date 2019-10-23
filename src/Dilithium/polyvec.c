@@ -40,18 +40,17 @@ void polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v) {
 }
 
 /*************************************************
-* Name:        polyvecl_ntt
+* Name:        polyvecl_dgt
 *
-* Description: Forward NTT of all polynomials in vector of length L. Output
-*              coefficients can be up to 16*Q larger than input coefficients.
+* Description: Forward DGT of all polynomials in vector of length L.
 *
 * Arguments:   - polyvecl *v: pointer to input/output vector
 **************************************************/
-void polyvecl_ntt(polyvecl *v) {
+void polyvecl_dgt(polyvecl *v) {
   unsigned int i;
 
   for(i = 0; i < L; ++i)
-    poly_ntt(&v->vec[i]);
+    poly_dgt(&v->vec[i]);
 }
 
 /*************************************************
@@ -59,9 +58,7 @@ void polyvecl_ntt(polyvecl *v) {
 *
 * Description: Pointwise multiply vectors of polynomials of length L, multiply
 *              resulting vector by 2^{-32} and add (accumulate) polynomials
-*              in it. Input/output vectors are in NTT domain representation.
-*              Input coefficients are assumed to be less than 22*Q. Output
-*              coeffcient are less than 2*L*Q.
+*              in it. Input/output vectors are in DGT domain representation.
 *
 * Arguments:   - poly *w: output polynomial
 *              - const polyvecl *u: pointer to first input vector
@@ -206,34 +203,32 @@ void polyveck_shiftl(polyveck *v) {
 }
 
 /*************************************************
-* Name:        polyveck_ntt
+* Name:        polyveck_dgt
 *
-* Description: Forward NTT of all polynomials in vector of length K. Output
-*              coefficients can be up to 16*Q larger than input coefficients.
+* Description: Forward DGT of all polynomials in vector of length K.
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
-void polyveck_ntt(polyveck *v) {
+void polyveck_dgt(polyveck *v) {
   unsigned int i;
 
   for(i = 0; i < K; ++i)
-    poly_ntt(&v->vec[i]);
+    poly_dgt(&v->vec[i]);
 }
 
 /*************************************************
-* Name:        polyveck_invntt_montgomery
+* Name:        polyveck_invdgt_montgomery
 *
-* Description: Inverse NTT and multiplication by 2^{32} of polynomials
-*              in vector of length K. Input coefficients need to be less
-*              than 2*Q.
+* Description: Inverse DGT and multiplication by 2^{32} of polynomials
+*              in vector of length K.
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
-void polyveck_invntt_montgomery(polyveck *v) {
+void polyveck_invdgt_montgomery(polyveck *v) {
   unsigned int i;
 
   for(i = 0; i < K; ++i)
-    poly_invntt_montgomery(&v->vec[i]);
+    poly_invdgt_montgomery(&v->vec[i]);
 }
 
 /*************************************************

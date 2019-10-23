@@ -88,11 +88,11 @@ int main(void) {
       }
     }
 
-    polyvecl_ntt(&y);
+    polyvecl_dgt(&y);
     for(j = 0; j < K; ++j) {
       polyvecl_pointwise_acc_invmontgomery(w.vec+j, mat+j, &y);
       poly_reduce(w.vec+j);
-      poly_invntt_montgomery(w.vec+j);
+      poly_invdgt_montgomery(w.vec+j);
     }
 
     polyveck_csubq(&w);

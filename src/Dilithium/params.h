@@ -6,7 +6,6 @@
 #define SEEDBYTES 32
 #define CRHBYTES 48
 #define N 256
-#define K2 128
 #define Q 8380417
 #define QBITS 23
 #define ROOT_OF_UNITY 1753

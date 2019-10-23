@@ -1,4 +1,6 @@
 #include <stdint.h>
+#include <inttypes.h>
+#include <stdio.h>
 #include "params.h"
 #include "reduce.h"
 #include "ntt.h"
@@ -51,6 +53,8 @@ void invntt_frominvmont(uint32_t p[N]) {
   unsigned int start, len, j, k;
   uint32_t t, zeta;
   const uint32_t f = (((uint64_t)MONT*MONT % Q) * (Q-1) % Q) * ((Q-1) >> 8) % Q;
+
+  printf("%" PRIu32 "\n", f);
 
   k = 0;
   for(len = 1; len < N; len <<= 1) {

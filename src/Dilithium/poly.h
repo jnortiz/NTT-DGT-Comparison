@@ -16,8 +16,8 @@ void poly_add(poly *c, const poly *a, const poly *b);
 void poly_sub(poly *c, const poly *a, const poly *b);
 void poly_shiftl(poly *a);
 
-void poly_ntt(poly *a);
-void poly_invntt_montgomery(poly *a);
+void poly_dgt(poly *a);
+void poly_invdgt_montgomery(poly *a);
 void poly_pointwise_invmontgomery(poly *c, const poly *a, const poly *b);
 
 void poly_power2round(poly *a1, poly *a0, const poly *a);

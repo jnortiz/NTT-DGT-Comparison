@@ -120,11 +120,11 @@ int crypto_sign_keypair(unsigned char *pk, unsigned char *sk) {
 
   /* Matrix-vector multiplication */
   s1hat = s1;
-  polyvecl_ntt(&s1hat);
+  polyvecl_dgt(&s1hat);
   for(i = 0; i < K; ++i) {
     polyvecl_pointwise_acc_invmontgomery(&t.vec[i], &mat[i], &s1hat);
     poly_reduce(&t.vec[i]);
-    poly_invntt_montgomery(&t.vec[i]);
+    poly_invdgt_montgomery(&t.vec[i]);
   }
 
   /* Add error vector s2 */
@@ -199,9 +199,9 @@ int crypto_sign(unsigned char *sm,
 
   /* Expand matrix and transform vectors */
   expand_mat(mat, rho);
-  polyvecl_ntt(&s1);
-  polyveck_ntt(&s2);
-  polyveck_ntt(&t0);
+  polyvecl_dgt(&s1);
+  polyveck_dgt(&s2);
+  polyveck_dgt(&t0);
 
   rej:
   /* Sample intermediate vector y */
@@ -210,11 +210,11 @@ int crypto_sign(unsigned char *sm,
 
   /* Matrix-vector multiplication */
   yhat = y;
-  polyvecl_ntt(&yhat);
+  polyvecl_dgt(&yhat);
   for(i = 0; i < K; ++i) {
     polyvecl_pointwise_acc_invmontgomery(&w.vec[i], &mat[i], &yhat);
     poly_reduce(&w.vec[i]);
-    poly_invntt_montgomery(&w.vec[i]);
+    poly_invdgt_montgomery(&w.vec[i]);
   }
 
   /* Decompose w and call the random oracle */
@@ -222,13 +222,13 @@ int crypto_sign(unsigned char *sm,
   polyveck_decompose(&w1, &w0, &w);
   challenge(&c, mu, &w1);
   chat = c;
-  poly_ntt(&chat);
+  poly_dgt(&chat);
 
   /* Check that subtracting cs2 does not change high bits of w and low bits
    * do not reveal secret information */
   for(i = 0; i < K; ++i) {
     poly_pointwise_invmontgomery(&cs2.vec[i], &chat, &s2.vec[i]);
-    poly_invntt_montgomery(&cs2.vec[i]);
+    poly_invdgt_montgomery(&cs2.vec[i]);
   }
   polyveck_sub(&w0, &w0, &cs2);
   polyveck_freeze(&w0);
@@ -238,7 +238,7 @@ int crypto_sign(unsigned char *sm,
   /* Compute z, reject if it reveals secret */
   for(i = 0; i < L; ++i) {
     poly_pointwise_invmontgomery(&z.vec[i], &chat, &s1.vec[i]);
-    poly_invntt_montgomery(&z.vec[i]);
+    poly_invdgt_montgomery(&z.vec[i]);
   }
   polyvecl_add(&z, &z, &y);
   polyvecl_freeze(&z);
@@ -248,7 +248,7 @@ int crypto_sign(unsigned char *sm,
   /* Compute hints for w1 */
   for(i = 0; i < K; ++i) {
     poly_pointwise_invmontgomery(&ct0.vec[i], &chat, &t0.vec[i]);
-    poly_invntt_montgomery(&ct0.vec[i]);
+    poly_invdgt_montgomery(&ct0.vec[i]);
   }
 
   polyveck_csubq(&ct0);
@@ -317,20 +317,20 @@ int crypto_sign_open(unsigned char *m,
   /* Matrix-vector multiplication; compute Az - c2^dt1 */
   expand_mat(mat, rho);
 
-  polyvecl_ntt(&z);
+  polyvecl_dgt(&z);
   for(i = 0; i < K ; ++i)
     polyvecl_pointwise_acc_invmontgomery(&tmp1.vec[i], &mat[i], &z);
 
   chat = c;
-  poly_ntt(&chat);
+  poly_dgt(&chat);
   polyveck_shiftl(&t1);
-  polyveck_ntt(&t1);
+  polyveck_dgt(&t1);
   for(i = 0; i < K; ++i)
     poly_pointwise_invmontgomery(&tmp2.vec[i], &chat, &t1.vec[i]);
 
   polyveck_sub(&tmp1, &tmp1, &tmp2);
   polyveck_reduce(&tmp1);
-  polyveck_invntt_montgomery(&tmp1);
+  polyveck_invdgt_montgomery(&tmp1);
 
   /* Reconstruct w1 */
   polyveck_csubq(&tmp1);

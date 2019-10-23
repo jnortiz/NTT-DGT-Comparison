@@ -49,10 +49,10 @@ int main(void) {
     t1[i] = cpucycles_stop() - t1[i] - overhead;
 
     t2[i] = cpucycles_start();
-    poly_ntt(&a);
-    poly_ntt(&b);
+    poly_dgt(&a);
+    poly_dgt(&b);
     poly_pointwise_invmontgomery(&c2, &a, &b);
-    poly_invntt_montgomery(&c2);
+    poly_invdgt_montgomery(&c2);
     t2[i] = cpucycles_stop() - t2[i] - overhead;
 
     poly_csubq(&c2);
@@ -62,6 +62,6 @@ int main(void) {
   }
 
   print_results("naive: ", t1, NTESTS);
-  print_results("ntt: ", t2, NTESTS);
+  print_results("dgt: ", t2, NTESTS);
   return 0;
 }

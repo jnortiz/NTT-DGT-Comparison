@@ -14,7 +14,7 @@ void polyvecl_freeze(polyvecl *v);
 
 void polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v);
 
-void polyvecl_ntt(polyvecl *v);
+void polyvecl_dgt(polyvecl *v);
 void polyvecl_pointwise_acc_invmontgomery(poly *w,
                                           const polyvecl *u,
                                           const polyvecl *v);
@@ -36,8 +36,8 @@ void polyveck_add(polyveck *w, const polyveck *u, const polyveck *v);
 void polyveck_sub(polyveck *w, const polyveck *u, const polyveck *v);
 void polyveck_shiftl(polyveck *v);
 
-void polyveck_ntt(polyveck *v);
-void polyveck_invntt_montgomery(polyveck *v);
+void polyveck_dgt(polyveck *v);
+void polyveck_invdgt_montgomery(polyveck *v);
 
 int polyveck_chknorm(const polyveck *v, uint32_t B);
 

@@ -1,174 +1,80 @@
-import unittest
-import time
-from random import randint
-from math import log
+from gaussian import GaussianInteger
+from params import N, p, kth_root_of_i, inv_kth_root_of_i, g, g_inv, invkmodp
 
-from gauss import GaussianInteger
-from params import *
-from params_dgt import *
+fold   = lambda a: [GaussianInteger(x, y) for x, y in zip(a[:N//2], a[N//2:])]
+unfold = lambda a: [a[j].re for j in range(N//2)] + [a[j].imag for j in range(N//2)]
 
-modinv = lambda y,p:pow(y,p-2,p)
+def bitrev_shuffle(x):
+    N = len(x)
+    j = 0
+    for i in range(1, N):
+        b = N >> 1
+        while j >= b:
+            j -= b
+            b >>= 1
+        j += b
+        if j > i:
+            x[i], x[j] = x[j], x[i]
+    return x
 
 def dgt(x):
-    n = len(x)
-    x = [a if isinstance(a, GaussianInteger) else GaussianInteger(a) for a in x]
 
-    g_inv = GaussianInteger(252694792,105937650)
+    # Folding the input signal into N//2 Gaussian integers
+    x_folded = fold(x)
+    # print(x_folded)
+    # Applying the right-angle convolution
+    x_folded = [x_folded[i] * kth_root_of_i[i] % p for i in range(N//2)]
     
-    X = []
-    for k in range(n):
-        X.append(
-            sum(
-                [x[j]*pow(g_inv, j*k) % p for j in range(n)]
-                )
-            )
-    return [x % p for x in X]
+    # print("x_folded: ", end="")
+    # print(x_folded)
+    # print("\n\n")
 
-def idgt(X):
-    n = len(X)
-    invN = modinv(n, p)
+    k = len(x_folded)
 
-    #assert (p-1)%n == 0
-    #k = (p-1)//n
+    m = k//2
+    window = 1
+    while m >= 1:
+        index = 0
+        for j in range(m):
+            a = pow(g, index, p)
+            i = j
+            while i < k:
+                xi = x_folded[i]
+                xim = x_folded[i + m]
+                
+                x_folded[i] = (xi + xim) % p
+                x_folded[i + m] = (a * (xi - xim)) % p
 
-    #g = pow(r, k, p)
-    #assert pow(g, n, p) == 1
-    g = GaussianInteger(191706000,265394796)
-    
-    x = []
-    for k in range(n):
-        x.append(
-            invN*sum(
-                [X[j]*pow(g, j*k) % p for j in range(n)]
-                ) % p
-            )
-    return x
+                i = i + (m << 1)
+            index += window
+        m >>= 1
+        window <<= 1
 
-def dgt_gentlemansande_mul(a, b):        
-    N = len(a)
+    return x_folded
 
-    # Initialize
-    a_folded = [GaussianInteger(x, y) for x, y in zip(a[:N//2], a[N//2:])]
-    b_folded = [GaussianInteger(x, y) for x, y in zip(b[:N//2], b[N//2:])]
+def idgt(x_folded):
 
-    # Twist the folded signals
-    a_h = [a_folded[j] * nthroots[j] for j in range(N // 2)] 
-    b_h = [b_folded[j] * nthroots[j] for j in range(N // 2)]
+    k = len(x_folded)
+    x = list(x_folded)
 
-    # Compute n//2 DGT
-    a_dgt = dgt(a_h)
-    b_dgt = dgt(b_h)
+    m = 1
+    while m < k:
+        for j in range(m):
+            a = pow(g_inv, int((j * k)/(2 * m)), p)
 
-    # Point-wise multiplication
-    c_dgt = [(x * y) for x,y in zip(a_dgt, b_dgt)]
+            i = j
+            while i < k:
+                xi = x[i]
+                xim = x[i + m]
 
-    # Compute n//2 IDGT
-    c_h = idgt(c_dgt)
+                x[i] = (xi + a * xim) % p
+                x[i + m] = (xi - a * xim) % p
 
-    # Remove twisting factors
-    c_folded = [c_h[j] * invNthroots[j] for j in range(N // 2)]
+                i = i + 2*m
+        m = 2*m 
 
-    # Unfold output
-    c = [c_folded[j].re for j in range(N//2)] + [c_folded[j].imag for j in range(N//2)]
+    # Removing the twisting factors and scaling by k^-1
+    x = [(xi * invkmodp * inv_kth_root_of_i[i]) % p for i, xi in enumerate(x)]
 
-    return c
-
-## Schoolbook polynomial multiplication in Z_q[x]/<x^N + 1>
-def schoolbook_mul(a, b):
-    assert len(a) == len(b)
-    N = len(a)
-    c = [0]*N
-
-    for i in range(N):
-        for j in range(N):
-            teste = (-1)**(int((i+j)//float(N)))
-            v = a[i]*b[j]*teste
-            c[(i+j) % N] = (c[(i+j) % N] + v) % p
-
-    return c
-
-## Scalar multipĺication in DGT's domain
-def dgt_gentlemansande_mulscalar(a, b):
-    N = len(a)
-
-    # Initialize
-    a_folded = [GaussianInteger(x, y) for x, y in zip(a[:N//2], a[N//2:])]
-
-    # Twist the folded signals
-    a_h = [a_folded[j] * nthroots[j] for j in range(N // 2)]
-
-    # Compute n//2 DGT
-    a_dgt = dgt(a_h)
-
-    # Point-wise multiplication
-    c_dgt = [x * (b % p) for x in a_dgt]
-
-    # Compute n//2 IDGT
-    c_h = idgt(c_dgt)
-
-    # Remove twisting factors
-    c_folded = [c_h[j] * invNthroots[j] for j in range(N // 2)]
-
-    # Unfold output
-    c = [c_folded[j].re for j in range(N//2)] + [c_folded[j].imag for j in range(N//2)]
-
-    return c
-
-## Schoolbook scalar multiplication in Z_q[x]/<x^N + 1>
-def mulint(a, b):
-    assert type(b) == int
-    N = len(a)
-    c = [x * b % p for x in a]
-    return c
-
-def gen_polynomial_modp(length):
-    x = []
-    for i in range(length):
-        x.append(randint(0,p))
-    return x
-
-class TestDGTGentlemansande(unittest.TestCase):
-
-    def test_transformation(self):
-        print("\nTesting DGT Gentleman-Sande")        
-        x = gen_polynomial_modp(N//2)        
-        x = [a if isinstance(a, GaussianInteger) else GaussianInteger(a) for a in x]
-        
-        start_time = time.time()
-        y = idgt(dgt(x))
-        end_time = time.time()
-
-        print("----------", end_time - start_time, "s. ----------")
-        
-        self.assertEqual(x, y)      
-
-    def test_mul(self):
-        print("\nPolynomial multiplication using DGT Gentleman-Sande")
-        
-        a = gen_polynomial_modp(N)
-        b = gen_polynomial_modp(N)
-
-        start_time = time.time()
-        c = dgt_gentlemansande_mul(a, b)
-        end_time = time.time()
-
-        print("----------", end_time - start_time, "s. ----------")
-
-        self.assertEqual(c, schoolbook_mul(a,b))
-
-    def test_mulint(self):
-        print("\nMultiplication by scalar using DGT Gentleman-Sande")
-        
-        a = gen_polynomial_modp(N)
-        b = randint(0, p) # An arbitrary scalar number
-
-        start_time = time.time()
-        c = dgt_gentlemansande_mulscalar(a, b)
-        end_time = time.time()
-
-        print("----------", end_time - start_time, "s. ----------")
-
-        self.assertEqual(c, mulint(a,b))
-
-if __name__ == '__main__':
-    unittest.main()
+    # Unfolding the output signal
+    return unfold(x)
