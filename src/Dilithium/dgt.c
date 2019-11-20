@@ -29,11 +29,11 @@ void dgt(uint32_t *poly)
       {
         a = montgomery_reduce(gj[jtwiddle] * copy[j + distance]);
         b = montgomery_reduce(gj[jtwiddle + 1] * copy[j + distance + 1]);
-        c = montgomery_reduce(gj[jtwiddle] * copy[j + distance + 1]);
-        d = montgomery_reduce(gj[jtwiddle + 1] * copy[j + distance]);
+        c = (gj[jtwiddle] * copy[j + distance + 1]);
+        d = (gj[jtwiddle + 1] * copy[j + distance]);
 
-        temp_re = reduce32(a + (2*Q - b));
-        temp_img = reduce32(c + d);
+        temp_re = reduce32((a + (2*Q - b)));
+        temp_img = reduce32(montgomery_reduce(c + d));
 
         copy[j + distance] = (copy[j] + (2*Q - temp_re));
         copy[j + distance + 1] = (copy[j + 1] + (2*Q - temp_img));
@@ -83,11 +83,11 @@ void idgt(uint32_t *poly)
 
         a = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_re);
         b = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_img);
-        c = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_img);
-        d = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_re);
+        c = ((uint64_t)invgj[jtwiddle] * sum_img);
+        d = ((uint64_t)invgj[jtwiddle + 1] * sum_re);
 
         copy[j + distance] = (a + (2*Q - b));
-        copy[j + distance + 1] = (c + d);
+        copy[j + distance + 1] = montgomery_reduce(c + d);
 
         jtwiddle += 2;
       }
@@ -113,11 +113,11 @@ void idgt(uint32_t *poly)
 
         a = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_re);
         b = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_img);
-        c = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_img);
-        d = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_re);
+        c = ((uint64_t)invgj[jtwiddle] * sum_img);
+        d = ((uint64_t)invgj[jtwiddle + 1] * sum_re);
 
         copy[j + distance] = (a + (2*Q - b));
-        copy[j + distance + 1] = (c + d);
+        copy[j + distance + 1] = montgomery_reduce(c + d);
 
         jtwiddle += 2;
       }
@@ -143,11 +143,11 @@ void idgt(uint32_t *poly)
 
         a = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_re);
         b = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_img);
-        c = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_img);
-        d = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_re);
+        c = ((uint64_t)invgj[jtwiddle] * sum_img);
+        d = ((uint64_t)invgj[jtwiddle + 1] * sum_re);
 
         copy[j + distance] = (a + (2*Q - b));
-        copy[j + distance + 1] = (c + d);
+        copy[j + distance + 1] = montgomery_reduce(c + d);
 
         jtwiddle += 2;
       }
@@ -173,11 +173,11 @@ void idgt(uint32_t *poly)
 
         a = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_re);
         b = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_img);
-        c = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_img);
-        d = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_re);
+        c = ((uint64_t)invgj[jtwiddle] * sum_img);
+        d = ((uint64_t)invgj[jtwiddle + 1] * sum_re);
 
         copy[j + distance] = (a + (2*Q - b));
-        copy[j + distance + 1] = (c + d);
+        copy[j + distance + 1] = montgomery_reduce(c + d);
 
         jtwiddle += 2;
       }
@@ -203,11 +203,11 @@ void idgt(uint32_t *poly)
 
         a = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_re);
         b = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_img);
-        c = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_img);
-        d = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_re);
+        c = ((uint64_t)invgj[jtwiddle] * sum_img);
+        d = ((uint64_t)invgj[jtwiddle + 1] * sum_re);
 
         copy[j + distance] = (a + (2*Q - b));
-        copy[j + distance + 1] = (c + d);
+        copy[j + distance + 1] = montgomery_reduce(c + d);
 
         jtwiddle += 2;
       }
@@ -233,11 +233,11 @@ void idgt(uint32_t *poly)
 
         a = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_re);
         b = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_img);
-        c = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_img);
-        d = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_re);
+        c = ((uint64_t)invgj[jtwiddle] * sum_img);
+        d = ((uint64_t)invgj[jtwiddle + 1] * sum_re);
 
         copy[j + distance] = (a + (2*Q - b));
-        copy[j + distance + 1] = (c + d);
+        copy[j + distance + 1] = montgomery_reduce(c + d);
 
         jtwiddle += 2;
       }
@@ -263,11 +263,11 @@ void idgt(uint32_t *poly)
 
         a = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_re);
         b = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_img);
-        c = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_img);
-        d = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_re);
+        c = ((uint64_t)invgj[jtwiddle] * sum_img);
+        d = ((uint64_t)invgj[jtwiddle + 1] * sum_re);
 
         copy[j + distance] = (a + (2*Q - b));
-        copy[j + distance + 1] = (c + d);
+        copy[j + distance + 1] = montgomery_reduce(c + d);
 
         jtwiddle += 2;
       }
