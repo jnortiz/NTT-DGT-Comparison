@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "polyvec.h": "c"
+        "polyvec.h": "c",
+        "cpucycles.h": "c"
     }
 }

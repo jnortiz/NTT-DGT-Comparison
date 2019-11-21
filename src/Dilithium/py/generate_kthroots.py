@@ -137,7 +137,7 @@ invkmodp = 8314945
 print("\nInverse of the powers of the n/2-th root of i")
 print("{", end="")
 for i in range(k):
-    print((invNthroots[i].re * 2365951 * 8314945) % p, end=", ")
-    print((invNthroots[i].imag * 2365951 * 8314945) % p, end=", ")
+    print((invNthroots[i].re * 4193792 * 8314945) % p, end=", ")
+    print((invNthroots[i].imag * 4193792 * 8314945) % p, end=", ")
 print("};")
 print("-----------------------------------------------")
