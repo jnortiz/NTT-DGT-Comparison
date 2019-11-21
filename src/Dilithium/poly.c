@@ -151,7 +151,7 @@ void poly_dgt(poly *r)
   j = 0;
   for(i = 0; i < 128; ++i)
   {
-    copy[i] = r->coeffs[i];
+    copy[j] = r->coeffs[i];
     copy[j+1] = r->coeffs[i+128];
     
     j = j+2;
