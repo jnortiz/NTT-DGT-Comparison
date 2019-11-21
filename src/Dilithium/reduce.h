@@ -12,6 +12,9 @@ uint32_t montgomery_reduce(uint64_t a);
 /* r < 2*Q */
 uint32_t reduce32(uint32_t a);
 
+/* a <= Q*2^32 => r < 2*Q */
+int32_t reduce(int64_t a);
+
 /* a < 2*Q => r < Q */
 uint32_t csubq(uint32_t a);
 

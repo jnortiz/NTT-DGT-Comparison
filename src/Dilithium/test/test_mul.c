@@ -6,7 +6,7 @@
 #include "../randombytes.h"
 #include "../poly.h"
 
-#define NTESTS 1000
+#define NTESTS 20000
 
 static void poly_naivemul(poly *c, const poly *a, const poly *b) {
   unsigned int i,j;

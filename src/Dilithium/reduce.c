@@ -23,6 +23,18 @@ uint32_t montgomery_reduce(uint64_t a) {
   return t;
 }
 
+
+int32_t reduce(int64_t a)
+{ // Montgomery reduction
+  int64_t u;
+
+  u = (a*QINV) & 0xFFFFFFFF;
+  u *= Q;
+  a += u;
+  return (int32_t)(a>>32);
+}
+
+
 /*************************************************
 * Name:        reduce32
 *
