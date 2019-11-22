@@ -1,6 +1,8 @@
 from gaussian import GaussianInteger
 from random import randint
 
+modinvp = lambda y,p:pow(y,p-2,p)
+
 #  (g, x, y) a*x + b*y = gcd(x, y)
 def egcd(a, b):
     if a == 0:
@@ -43,25 +45,14 @@ def is_nthroot_i(c, n, f):
 
     return True
 
-def find_residues(p):
-    # https://stackoverflow.com/questions/2269810/whats-a-nice-method-to-factor-gaussian-integers
-    for _ in range(2**20):
-        n = randint(0, p)
-        if pow(n, (p-1)//2, p) == (-1 % p):
-            k = int(pow(n, (p-1)//4, p))
-            u = egcd(GaussianInteger(p), GaussianInteger(k, 1))[0]
-
-            if GaussianInteger(p) % u == 0 or GaussianInteger(p) % u.conjugate():
-                return u, u.conjugate()
-    raise Exception("Couldn't find a residue")
-
 def nthroot(n, p): 
     # First, find the factorization of p using https://www.alpertron.com.ar/GAUSSIAN.HTM
     # Then, try different combinations of signals and positions, real and imaginary parts, and invf0Modf1 and invf1Modf0 
     # (usually, the algorithm only find of inverse; the other is the conjugate of the first) in order to find a proper root of i.
     # Define the values of f0 and f1 below and obtain the generators.
-    f0 = GaussianInteger(2841,556) # Factorization of p
-    f1 = GaussianInteger(2841,-556)
+    
+    f0 = GaussianInteger(2841, 556) # Factorization of p
+    f1 = GaussianInteger(2841, -556)
 
     invf1Modf0 = modinv(f1, f0)
     invf0Modf1 = invf1Modf0.conjugate()
@@ -90,54 +81,63 @@ def nthroot(n, p):
     raise Exception("Couldn't find a primitive root")
 
 p = 8380417
-n = 16
+r = 10
+n = 256
 k = n//2
 
-# nth_root = GaussianInteger(2089168, 5159577)
-# inv_nth_root = GaussianInteger(4799789, 4692735)
+def gen_roots_dgt():
 
-nth_root = None
-inv_nth_root = None
-g = None
+    kth_root = None
+    r = None            
 
-while g != 1:
-    nth_root = nthroot(k, p) % p
-    g, _, _ = egcd(nth_root, GaussianInteger(p))
-inv_nth_root = modinv(nth_root, GaussianInteger(p)) % p
+    # 1. Compute the k-th root of i
+    while r != 1:
+        kth_root = nthroot(k, p) % p
+        r, _, _ = egcd(kth_root, GaussianInteger(p))
+    # 2. And its inverse mod p
+    inv_kth_root = modinv(kth_root, GaussianInteger(p)) % p
+    assert kth_root * inv_kth_root % p == 1
 
-assert nth_root*inv_nth_root % p == 1
+    pow_kth_root = []
+    inv_pow_kth_root = []
 
-print("n-th root: %s" % nth_root)
-print("inverse of n-th root: %s" % inv_nth_root)
+    m = k
+    w = kth_root
+    w_inv = inv_kth_root
+    while m > 1: # log(k) iterations            
+        # 3. Compute the powers h, h^2, h^4, h^8, ..., h^k           
+        pow_kth_root.append(w)
+        inv_pow_kth_root.append(w_inv)
+        
+        w = (w * w) % p # h_{N}^{2} = h_{N/2}
+        w_inv = (w_inv * w_inv) % p # h_{N}^{-2} = h_{N/2}^{-1}
+        
+        m >>= 1
 
-print(is_nthroot_i(nth_root, k, p))
+    # 4. Invert the list of powers to h^k, ..., h^4, h^2, h
+    inv_pow_kth_root.reverse()
 
-print("--------------------------------------------------------------")
+    print("Powers of h: ", end="")
+    print(pow_kth_root)
 
-assert(pow(nth_root, k) % p == GaussianInteger(0,1))
-assert(nth_root*inv_nth_root % p == GaussianInteger(1,0))
+    print("\nPowers of h^{-1}: ", end="")
+    print(inv_pow_kth_root)
 
-nthroots = []
-invNthroots = []
-for i in range(k):
-    nthroots.append(pow(nth_root, i) % p)
-    invNthroots.append(pow(inv_nth_root, i) % p)
-    assert(nthroots[i] * invNthroots[i] % p == GaussianInteger(1,0))
+gen_roots_dgt()
 
-print("\nPowers of the n/2-th root of i\n")
-print("{", end="")
-for i in range(k):
-    print((nthroots[i].re * 4193792) % p, end=", ")
-    print((nthroots[i].imag * 4193792) % p, end=", ")
-print("};")
-print("-----------------------------------------------")
+####################################
 
-invkmodp = 8314945
+# nth_root = None
+# r = None            
 
-print("\nInverse of the powers of the n/2-th root of i")
-print("{", end="")
-for i in range(k):
-    print((invNthroots[i].re * 4193792) % p, end=", ")
-    print((invNthroots[i].imag * 4193792) % p, end=", ")
-print("};")
-print("-----------------------------------------------")
+# while r != 1:
+#     nth_root = nthroot(k, p) % p
+#     r, _, _ = egcd(nth_root, GaussianInteger(p))
+
+# inv_kth_root = modinv(nth_root, GaussianInteger(p)) % p
+# assert nth_root * inv_kth_root % p == 1
+# assert pow(nth_root, k) % p == GaussianInteger(0, 1)
+
+# print(nth_root)
+# print("--------------\n")
+# print(inv_kth_root)

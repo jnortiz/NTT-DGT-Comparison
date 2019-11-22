@@ -1,6 +1,6 @@
 import unittest
 from gaussian import GaussianInteger
-from dgt import dgt, idgt
+from dgt import dgt_cooley_tukey, idgt_gentleman_sande
 import random
 from params import N, p
 
@@ -27,41 +27,38 @@ def schoolbook_mul(a, b):
             c[(i + j) % N] = (c[(i + j) % N] + v) % p
     return c 
 
-class TestDGTHierarquical(unittest.TestCase):
+class TestNegacyclicDGT(unittest.TestCase):
 
-    def test_dgt(self):
-        print("\nDGT transformation")
+    def test_negacyclic(self):
+        print("\nDGT transformation merged with the right-angle convolution")
 
-        for _ in range(NRUNS):
-            x = gen_polynomial_modp(N)
-            
-            x_dgt = dgt(x)
-            y = list(idgt(x_dgt))
-            y = [y[i] % p for i in range(N)]
-           
-            self.assertEqual(x, y)
+        for _ in range(NRUNS):            
+            a = gen_polynomial_modp(N)            
+            A = dgt_cooley_tukey(a)
+            A = idgt_gentleman_sande(A)
 
-    def test_mul(self):
-        print("\nPolynomial multiplication using DGT")
+            self.assertEqual(a, A)
+
+    def test_mul_negacyclic(self):
+        print("\nPolynomial multiplication using DGT merged with the right-angle convolution")
 
         for _ in range(NRUNS):
-            #a = gen_polynomial_modp(N)
-            #b = gen_polynomial_modp(N)
-            a = [1]*N
-            b = [1]*N
+            a = gen_polynomial_modp(N)
+            b = gen_polynomial_modp(N)
+            print(a)
+            print("\n", b)
 
             ab = schoolbook_mul(a, b)
 
-            print(ab)
-
-            a_dgt = dgt(a)
-            b_dgt = dgt(b)
+            a_dgt = dgt_cooley_tukey(a)
+            b_dgt = dgt_cooley_tukey(b)
 
             c_dgt = [x * y for x, y in zip(a_dgt, b_dgt)]
 
-            c = idgt(c_dgt)
+            c = idgt_gentleman_sande(c_dgt)
+            print("\n", c)
 
-            self.assertEqual(c, ab)
+            self.assertEqual(c, ab)    
 
 if __name__ == '__main__':
     unittest.main()
