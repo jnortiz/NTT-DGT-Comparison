@@ -81,7 +81,7 @@ void dgt(poly x)
   int64_t a, sub_re, sub_img;
 
   for(i = 0; i < PARAM_N; ++i)
-    x_64[i] = (int64_t)x[i];
+    x_64[i] = (int64_t) x[i];
 
   window = 1;
   m = PARAM_K2;

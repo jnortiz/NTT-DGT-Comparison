@@ -11,7 +11,7 @@ KECCAK_HEADERS = $(HEADERS) fips202.h
 AES_SOURCES = $(SOURCES) fips202.c aes256ctr.c
 AES_HEADERS = $(HEADERS) fips202.h aes256ctr.h
 
-all: PQCgenKAT_sign test/test_dilithium
+all: PQCgenKAT_sign test/test_dilithium test/test_mul
 
 PQCgenKAT_sign: PQCgenKAT_sign.c rng.c $(KECCAK_SOURCES) rng.h $(KECCAK_HEADERS)
 	$(CC) $(NISTFLAGS) $< rng.c $(KECCAK_SOURCES) -o $@ -lcrypto

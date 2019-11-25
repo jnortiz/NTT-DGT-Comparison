@@ -23,7 +23,6 @@ uint32_t montgomery_reduce(uint64_t a) {
   return t;
 }
 
-
 int32_t reduce(int64_t a)
 { // Montgomery reduction
   int64_t u;
@@ -33,7 +32,6 @@ int32_t reduce(int64_t a)
   a += u;
   return (int32_t)(a>>32);
 }
-
 
 /*************************************************
 * Name:        reduce32
