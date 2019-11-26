@@ -3,7 +3,6 @@
 #include "test/cpucycles.h"
 #include "params.h"
 #include "symmetric.h"
-#include "ntt.h"
 #include "dgt.h"
 #include "reduce.h"
 #include "rounding.h"
