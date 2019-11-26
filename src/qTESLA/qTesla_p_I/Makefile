@@ -22,7 +22,7 @@ AR=ar rcs
 RANLIB=ranlib
 
 CFLAGS = -std=gnu11 -O3 -D $(ARCHITECTURE) -D __LINUX__ -fomit-frame-pointer
-LDFLAGS=-lm -L/usr/lib/ -lssl -lcrypto 
+LDFLAGS=-lm -lssl -lcrypto 
 
 ifeq "$(CC)" "gcc"
     CFLAGS+= -march=native

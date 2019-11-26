@@ -189,7 +189,7 @@ void dgt(poly x)
   }
 
   for(i = 0; i < PARAM_N; ++i)
-    x[i] = (int32_t)(x_64[i]);
+    x[i] = (int32_t)barr_reduce(x_64[i]);
 }
 
 
@@ -244,13 +244,13 @@ void poly_dgt(poly x_dgt, const poly x)
   int i, j;
 
   for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
-      x_dgt[i] = reduce(
+      x_dgt[i] = barr_reduce(reduce(
         (int64_t)x[j] * nthroots[i] - 
-        (int64_t)x[PARAM_K2+j] * nthroots[i+1]);
+        (int64_t)x[PARAM_K2+j] * nthroots[i+1]));
       
-      x_dgt[i+1] = reduce(
+      x_dgt[i+1] = barr_reduce(reduce(
         (int64_t)x[j] * nthroots[i+1] + 
-        (int64_t)x[PARAM_K2+j] * nthroots[i]);
+        (int64_t)x[PARAM_K2+j] * nthroots[i]));
   } 
 
   dgt(x_dgt);
@@ -283,13 +283,13 @@ void poly_mul(poly result, const poly a, const poly b)
 
   /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
   for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {
-      result[j] = reduce(
+      result[j] = barr_reduce(reduce(
         (int64_t)mul[i] * invnthroots[i] - 
-        (int64_t)mul[i+1] * invnthroots[i+1]
+        (int64_t)mul[i+1] * invnthroots[i+1])
       );
-      result[j + PARAM_K2] = reduce(
+      result[j + PARAM_K2] = barr_reduce(reduce(
         (int64_t)mul[i] * invnthroots[i+1] + 
-        (int64_t)mul[i+1] * invnthroots[i]
+        (int64_t)mul[i+1] * invnthroots[i])
       );
   }
 }
