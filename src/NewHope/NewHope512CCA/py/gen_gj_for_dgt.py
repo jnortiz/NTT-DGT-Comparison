@@ -27,7 +27,7 @@ def gen_powers_of_invgj():
 
     print("{", end="")
     for i in range(k//2):
-        print((2**18*pow(g_inv,i,p)) % p, end=", ")
+        print((2**36*pow(g_inv,i,p)) % p, end=", ")
     print("};")
 
 # def gen_powers_of_gj():    
