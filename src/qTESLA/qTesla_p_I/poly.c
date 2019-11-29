@@ -80,103 +80,39 @@ sdigit_t barr_reduce(sdigit_t a)
 void dgt(poly x)
 {
 
-  int64_t x_64[PARAM_N];
-  int64_t a, sub_re, sub_img;
+  int32_t a, sub_re, sub_img;
   int i, index, j, m, window;
 
-  for(i = 0; i < PARAM_N; ++i)
-    x_64[i] = (int64_t) x[i];
-
   window = 1;
-  for(m = 512; m >= 16; m >>= 1) 
+  for(m = 512; m >= 2; m >>= 1) 
   {
     index = 0;
 
     for(j = 0; j < m; j += 2) 
     {
-      a = (int64_t)gj[index];
+      a = gj[index];
 
       for(i = j; i < PARAM_N; i += (m << 1)) 
       {
-        sub_re = x_64[i] - x_64[i+m];
-        sub_img = x_64[i+1] - x_64[i+m+1];
+        sub_re = x[i] - x[i+m];
+        sub_img = x[i+1] - x[i+m+1];
         
-        x_64[i] = x_64[i] + x_64[i+m];
-        x_64[i+1] = x_64[i+1] + x_64[i+m+1];
-        
-        x_64[i+m] = reduce((int64_t)a * sub_re);
-        x_64[i+m+1] = reduce((int64_t)a * sub_img);        
+        x[i] = x[i] + x[i+m];
+        x[i+1] = x[i+1] + x[i+m+1];
+
+	if(m == 256 || m == 64 || m == 16 || m == 4)
+	{
+	  x[i] = barr_reduce(x[i]);
+	  x[i+1] = barr_reduce(x[i+1]);
+	}
+
+        x[i+m] = reduce((int64_t)a * sub_re);
+        x[i+m+1] = reduce((int64_t)a * sub_img);        
       }
       index += window;
     }
     window <<= 1;
   }
-    
-  index = 0;    
-  for(j = 0; j < m; j += 2) 
-  {
-    a = (int64_t)gj[index];
-
-    for(i = j; i < PARAM_N; i += (m << 1)) 
-    {
-      sub_re = x_64[i] - x_64[i+m];
-      sub_img = x_64[i+1] - x_64[i+m+1];
-      
-      x_64[i] = barr_reduce64(x_64[i] + x_64[i+m]);
-      x_64[i+1] = barr_reduce64(x_64[i+1] + x_64[i+m+1]);
-      
-      x_64[i+m] = reduce((int64_t)a * sub_re);
-      x_64[i+m+1] = reduce((int64_t)a * sub_img);        
-    }
-    index += window;
-  }
-  window <<= 1;
-
-  m >>= 1;
-  
-  index = 0;    
-  for(j = 0; j < m; j += 2) 
-  {
-    a = (int64_t)gj[index];
-
-    for(i = j; i < PARAM_N; i += (m << 1)) 
-    {
-      sub_re = x_64[i] - x_64[i+m];
-      sub_img = x_64[i+1] - x_64[i+m+1];
-      
-      x_64[i] = x_64[i] + x_64[i+m];
-      x_64[i+1] = x_64[i+1] + x_64[i+m+1];
-      
-      x_64[i+m] = reduce((int64_t)a * sub_re);
-      x_64[i+m+1] = reduce((int64_t)a * sub_img);        
-    }
-    index += window;
-  }
-  window <<= 1;
-
-  m >>= 1;
-  
-  index = 0;    
-  for(j = 0; j < m; j += 2) 
-  {
-    a = (int64_t)gj[index];
-
-    for(i = j; i < PARAM_N; i += (m << 1)) 
-    {
-      sub_re = x_64[i] - x_64[i+m];
-      sub_img = x_64[i+1] - x_64[i+m+1];
-      
-      x_64[i] = x_64[i] + x_64[i+m];
-      x_64[i+1] = x_64[i+1] + x_64[i+m+1];
-      
-      x_64[i+m] = reduce((int64_t)a * sub_re);
-      x_64[i+m+1] = reduce((int64_t)a * sub_img);        
-    }
-    index += window;
-  }
-
-  for(i = 0; i < PARAM_N; ++i)
-    x[i] = (int32_t)barr_reduce64(x_64[i]);
 
 }
 
@@ -184,12 +120,8 @@ void dgt(poly x)
 void idgt(poly x)
 {
 
-  int64_t x_64[PARAM_N];
-  int64_t a, mul_re, mul_img;
+  int32_t a, mul_re, mul_img;
   int i, index, j, m, window;
-
-  for(i = 0; i < PARAM_N; ++i)
-    x_64[i] = (int64_t) x[i];
 
   window = 256;
   for(m = 2; m <= 512; m <<= 1) 
@@ -197,26 +129,31 @@ void idgt(poly x)
     index = 0;
     for(j = 0; j < m; j += 2) 
     {
-      a = (int64_t)invgj[index];
+      a = invgj[index];
       for(i = j; i < PARAM_N; i += (m << 1)) 
       {
-        mul_re = reduce(x_64[i+m] * a);
-        mul_img = reduce(x_64[i+m+1] * a);
+        mul_re = reduce((int64_t)x[i+m] * a);
+        mul_img = reduce((int64_t)x[i+m+1] * a);        
+	
+	x[i+m] = x[i] - mul_re;
+        x[i+m+1] = x[i+1] - mul_img;
 
-        x_64[i+m] = x_64[i] - mul_re;
-        x_64[i+m+1] = x_64[i+1] - mul_img;
+        x[i] = x[i] + mul_re;
+        x[i+1] = x[i+1] + mul_img;       
 
-        x_64[i] = x_64[i] + mul_re;
-        x_64[i+1] = x_64[i+1] + mul_img;        
+	if(m == 16 || m == 256)
+	{
+	  x[i+m] = barr_reduce(x[i+m]);	
+	  x[i+m+1] = barr_reduce(x[i+m+1]);	
+	  
+	  x[i] = barr_reduce(x[i]);	
+	  x[i+1] = barr_reduce(x[i+1]);		
+	}	
       }
       index += window;
     }
     window >>= 1;
-  }  
-
-  for(i = 0; i < PARAM_N; ++i)
-    x[i] = (int32_t)barr_reduce64(x_64[i]);
-
+  }
 }
 
 
