@@ -13,7 +13,7 @@
 #include "rng.h"
 #include "api.h"
 
-#define NRUNS 20000
+#define NRUNS 1000
 #define	MAX_MARKER_LEN		50
 #define KAT_SUCCESS          0
 #define KAT_FILE_OPEN_ERROR -1
