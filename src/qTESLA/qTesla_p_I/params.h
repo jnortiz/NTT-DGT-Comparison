@@ -29,6 +29,7 @@
 #define PARAM_KEYGEN_BOUND_S 554
 #define PARAM_S PARAM_KEYGEN_BOUND_S
 #define PARAM_R2_INVN 13632409
+#define PARAM_R2 216523736
 #define PARAM_R 172048372
 #define SHAKE shake128
 #define cSHAKE cshake128_simple
