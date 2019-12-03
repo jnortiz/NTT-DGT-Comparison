@@ -108,12 +108,13 @@ void cpapke_keypair(unsigned char *pk,
   shake256(z, 2*NEWHOPE_SYMBYTES, z, NEWHOPE_SYMBYTES);
 
   gen_a(&ahat, publicseed);
+  poly_dgt(&ahat);
 
-  poly_sample_dgt(&shat, noiseseed, 0);
-  //poly_dgt(&shat);
+  poly_sample(&shat, noiseseed, 0);
+  poly_dgt(&shat);
 
-  poly_sample_dgt(&ehat, noiseseed, 1);
-  //poly_dgt(&ehat);
+  poly_sample(&ehat, noiseseed, 1);
+  poly_dgt(&ehat);
 
   poly_mul(&ahat_shat, &shat, &ahat);
   poly_add(&bhat, &ehat, &ahat_shat);
@@ -147,13 +148,14 @@ void cpapke_enc(unsigned char *c,
 
   decode_pk(&bhat, publicseed, pk);
   gen_a(&ahat, publicseed);
+  poly_dgt(&ahat);
 
-  poly_sample_dgt(&sprime, coin, 0);
-  poly_sample_dgt(&eprime, coin, 1);
+  poly_sample(&sprime, coin, 0);
+  poly_sample(&eprime, coin, 1);
   poly_sample(&eprimeprime, coin, 2);
 
-  //poly_dgt(&sprime);
-  //poly_dgt(&eprime);
+  poly_dgt(&sprime);
+  poly_dgt(&eprime);
 
   poly_mul(&uhat, &sprime, &ahat);
   poly_add(&uhat, &uhat, &eprime);
