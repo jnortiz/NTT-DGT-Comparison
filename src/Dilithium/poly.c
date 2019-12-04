@@ -207,23 +207,25 @@ void poly_invdgt_montgomery(poly *r)
 **************************************************/
 void poly_pointwise_invmontgomery(poly *r, const poly *a, const poly *b)
 {
-  uint64_t t, s;
+  uint32_t mont_a[N];
+  uint32_t mont_const;
   unsigned int i;
-  DBENCH_START();
-  
-  for(i = 0; i < N; i += 2) 
+
+  mont_const = (uint32_t) 2365951u; // R^2 mod p s.t. R = 2^32 mod p
+
+  for(i = 0; i < N; ++i) 
   {
-    t = montgomery_reduce((uint64_t) 2365951u * a->coeffs[i]); // R^2 mod p s.t. R = 2^32 mod p
-    s = montgomery_reduce((uint64_t) 2365951u * a->coeffs[i+1]);
-
-    r->coeffs[i] = 2*Q + reduce(t * (uint64_t)b->coeffs[i] -
-                   s * (uint64_t)b->coeffs[i+1]);
-
-    r->coeffs[i+1] = montgomery_reduce(t * (uint64_t)b->coeffs[i+1] + 
-                                       s * (uint64_t)b->coeffs[i]);
+    mont_a[i] = montgomery_reduce((uint64_t)mont_const * a->coeffs[i]);
   }
 
-  DBENCH_STOP(*tmul);
+  for(i = 0; i < N; i += 2) 
+  {
+    r->coeffs[i] = montgomery_reduce((uint64_t)mont_a[i] * b->coeffs[i]) +
+                    (2*Q - montgomery_reduce((uint64_t)mont_a[i+1] * b->coeffs[i+1]));
+
+    r->coeffs[i+1] = montgomery_reduce((uint64_t)mont_a[i] * b->coeffs[i+1]) + 
+                    montgomery_reduce((uint64_t)mont_a[i+1] * b->coeffs[i]);
+  }
 }
 
 /*************************************************
