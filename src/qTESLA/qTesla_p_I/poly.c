@@ -63,6 +63,11 @@ int32_t reduce(int64_t a)
 }
 
 
+int32_t sub_reduce(int64_t a) {
+    return a - PARAM_Q * (a >= PARAM_Q);
+}
+
+
 int64_t barr_reduce64(int64_t a)
 { // Barrett reduction
   int64_t u = (a*PARAM_BARR_MULT)>>PARAM_BARR_DIV;
@@ -97,14 +102,8 @@ void dgt(poly x)
         sub_re = x[i] - x[i+m];
         sub_img = x[i+1] - x[i+m+1];
         
-        x[i] = x[i] + x[i+m];
-        x[i+1] = x[i+1] + x[i+m+1];
-
-	if(m == 256 || m == 64 || m == 16 || m == 4)
-	{
-	  x[i] = barr_reduce(x[i]);
-	  x[i+1] = barr_reduce(x[i+1]);
-	}
+        x[i] = sub_reduce(x[i] + x[i+m]);
+        x[i+1] = sub_reduce(x[i+1] + x[i+m+1]);
 
         x[i+m] = reduce((int64_t)a * sub_re);
         x[i+m+1] = reduce((int64_t)a * sub_img);        
