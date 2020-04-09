@@ -147,7 +147,8 @@ static int check_ES(poly p, unsigned int bound)
 int crypto_sign_keypair(unsigned char *pk, unsigned char *sk)
 {
   unsigned char randomness[CRYPTO_RANDOMBYTES], randomness_extended[(PARAM_K+3)*CRYPTO_SEEDBYTES];
-  poly s, s_dgt;
+  poly s;
+  poly2x s_dgt;
   poly_k e, a, t;
   int k, nonce = 0;  // Initialize domain separator for error and secret polynomials
 #ifdef STATS
@@ -209,7 +210,8 @@ int crypto_sign(unsigned char *sm, unsigned long long *smlen, const unsigned cha
   unsigned char c[CRYPTO_C_BYTES], randomness[CRYPTO_SEEDBYTES], randomness_input[CRYPTO_RANDOMBYTES+CRYPTO_SEEDBYTES+HM_BYTES];
   uint32_t pos_list[PARAM_H];
   int16_t sign_list[PARAM_H];
-  poly y, y_dgt, Sc, z; 
+  poly y, Sc, z; 
+  poly2x y_dgt;
   poly_k v, Ec, a;
   int k, rsp, nonce = 0;  // Initialize domain separator for sampling y 
 #ifdef STATS
@@ -291,7 +293,8 @@ int crypto_sign_open(unsigned char *m, unsigned long long *mlen, const unsigned 
   int16_t sign_list[PARAM_H]; 
   int32_t pk_t[PARAM_N*PARAM_K];
   poly_k w, a, Tc;
-  poly z, z_dgt;
+  poly z;
+  poly2x z_dgt;
   int k;
 
   if (smlen < CRYPTO_BYTES) return -1;

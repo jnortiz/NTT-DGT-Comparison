@@ -5,16 +5,17 @@
 #include "config.h"
 #include <stdint.h>
 
-typedef	int32_t poly[PARAM_N];
-typedef	int32_t poly_k[PARAM_N*PARAM_K];
+typedef	int32_t poly[PARAM_N] __attribute__((aligned(32)));
+typedef int64_t poly2x[PARAM_N] __attribute__((aligned(32)));
+typedef	int32_t poly_k[PARAM_N*PARAM_K] __attribute__((aligned(32)));
 
 int32_t reduce(int64_t a);
 sdigit_t barr_reduce(sdigit_t a);
 int64_t barr_reduce64(int64_t a);
-void dgt(poly x);
-void idgt(poly x);
-void poly_dgt(poly x_dgt, const poly x);
-void poly_mul(poly result, const poly x, const poly y);
+void dgt(poly2x x_dgt, poly x, int32_t *gj);
+void idgt(poly2x x_dgt, poly x);
+void poly_dgt(poly2x x_dgt, const poly x);
+void poly_mul(poly result, const poly x, const poly2x y);
 void poly_add(poly result, const poly x, const poly y);
 void poly_add_correct(poly result, const poly x, const poly y);
 void poly_sub(poly result, const poly x, const poly y);

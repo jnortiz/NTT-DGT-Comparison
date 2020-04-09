@@ -75,9 +75,11 @@ static void print_results(const char *s, unsigned long long *t, size_t tlen)
   printf("\n");
 }
 
+extern const int32_t invgj[256];
+
 int main(void) {
   unsigned int i, j;
-  unsigned long long cycles0[NRUNS], cycles1[NRUNS];
+  unsigned long long cycles0[NRUNS], cycles1[NRUNS], cycles2[NRUNS], cycles3[NRUNS];
   uint16_t nonce = 0;
   unsigned char m1[PARAM_N], m2[PARAM_N];
   poly a, b;
@@ -103,10 +105,20 @@ int main(void) {
     poly_dgt(b_dgt, b);
     poly_mul(c2, a_dgt, b_dgt);
     cycles1[i] = cpucycles() - cycles1[i];
-  }
+
+    cycles2[i] = cpucycles();
+    poly_dgt_asm(a_dgt, a, invgj);  
+    cycles2[i] = cpucycles() - cycles2[i];
+
+    cycles3[i] = cpucycles();
+    poly_idgt_asm(a_dgt, a, invgj);  
+    cycles3[i] = cpucycles() - cycles3[i];  
+}
 
   print_results("naive: ", cycles0, NRUNS);
   print_results("dgt: ", cycles1, NRUNS);
+  print_results("dgt_asm: ", cycles2, NRUNS);
+  print_results("idgt_asm: ", cycles3, NRUNS);
 
   return 0;
 }

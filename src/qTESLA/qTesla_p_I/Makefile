@@ -22,7 +22,7 @@ AR=ar rcs
 RANLIB=ranlib
 
 CFLAGS = -std=gnu11 -O3 -D $(ARCHITECTURE) -D __LINUX__ -fomit-frame-pointer
-LDFLAGS=-lm -lssl -lcrypto 
+LDFLAGS=-lm -lssl -lcrypto
 
 ifeq "$(CC)" "gcc"
     CFLAGS+= -march=native
@@ -33,7 +33,8 @@ ifeq "$(STATS)" "TRUE"
     DFLAG=-DSTATS
 endif
 
-OBJECTS_p_I = objs_p_I/sign.o objs_p_I/pack.o objs_p_I/sample.o objs_p_I/gauss.o objs_p_I/poly.o objs_p_I/consts.o objs/fips202.o objs/random.o
+OBJECTS_p_I = objs_p_I/sign.o objs_p_I/pack.o objs_p_I/sample.o objs_p_I/gauss.o objs_p_I/poly.o objs_p_I/consts.o objs_p_I/fips202.o objs_p_I/random.o objs_p_I/dgt_mul1024.o objs_p_I/s_consts.o
+
 SOURCE_MUL = tests/cpucycles.c tests/test_mul.c
 SOURCE_TEST = tests/cpucycles.c tests/test_qtesla.c
 SOURCE_KATS_GEN  = tests/rng.c tests/PQCgenKAT_sign.c
@@ -45,13 +46,17 @@ objs_p_I/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) -c $(CFLAGS) $(DFLAG) -D _qTESLA_p_I_ $< -o $@
 
-objs/random.o: random/random.c
+objs_p_I/random.o: random/random.c
 	@mkdir -p $(@D)
-	$(CC) -c $(CFLAGS) random/random.c -o objs/random.o
+	$(CC) -c $(CFLAGS) random/random.c -o objs_p_I/random.o
 
-objs/fips202.o: sha3/fips202.c
+objs_p_I/fips202.o: sha3/fips202.c
 	@mkdir -p $(@D)
-	$(CC) -c $(CFLAGS) sha3/fips202.c -o objs/fips202.o
+	$(CC) -c $(CFLAGS) sha3/fips202.c -o objs_p_I/fips202.o
+
+objs_p_I/dgt_mul1024.o: dgt_mul1024.S
+	@mkdir -p $(@D)
+	$(CC) -c $(CFLAGS) dgt_mul1024.S -o objs_p_I/dgt_mul1024.o
 
 lib_p_I: $(OBJECTS_p_I)
 	rm -rf lib_p_I
