@@ -30,11 +30,11 @@ def bit_reverse(x):
 brv_powers_of_g = bit_reverse(powers_of_g)
 brv_powers_of_g_inv = bit_reverse(powers_of_g_inv)
 
-# brv_powers_of_g = [(2**32 * xi) % p for xi in brv_powers_of_g]
-# brv_powers_of_g_inv = [(2**32 * xi) % p for xi in brv_powers_of_g_inv]
+brv_powers_of_g = [(2**32 * xi) % p for xi in brv_powers_of_g]
+brv_powers_of_g_inv = [(2**32 * xi) % p for xi in brv_powers_of_g_inv]
 
-powers_of_g = [(2**32 * xi) % p for xi in powers_of_g]
-powers_of_g_inv = [(2**32 * xi) % p for xi in powers_of_g_inv]
+# powers_of_g = [(2**32 * xi) % p for xi in powers_of_g]
+# powers_of_g_inv = [(2**32 * xi) % p for xi in powers_of_g_inv]
 
 print(powers_of_g)
 print("\n-----------------------------------\n")

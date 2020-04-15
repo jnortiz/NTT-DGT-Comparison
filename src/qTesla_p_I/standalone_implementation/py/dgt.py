@@ -57,13 +57,16 @@ def dgt_cooley_tukey(A):
             JFirst = 2 * k * Distance
             JLast = JFirst + Distance - 1
             a = pow(g, bit_reverse(k, log_2(n//2)-1))
+            print(k, end=", ")
             for j in range(JFirst, JLast+1, 1):
                 Temp = a * A[j + Distance]
                 A[j + Distance] = (A[j] - Temp) % p
                 A[j] = (A[j] + Temp) % p        
         m = m * 2
         Distance = Distance//2
+        print()
 
+    print("\n-----------------------\n")
     return A
 
 def idgt_gentleman_sande(A):
@@ -78,12 +81,13 @@ def idgt_gentleman_sande(A):
             r = 0
             while(j < n):
                 a = pow(g_inv, bit_reverse(r, log_2(n//2)-1))
-                #print(r, end=", ")
+                print(r, end=", ")
                 Temp = A[j]
                 A[j] = (Temp + A[j + Distance]) % p
                 A[j + Distance] = ((Temp - A[j + Distance]) * a) % p
                 r += 1
                 j = j + 2 * Distance
+            print()
 
         ProblemSize = ProblemSize//2
         Distance = Distance * 2

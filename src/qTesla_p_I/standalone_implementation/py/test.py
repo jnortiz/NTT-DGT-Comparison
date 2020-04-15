@@ -13,8 +13,7 @@ def gen_polynomial_modp(length):
     x = []
 
     for _ in range(length):
-        #x.append(random.randrange(0,p))
-        x.append(1)
+        x.append(random.randrange(0,p))
     
     return x
 
@@ -144,7 +143,7 @@ class TestDGT(unittest.TestCase):
 
             self.assertEqual(c, ab)
 
-    def test_mul_ct_then_gs(self):
+    def _test_mul_ct_then_gs(self):
         print("\nPolynomial multiplication using DGT (Cooley-Tukey then Gentleman-Sande)")
 
         for _ in range(NRUNS):
@@ -158,7 +157,7 @@ class TestDGT(unittest.TestCase):
 
             self.assertEqual(c, ab)
 
-    def _test_basic_behaviour(self):
+    def test_basic_behaviour(self):
 
         x = [1]*N
 
@@ -168,8 +167,6 @@ class TestDGT(unittest.TestCase):
         x_folded_twisted = [x_folded[i] * kth_root_of_i[i] % p for i in range(N//2)]
 
         aux = dgt_cooley_tukey(x_folded_twisted)
-
-        print(aux)
 
         y_folded_twisted = idgt_gentleman_sande(aux)
 
