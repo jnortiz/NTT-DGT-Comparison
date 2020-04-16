@@ -16,7 +16,7 @@
   #include <unistd.h>
 #endif
 
-#define NRUNS 1000
+#define NRUNS 5000
 
 static void poly_naivemul(poly c, const poly a, const poly b) {
   unsigned int i,j;
@@ -78,6 +78,7 @@ static void print_results(const char *s, unsigned long long *t, size_t tlen)
 int main(void) {
   unsigned int i, j;
   unsigned long long cycles0[NRUNS], cycles1[NRUNS];
+  unsigned long long cycles_dgt[NRUNS], cycles_idgt[NRUNS];
   uint16_t nonce = 0;
   unsigned char m1[PARAM_N], m2[PARAM_N];
   poly a, b;
@@ -103,10 +104,21 @@ int main(void) {
     poly_dgt(b_dgt, b);
     poly_mul(c2, a_dgt, b_dgt);
     cycles1[i] = cpucycles() - cycles1[i];
+
+    cycles_dgt[i] = cpucycles();
+    poly_dgt(a_dgt, a);
+    cycles_dgt[i] = cpucycles() - cycles_dgt[i];
+
+    cycles_idgt[i] = cpucycles();
+    poly_mul(c2, a_dgt, b_dgt);
+    cycles_idgt[i] = cpucycles() - cycles_idgt[i];
+
   }
 
   print_results("naive: ", cycles0, NRUNS);
   print_results("dgt: ", cycles1, NRUNS);
+  print_results("forward dgt: ", cycles_dgt, NRUNS);
+  print_results("inverse dgt: ", cycles_idgt, NRUNS);
 
   return 0;
 }

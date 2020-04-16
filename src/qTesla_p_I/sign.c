@@ -231,7 +231,7 @@ int crypto_sign(unsigned char *sm, unsigned long long *smlen, const unsigned cha
   ctr_sign++;
 #endif
     sample_y(y, randomness, ++nonce);           // Sample y uniformly at random from [-B,B]
-    poly_dgt (y_dgt, y);
+    poly_dgt(y_dgt, y);
     for (k=0; k<PARAM_K; k++)
       poly_mul(&v[k*PARAM_N], &a[k*PARAM_N], y_dgt);
     hash_H(c, v, randomness_input+CRYPTO_RANDOMBYTES+CRYPTO_SEEDBYTES);

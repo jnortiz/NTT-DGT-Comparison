@@ -33,7 +33,7 @@ ifeq "$(STATS)" "TRUE"
     DFLAG=-DSTATS
 endif
 
-OBJECTS_p_I = objs_p_I/sign.o objs_p_I/pack.o objs_p_I/sample.o objs_p_I/gauss.o objs_p_I/poly.o objs_p_I/consts.o objs/fips202.o objs/random.o
+OBJECTS_p_I = objs_p_I/sign.o objs_p_I/pack.o objs_p_I/sample.o objs_p_I/gauss.o objs_p_I/poly.o objs_p_I/consts.o objs/fips202.o objs/random.o 
 SOURCE_MUL = tests/cpucycles.c tests/test_mul.c
 SOURCE_TEST = tests/cpucycles.c tests/test_qtesla.c
 SOURCE_KATS_GEN  = tests/rng.c tests/PQCgenKAT_sign.c
