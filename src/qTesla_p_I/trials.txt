@@ -1,0 +1,96 @@
+Successful trials
+
+1)
+        if(
+          distance == 2 || 
+          distance == 4 || 
+          distance == 8 || 
+          distance == 16 || 
+          distance == 32 || 
+          distance == 64 || 
+          distance == 128 //|| 
+          //distance == 256 
+          //|| distance == 512
+        )
+        {
+          poly[j] = sub_reduce(poly[j]);
+          poly[j+1] = sub_reduce(poly[j+1]);
+        }
+
+qTESLA keygen: 
+median:  2190605 cycles
+average: 2241313 cycles
+
+qTESLA sign: 
+median:  2153416 cycles
+average: 2835022 cycles
+
+qTESLA verify: 
+median:  660520 cycles
+average: 688115 cycle
+
+2)
+        if(
+          //distance == 2 || 
+          distance == 4 || 
+          //distance == 8 || 
+          distance == 16 || 
+          //distance == 32 || 
+          distance == 64 || 
+          //distance == 128 || 
+          distance == 256 
+          //|| distance == 512
+        )
+        {
+          poly[j] = barr_reduce64(poly[j]);
+          poly[j+1] = barr_reduce64(poly[j+1]);
+        }
+
+qTESLA keygen: 
+median:  2176072 cycles
+average: 2239618 cycles
+
+qTESLA sign: 
+median:  2092409 cycles
+average: 2759148 cycles
+
+qTESLA verify: 
+median:  652227 cycles
+average: 678735 cycles
+
+3)
+        poly[j] = sub_re + poly[j+distance] - PARAM_Q;
+        poly[j+1] = sub_img + poly[j+distance+1] - PARAM_Q;
+
+        poly[j+distance] = reduce((int64_t)invgj[jtwiddle] * (sub_re - poly[j+distance]));
+        poly[j+distance+1] = reduce((int64_t)invgj[jtwiddle++] * (sub_img - poly[j+distance+1]));
+
+        if(
+          //distance == 2 || 
+          distance == 4 || 
+          //distance == 8 || 
+          distance == 16 || 
+          //distance == 32 || 
+          distance == 64 || 
+          //distance == 128 || 
+          distance == 256 
+          //|| distance == 512
+        )
+        {
+          poly[j] = barr_reduce64(poly[j]);
+          poly[j+1] = barr_reduce64(poly[j+1]);
+        }
+
+qTESLA keygen: 
+median:  2143301 cycles
+average: 2204064 cycles
+
+qTESLA sign: 
+median:  2087842 cycles
+average: 2758714 cycles
+
+qTESLA verify: 
+median:  648136 cycles
+average: 675405 cycles        
+
+4) Option 1) without if but with loop unrolling
