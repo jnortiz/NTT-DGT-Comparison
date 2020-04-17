@@ -16,7 +16,7 @@
   #include <unistd.h>
 #endif
 
-#define NRUNS 1000
+#define NRUNS 5000
 
 static void poly_naivemul(poly c, const poly a, const poly b) {
   unsigned int i,j;
