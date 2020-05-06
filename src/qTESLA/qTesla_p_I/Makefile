@@ -33,7 +33,10 @@ ifeq "$(STATS)" "TRUE"
     DFLAG=-DSTATS
 endif
 
-OBJECTS_p_I = objs_p_I/sign.o objs_p_I/pack.o objs_p_I/sample.o objs_p_I/gauss.o objs_p_I/poly.o objs_p_I/consts.o objs_p_I/fips202.o objs_p_I/random.o objs_p_I/dgt_mul1024.o objs_p_I/s_consts.o
+OBJECTS_ASM_p_I = objs_p_I/s_consts.o objs_p_I/dgt_mul1024.o
+OBJECTS_EXTRAS = objs/fips202x4.o objs/KeccakP-1600-times4-SIMD256.o
+
+OBJECTS_p_I = objs_p_I/sign.o objs_p_I/pack.o objs_p_I/sample.o objs_p_I/gauss.o objs_p_I/poly.o objs_p_I/consts.o $(OBJECTS_ASM_p_I) objs/fips202.o objs/random.o $(OBJECTS_EXTRAS)
 
 SOURCE_MUL = tests/cpucycles.c tests/test_mul.c
 SOURCE_TEST = tests/cpucycles.c tests/test_qtesla.c
@@ -46,13 +49,19 @@ objs_p_I/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) -c $(CFLAGS) $(DFLAG) -D _qTESLA_p_I_ $< -o $@
 
-objs_p_I/random.o: random/random.c
+objs/random.o: random/random.c
 	@mkdir -p $(@D)
-	$(CC) -c $(CFLAGS) random/random.c -o objs_p_I/random.o
+	$(CC) -c $(CFLAGS) random/random.c -o objs/random.o
 
-objs_p_I/fips202.o: sha3/fips202.c
+objs/fips202.o: sha3/fips202.c
 	@mkdir -p $(@D)
-	$(CC) -c $(CFLAGS) sha3/fips202.c -o objs_p_I/fips202.o
+	$(CC) -c $(CFLAGS) sha3/fips202.c -o objs/fips202.o
+
+objs/fips202x4.o: sha3/fips202x4.c
+	$(CC) -c $(CFLAGS) sha3/fips202x4.c -o objs/fips202x4.o
+
+objs/KeccakP-1600-times4-SIMD256.o: sha3/keccak4x/KeccakP-1600-times4-SIMD256.c
+	$(CC) -c $(CFLAGS) sha3/keccak4x/KeccakP-1600-times4-SIMD256.c -o objs/KeccakP-1600-times4-SIMD256.o
 
 objs_p_I/dgt_mul1024.o: dgt_mul1024.S
 	@mkdir -p $(@D)
