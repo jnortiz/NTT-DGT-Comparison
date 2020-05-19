@@ -1,7 +1,7 @@
 /*************************************************************************************
 * qTESLA: an efficient post-quantum signature scheme based on the R-LWE problem
 *
-* Abstract: DGT, modular reduction and polynomial functions
+* Abstract: NTT, modular reduction and polynomial functions
 **************************************************************************************/
 
 #include "poly.h"
@@ -52,6 +52,9 @@ void poly_uniform(poly_k a, const unsigned char *seed)
   }
 }
 
+int32_t sub_reduce(int64_t a) {
+    return a - PARAM_Q * (a >= PARAM_Q);
+}
 
 int32_t reduce(int64_t a)
 { // Montgomery reduction
@@ -61,11 +64,6 @@ int32_t reduce(int64_t a)
   u *= PARAM_Q;
   a += u;
   return (int32_t)(a>>32);
-}
-
-
-int32_t sub_reduce(int64_t a) {
-    return a - PARAM_Q * (a >= PARAM_Q);
 }
 
 
@@ -110,6 +108,7 @@ void dgt(poly x)
     }
     window <<= 1;
   }
+
 }
 
 
@@ -119,10 +118,10 @@ void idgt(poly x)
   int i, index, j, m, window;
 
   window = 256;
-  for(m = 2; m < PARAM_N; m <<= 1) 
+  for(m = 2; m <= 512; m <<= 1) 
   {
     index = 0;
-    for(j = 0; j < m; j+=2) 
+    for(j = 0; j < m; j += 2) 
     {
       a = invgj[index];
       for(i = j; i < PARAM_N; i += (m << 1)) 
@@ -164,8 +163,7 @@ void poly_dgt(poly x_dgt, const poly x)
 {
   int i, j;
 
-  j = 0;
-  for(i = 0; i < PARAM_N; i+=2) {             
+  for(i = 0, j = 0; i < PARAM_N && j < 512; i+=2, j++) {             
       x_dgt[i] = reduce(
         (int64_t)x[j] * nthroots[i] - 
         (int64_t)x[512+j] * nthroots[i+1]
@@ -175,47 +173,43 @@ void poly_dgt(poly x_dgt, const poly x)
         (int64_t)x[j] * nthroots[i+1] + 
         (int64_t)x[512+j] * nthroots[i]
       );
-
-      j++;
   } 
 
   dgt(x_dgt);
 }
 
 
-void poly_mul(poly result, const poly x, const poly y)
+void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
 { /* It is assumed that both signals are already in the DGT domain. 
      The DGT counterpart of poly_b was computed in sign.c. */  
-  poly aux_mul;
+  poly _mul;
   int i, j;
 
   /* Calculating the point-wise multiplication of input signals */
   for(i = 0; i < PARAM_N; i+=2) {             
-    aux_mul[i] = reduce(
-      (int64_t)x[i] * y[i] -
-      (int64_t)x[i+1] * y[i+1]
+    _mul[i] = reduce(
+      (int64_t)_poly_a[i] * _poly_b[i] -
+      (int64_t)_poly_a[i+1] * _poly_b[i+1]
     );
 
-    aux_mul[i+1] = reduce(
-      (int64_t)x[i] * y[i+1] + 
-      (int64_t)x[i+1] * y[i]
+    _mul[i+1] = reduce(
+      (int64_t)_poly_a[i] * _poly_b[i+1] + 
+      (int64_t)_poly_a[i+1] * _poly_b[i]
     );
   }
 
   /* Recovering the multiplication result in Z[x]/<x^n+1> */
-  idgt(aux_mul);
+  idgt(_mul);
 
   /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
-  j = 0;
-  for(i = 0; i < PARAM_N; i+=2) {
-      result[j] = reduce(
-               (int64_t)aux_mul[i] * invnthroots[i] -
-               (int64_t)aux_mul[i+1] * invnthroots[i+1]);
+  for(i = 0, j = 0; i < PARAM_N && j < 512; i+=2, j++) {
+      _output[j] = reduce(
+               (int64_t)_mul[i] * invnthroots[i] -
+               (int64_t)_mul[i+1] * invnthroots[i+1]);
 
-      result[j+512] = reduce(
-               (int64_t)aux_mul[i] * invnthroots[i+1] + 
-               (int64_t)aux_mul[i+1] * invnthroots[i]);
-      j++;
+      _output[j+512] = reduce(
+               (int64_t)_mul[i] * invnthroots[i+1] + 
+               (int64_t)_mul[i+1] * invnthroots[i]);
   }
 }
 
@@ -252,7 +246,7 @@ void poly_sub_reduce(poly result, const poly x, const poly y)
 { // Polynomial subtraction result = x-y
 
     for (int i=0; i<PARAM_N; i++)
-      result[i] = (int32_t) barr_reduce(x[i] - y[i]);
+      result[i] = (int32_t)barr_reduce(x[i] - y[i]);
 }
 
 

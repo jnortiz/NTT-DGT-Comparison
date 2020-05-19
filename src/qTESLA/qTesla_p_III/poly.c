@@ -84,7 +84,7 @@ void dgt(poly x)
   int i, index, j, m, window;
 
   window = 1;
-  for(m = PARAM_K2; m >= 2; m >>= 1) {
+  for(m = 1024; m >= 2; m >>= 1) {
     index = 0;
     for(j = 0; j < m; j += 2) {
       a = gj[index];
@@ -112,8 +112,8 @@ void idgt(poly x)
   int32_t a, mul_re, mul_img;
   int i, index, j, m, window;
 
-  window = (PARAM_K2 >> 1);
-  for(m = 2; m <= PARAM_K2; m <<= 1) {
+  window = (1024 >> 1);
+  for(m = 2; m <= 1024; m <<= 1) {
     index = 0;
     for(j = 0; j < m; j += 2) {
       a = invgj[index];
@@ -155,12 +155,11 @@ void idgt(poly x)
   }
 }
 
-
 static void poly_pointwise(poly result, const poly x, const poly y)
 { // Pointwise polynomial multiplication result = x.y
 
   for (int i=0; i<PARAM_N; i++)
-    result[i] = reduce((int64_t)x[i] * y[i]);
+    result[i] = reduce((int64_t)x[i]*y[i]);
 }
 
 
@@ -169,14 +168,14 @@ void poly_dgt(poly x_dgt, const poly x)
 
   int i, j;
 
-  for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
+  for(i = 0, j = 0; i < PARAM_N && j < 1024; i+=2, j++) {             
       x_dgt[i] = barr_reduce(reduce(
         (int64_t)x[j] * nthroots[i] - 
-        (int64_t)x[PARAM_K2+j] * nthroots[i+1]));
+        (int64_t)x[1024+j] * nthroots[i+1]));
       
       x_dgt[i+1] = barr_reduce(reduce(
         (int64_t)x[j] * nthroots[i+1] + 
-        (int64_t)x[PARAM_K2+j] * nthroots[i]));
+        (int64_t)x[1024+j] * nthroots[i]));
   } 
 
   dgt(x_dgt);
@@ -192,15 +191,15 @@ void poly_mul(poly result, const poly a, const poly b)
   int i, j;
 
   /* Calculating the point-wise multiplication of input signals */
-  for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {             
+  for(i = 0, j = 0; i < PARAM_N && j < 1024; i+=2, j++) {             
     mul[i] = barr_reduce64(reduce(
       (int64_t)a[j] * b[i] - 
-      (int64_t)a[j+PARAM_K2] * b[i+1])
+      (int64_t)a[j+1024] * b[i+1])
     );
 
     mul[i+1] = barr_reduce64(reduce(
       (int64_t)a[j] * b[i+1] + 
-      (int64_t)a[j+PARAM_K2] * b[i])
+      (int64_t)a[j+1024] * b[i])
     );
   }
 
@@ -208,12 +207,12 @@ void poly_mul(poly result, const poly a, const poly b)
   idgt(mul);
 
   /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
-  for(i = 0, j = 0; i < PARAM_N && j < PARAM_K2; i+=2, j++) {
+  for(i = 0, j = 0; i < PARAM_N && j < 1024; i+=2, j++) {
       result[j] = barr_reduce(reduce(
         (int64_t)mul[i] * invnthroots[i] - 
         (int64_t)mul[i+1] * invnthroots[i+1])
       );
-      result[j + PARAM_K2] = barr_reduce(reduce(
+      result[j + 1024] = barr_reduce(reduce(
         (int64_t)mul[i] * invnthroots[i+1] + 
         (int64_t)mul[i+1] * invnthroots[i])
       );

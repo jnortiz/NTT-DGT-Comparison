@@ -7,7 +7,6 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-#define PARAM_K2 512
 #define PARAM_N 1024
 #define PARAM_N_LOG 10
 #define PARAM_SIGMA 8.5
