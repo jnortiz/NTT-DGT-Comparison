@@ -79,17 +79,18 @@ sdigit_t barr_reduce(sdigit_t a)
 
 void dgt(poly x)
 {  
+  int32_t a, sub_re, sub_img;
   int i, index, j, m, window;
 
   window = 1;
   for(m = 1024; m >= 2; m >>= 1) {
     index = 0;
     for(j = 0; j < m; j += 2) {
-      int32_t a = gj[index];
+      a = gj[index];
 
       for(i = j; i < PARAM_N; i += (m << 1)) {
-        int32_t sub_re = x[i] - x[i+m];
-        int32_t sub_img = x[i+1] - x[i+m+1];
+        sub_re = x[i] - x[i+m];
+        sub_img = x[i+1] - x[i+m+1];
         
         x[i] = barr_reduce(x[i] + x[i+m]);
         x[i+1] = barr_reduce(x[i+1] + x[i+m+1]);
@@ -107,16 +108,17 @@ void dgt(poly x)
 void idgt(poly x)
 {
   int i, index, j, m, window;
+  int32_t a, mul_re, mul_img;
 
   window = (1024 >> 1);
   for(m = 2; m <= 1024; m <<= 1) {
     index = 0;
     for(j = 0; j < m; j += 2) {
-      int32_t a = invgj[index];
+      a = invgj[index];
       
       for(i = j; i < PARAM_N; i += (m << 1)) {
-        int32_t mul_re = reduce((int64_t)x[i+m] * a);
-        int32_t mul_img = reduce((int64_t)x[i+m+1] * a);
+        mul_re = reduce((int64_t)x[i+m] * a);
+        mul_img = reduce((int64_t)x[i+m+1] * a);
         
         x[i+m] = x[i] - mul_re; // Omit reduction, be lazy
         x[i+m+1] = x[i+1] - mul_img; // Omit reduction, be lazy
@@ -135,11 +137,11 @@ void idgt(poly x)
 
     index = 0;
     for(j = 0; j < m; j += 2) {
-      int32_t a = invgj[index];
+      a = invgj[index];
       
       for(i = j; i < PARAM_N; i += (m << 1)) {
-        int32_t mul_re = reduce((int64_t)x[i+m] * a);
-        int32_t mul_img = reduce((int64_t)x[i+m+1] * a);
+        mul_re = reduce((int64_t)x[i+m] * a);
+        mul_img = reduce((int64_t)x[i+m+1] * a);
         
         x[i+m] = barr_reduce(x[i] - mul_re);
         x[i+m+1] = barr_reduce(x[i+1] - mul_img);
@@ -167,18 +169,19 @@ void poly_dgt(poly x_dgt, const poly x)
 
   int i, j;
 
-  for(i = 0, j = 0; i < PARAM_N && j < 1024; i+=2, j++) {             
-      x_dgt[i] = barr_reduce(reduce(
+  j = 0;
+  for(i = 0; i < PARAM_N; i+=2) {             
+      x_dgt[i] = reduce(
         (int64_t)x[j] * nthroots[i] - 
-        (int64_t)x[1024+j] * nthroots[i+1]));
+        (int64_t)x[1024+j] * nthroots[i+1]);
       
-      x_dgt[i+1] = barr_reduce(reduce(
+      x_dgt[i+1] = reduce(
         (int64_t)x[j] * nthroots[i+1] + 
-        (int64_t)x[1024+j] * nthroots[i]));
+        (int64_t)x[1024+j] * nthroots[i]);
+      j++;
   } 
 
   dgt(x_dgt);
-    
 }
 
 
@@ -190,31 +193,28 @@ void poly_mul(poly result, const poly a, const poly b)
   int i, j;
 
   /* Calculating the point-wise multiplication of input signals */
-  for(i = 0, j = 0; i < PARAM_N && j < 1024; i+=2, j++) {             
-    mul[i] = barr_reduce64(reduce(
-      (int64_t)a[j] * b[i] - 
-      (int64_t)a[j+1024] * b[i+1])
-    );
-
-    mul[i+1] = barr_reduce64(reduce(
-      (int64_t)a[j] * b[i+1] + 
-      (int64_t)a[j+1024] * b[i])
-    );
+  for(i = 0; i < PARAM_N; i+=2) {             
+    mul[i] = reduce(
+      (int64_t)a[i] * b[i] - 
+      (int64_t)a[i+1] * b[i+1]);
+    mul[i+1] = reduce(
+      (int64_t)a[i] * b[i+1] + 
+      (int64_t)a[i+1] * b[i]);
   }
 
   /* Recovering the multiplication result in Z[x]/<x^n+1> */
   idgt(mul);
 
   /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
-  for(i = 0, j = 0; i < PARAM_N && j < 1024; i+=2, j++) {
-      result[j] = barr_reduce(reduce(
+  j = 0;
+  for(i = 0; i < PARAM_N; i+=2) {
+      result[j] = reduce(
         (int64_t)mul[i] * invnthroots[i] - 
-        (int64_t)mul[i+1] * invnthroots[i+1])
-      );
-      result[j + 1024] = barr_reduce(reduce(
+        (int64_t)mul[i+1] * invnthroots[i+1]);
+      result[j+1024] = reduce(
         (int64_t)mul[i] * invnthroots[i+1] + 
-        (int64_t)mul[i+1] * invnthroots[i])
-      );
+        (int64_t)mul[i+1] * invnthroots[i]);
+      j++;
   }
 }
 

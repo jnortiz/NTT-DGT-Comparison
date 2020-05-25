@@ -84,6 +84,7 @@ sdigit_t barr_reduce(sdigit_t a)
 
 void dgt(poly x)
 {
+  int32_t a, sub_re, sub_img;
   int i, index, j, m, window;
 
   window = 1;
@@ -92,11 +93,11 @@ void dgt(poly x)
     index = 0;
     for(j = 0; j < m; j += 2) 
     {
-      int32_t a = gj[index];
+      a = gj[index];
       for(i = j; i < PARAM_N; i += (m << 1)) 
       {
-        int32_t sub_re = x[i] - x[i+m];
-        int32_t sub_img = x[i+1] - x[i+m+1];
+        sub_re = x[i] - x[i+m];
+        sub_img = x[i+1] - x[i+m+1];
         
         x[i] = x[i] + x[i+m] - PARAM_Q;
         x[i+1] = x[i+1] + x[i+m+1] - PARAM_Q;
@@ -117,6 +118,7 @@ void dgt(poly x)
 
 void idgt(poly x)
 {
+  int32_t a, mul_re, mul_img;
   int i, index, j, m, window;
 
   window = 256;
@@ -125,13 +127,13 @@ void idgt(poly x)
     index = 0;
     for(j = 0; j < m; j += 2) 
     {
-      int32_t a = invgj[index];
+      a = invgj[index];
       for(i = j; i < PARAM_N; i += (m << 1)) 
       {
-        int32_t mul_re = reduce((int64_t)x[i+m] * a);
-        int32_t mul_img = reduce((int64_t)x[i+m+1] * a);        
+        mul_re = reduce((int64_t)x[i+m] * a);
+        mul_img = reduce((int64_t)x[i+m+1] * a);        
 	
-	      x[i+m] = x[i] - mul_re;
+	x[i+m] = x[i] - mul_re;
         x[i+m] += (x[i+m] >> (RADIX32-1)) & PARAM_Q;
 
         x[i+m+1] = x[i+1] - mul_img;
@@ -162,53 +164,56 @@ void poly_dgt(poly x_dgt, const poly x)
 {
   int i, j;
 
-  for(i = 0, j = 0; i < PARAM_N && j < 512; i+=2, j++) {             
+  j = 0;
+  for(i = 0; i < PARAM_N; i+=2) {             
       x_dgt[i] = reduce(
         (int64_t)x[j] * nthroots[i] - 
         (int64_t)x[512+j] * nthroots[i+1]
       );
-      
       x_dgt[i+1] = reduce(
         (int64_t)x[j] * nthroots[i+1] + 
         (int64_t)x[512+j] * nthroots[i]
       );
+      j++;
   } 
 
   dgt(x_dgt);
 }
 
 
-void poly_mul(poly _output, const poly _poly_a, const poly _poly_b)
+void poly_mul(poly result, const poly a, const poly b)
 { /* It is assumed that both signals are already in the DGT domain. 
      The DGT counterpart of poly_b was computed in sign.c. */  
-  poly _mul;
+  poly mul;
   int i, j;
 
   /* Calculating the point-wise multiplication of input signals */
   for(i = 0; i < PARAM_N; i+=2) {             
-    _mul[i] = reduce(
-      (int64_t)_poly_a[i] * _poly_b[i] -
-      (int64_t)_poly_a[i+1] * _poly_b[i+1]
+    mul[i] = reduce(
+      (int64_t)a[i] * b[i] -
+      (int64_t)a[i+1] * b[i+1]
     );
 
-    _mul[i+1] = reduce(
-      (int64_t)_poly_a[i] * _poly_b[i+1] + 
-      (int64_t)_poly_a[i+1] * _poly_b[i]
+    mul[i+1] = reduce(
+      (int64_t)a[i] * b[i+1] + 
+      (int64_t)a[i+1] * b[i]
     );
   }
 
   /* Recovering the multiplication result in Z[x]/<x^n+1> */
-  idgt(_mul);
+  idgt(mul);
 
   /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
-  for(i = 0, j = 0; i < PARAM_N && j < 512; i+=2, j++) {
-      _output[j] = reduce(
-               (int64_t)_mul[i] * invnthroots[i] -
-               (int64_t)_mul[i+1] * invnthroots[i+1]);
+  j = 0;
+  for(i = 0; i < PARAM_N; i+=2) {
+      result[j] = reduce(
+               (int64_t)mul[i] * invnthroots[i] -
+               (int64_t)mul[i+1] * invnthroots[i+1]);
 
-      _output[j+512] = reduce(
-               (int64_t)_mul[i] * invnthroots[i+1] + 
-               (int64_t)_mul[i+1] * invnthroots[i]);
+      result[j+512] = reduce(
+               (int64_t)mul[i] * invnthroots[i+1] + 
+               (int64_t)mul[i+1] * invnthroots[i]);
+      j++;
   }
 }
 
@@ -250,7 +255,7 @@ void poly_sub_reduce(poly result, const poly x, const poly y)
 
 
 /********************************************************************************************
-* Name:        sparse_mul8
+* Name:        sparsemul8
 * Description: performs sparse polynomial multiplication
 * Parameters:  inputs:
 *              - const unsigned char* s: part of the secret key
@@ -282,7 +287,7 @@ void sparse_mul8(poly prod, const unsigned char *s, const uint32_t pos_list[PARA
 
 
 /********************************************************************************************
-* Name:        sparse_mul32
+* Name:        sparsemul32
 * Description: performs sparse polynomial multiplication 
 * Parameters:  inputs:
 *              - const int32_t* pk: part of the public key
