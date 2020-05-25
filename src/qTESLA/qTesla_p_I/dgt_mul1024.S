@@ -9,6 +9,7 @@
 #define PARAM_BARR_DIV 30
 
 #define LAZYR
+#define BARRR
 
 .text
 //**********************************************************************************
@@ -54,6 +55,24 @@ loop_dgt123:
   vpaddq       ymm2, ymm2, ymm6
   vpaddq       ymm3, ymm3, ymm7
   
+#ifndef BARRR
+  vpsubd       ymm0, ymm0, ymm15                      // If result >= q then subtract q    
+  vpsubd       ymm1, ymm1, ymm15                     
+  vpsubd       ymm2, ymm2, ymm15                      
+  vpsubd       ymm3, ymm3, ymm15    
+  vpsrad       ymm4, ymm0, 31                 
+  vpsrad       ymm5, ymm1, 31                       
+  vpsrad       ymm6, ymm2, 31                       
+  vpsrad       ymm7, ymm3, 31   
+  vpand        ymm4, ymm4, ymm15                                             
+  vpand        ymm5, ymm5, ymm15                       
+  vpand        ymm6, ymm6, ymm15                   
+  vpand        ymm7, ymm7, ymm15
+  vpaddd       ymm0, ymm0, ymm4
+  vpaddd       ymm1, ymm1, ymm5                     
+  vpaddd       ymm2, ymm2, ymm6                      
+  vpaddd       ymm3, ymm3, ymm7
+#else
   vpmuldq      ymm4, ymm0, ymm13 // barr_reduce(add)
   vpmuldq      ymm5, ymm1, ymm13 // barr_reduce(add)
   vpmuldq      ymm6, ymm2, ymm13 // barr_reduce(add)
@@ -70,7 +89,8 @@ loop_dgt123:
   vpsubq       ymm1, ymm1, ymm5
   vpsubq       ymm2, ymm2, ymm6
   vpsubq       ymm3, ymm3, ymm7
-  
+#endif
+
   vpmovsxdq    ymm4, XMMWORD PTR [reg_p3+r8]
   vpmovsxdq    ymm5, XMMWORD PTR [reg_p3+r8+64*4]
   vpmovsxdq    ymm6, XMMWORD PTR [reg_p3+r8+128*4]
@@ -111,6 +131,20 @@ loop_dgt123:
   vpaddq       ymm3, ymm5, ymm7
   
 #ifndef LAZYR
+#ifndef BARRR
+  vpsrad       ymm4, ymm0, 31                         // If result < 0 then add q                   
+  vpsrad       ymm5, ymm1, 31                       
+  vpsrad       ymm6, ymm2, 31                       
+  vpsrad       ymm7, ymm3, 31   
+  vpand        ymm4, ymm4, ymm15                                             
+  vpand        ymm5, ymm5, ymm15                       
+  vpand        ymm6, ymm6, ymm15                    
+  vpand        ymm7, ymm7, ymm15
+  vpaddd       ymm0, ymm4, ymm0                      
+  vpaddd       ymm1, ymm5, ymm1                     
+  vpaddd       ymm2, ymm6, ymm2
+  vpaddd       ymm3, ymm7, ymm3
+#else
   vpmuldq      ymm4, ymm0, ymm13 // barr_reduce(add)
   vpmuldq      ymm6, ymm1, ymm13
   vpmuldq      ymm5, ymm2, ymm13
@@ -127,6 +161,7 @@ loop_dgt123:
   vpsubq       ymm1, ymm1, ymm6
   vpsubq       ymm2, ymm2, ymm5
   vpsubq       ymm3, ymm3, ymm7
+#endif
 #endif
 
   vpmovsxdq    ymm12, XMMWORD PTR [reg_p3+2*r8]
@@ -248,6 +283,20 @@ loop_dgt4:
   vpaddq       ymm3, ymm6, ymm7
   
 #ifndef LAZYR
+#ifndef BARRR
+  vpsrad       ymm4, ymm0, 31                         // If result < 0 then add q                   
+  vpsrad       ymm5, ymm1, 31                       
+  vpsrad       ymm6, ymm2, 31                       
+  vpsrad       ymm7, ymm3, 31   
+  vpand        ymm4, ymm4, ymm15                                             
+  vpand        ymm5, ymm5, ymm15                       
+  vpand        ymm6, ymm6, ymm15                    
+  vpand        ymm7, ymm7, ymm15
+  vpaddd       ymm0, ymm4, ymm0                      
+  vpaddd       ymm1, ymm5, ymm1                     
+  vpaddd       ymm2, ymm6, ymm2
+  vpaddd       ymm3, ymm7, ymm3
+#else
   vpmuldq      ymm4, ymm0, ymm13 // barr_reduce(add)
   vpmuldq      ymm5, ymm1, ymm13 // barr_reduce(add)
   vpmuldq      ymm6, ymm2, ymm13 // barr_reduce(add)
@@ -264,6 +313,7 @@ loop_dgt4:
   vpsubq       ymm1, ymm1, ymm5
   vpsubq       ymm2, ymm2, ymm6
   vpsubq       ymm3, ymm3, ymm7
+#endif
 #endif
 
   vpmuldq      ymm4, ymm8, ymm12
@@ -410,6 +460,20 @@ loop_dgt6789:
   vpaddq       ymm3, ymm3, ymm7
 
 #ifndef LAZYR
+#ifndef BARRR
+  vpsrad       ymm4, ymm0, 31                         // If result < 0 then add q                   
+  vpsrad       ymm5, ymm1, 31                       
+  vpsrad       ymm6, ymm2, 31                       
+  vpsrad       ymm7, ymm3, 31   
+  vpand        ymm4, ymm4, ymm15                                             
+  vpand        ymm5, ymm5, ymm15                       
+  vpand        ymm6, ymm6, ymm15                    
+  vpand        ymm7, ymm7, ymm15
+  vpaddd       ymm0, ymm4, ymm0                      
+  vpaddd       ymm1, ymm5, ymm1                     
+  vpaddd       ymm2, ymm6, ymm2
+  vpaddd       ymm3, ymm7, ymm3
+#else
   vpmuldq      ymm4, ymm0, ymm13 // barr_reduce(add)
   vpmuldq      ymm5, ymm1, ymm13 // barr_reduce(add)
   vpmuldq      ymm6, ymm2, ymm13 // barr_reduce(add)
@@ -426,6 +490,7 @@ loop_dgt6789:
   vpsubq       ymm1, ymm1, ymm5
   vpsubq       ymm2, ymm2, ymm6
   vpsubq       ymm3, ymm3, ymm7
+#endif
 #endif
   
   vpmovsxdq    ymm12, XMMWORD PTR [reg_p3]
@@ -532,6 +597,20 @@ loop_dgt6789:
   vpaddq       ymm3, ymm6, ymm7
   
 #ifndef LAZYR
+#ifndef BARRR
+  vpsrad       ymm4, ymm0, 31                         // If result < 0 then add q                   
+  vpsrad       ymm5, ymm1, 31                       
+  vpsrad       ymm6, ymm2, 31                       
+  vpsrad       ymm7, ymm3, 31   
+  vpand        ymm4, ymm4, ymm15                                             
+  vpand        ymm5, ymm5, ymm15                       
+  vpand        ymm6, ymm6, ymm15                    
+  vpand        ymm7, ymm7, ymm15
+  vpaddd       ymm0, ymm4, ymm0                      
+  vpaddd       ymm1, ymm5, ymm1                     
+  vpaddd       ymm2, ymm6, ymm2
+  vpaddd       ymm3, ymm7, ymm3
+#else
   vpmuldq      ymm4, ymm0, ymm13 // barr_reduce(add)
   vpmuldq      ymm5, ymm1, ymm13 // barr_reduce(add)
   vpmuldq      ymm6, ymm2, ymm13 // barr_reduce(add)
@@ -548,6 +627,7 @@ loop_dgt6789:
   vpsubq       ymm1, ymm1, ymm5
   vpsubq       ymm2, ymm2, ymm6
   vpsubq       ymm3, ymm3, ymm7
+#endif
 #endif
   
   vpmovsxdq    ymm12, XMMWORD PTR [reg_p3]
@@ -814,7 +894,7 @@ loop_pmul3:
   vmovdqa      ymm1, [reg_p2+4*rax+8*4]
   vmovdqa      ymm2, [reg_p2+4*rax+8*8]
   vmovdqa      ymm3, [reg_p2+4*rax+8*12]
-  vpmovsxdq      ymm4, XMMWORD PTR [reg_p3+2*rax]                     // Load a[j]
+  vpmovsxdq      ymm4, XMMWORD PTR [reg_p3+2*rax]                     // Load invnthroots[j]
   vpmovsxdq      ymm5, XMMWORD PTR [reg_p3+2*rax+4*4]
   vpmovsxdq      ymm6, XMMWORD PTR [reg_p3+2*rax+4*8]
   vpmovsxdq      ymm7, XMMWORD PTR [reg_p3+2*rax+4*12]
@@ -876,7 +956,8 @@ loop_pmul3:
   dec          r10
   jnz          loop_pmul3
   ret
-
+  
+//#undef LAZYR
 //**********************************************************************************
 //  Inverse DGT, case N = 1024
 //  Operation: c [reg_p1] <- IDGT(a) [reg_p2], 
@@ -916,6 +997,7 @@ loop_idgt1234:
   vpmuldq      ymm6, ymm10, ymm12
   vpmuldq      ymm7, ymm11, ymm12
   
+#ifdef LAZYR
   vpmuldq      ymm8, ymm4, ymm14 // reduce(a)
   vpmuldq      ymm9, ymm5, ymm14
   vpmuldq      ymm10, ymm6, ymm14
@@ -932,6 +1014,7 @@ loop_idgt1234:
   vpsrlq       ymm5, ymm5, 32
   vpsrlq       ymm6, ymm6, 32
   vpsrlq       ymm7, ymm7, 32
+#endif
 
   vpsubq       ymm8, ymm0, ymm4
   vpsubq       ymm9, ymm1, ymm5
@@ -959,7 +1042,21 @@ loop_idgt1234:
   vpsubq       ymm1, ymm1, ymm5
   vpsubq       ymm2, ymm2, ymm6
   vpsubq       ymm3, ymm3, ymm7
-  
+
+#ifndef BARRR
+  vpsrad       ymm4, ymm8, 31                         // If result < 0 then add q                   
+  vpsrad       ymm5, ymm9, 31                       
+  vpsrad       ymm6, ymm10, 31                       
+  vpsrad       ymm7, ymm11, 31   
+  vpand        ymm4, ymm4, ymm15                                             
+  vpand        ymm5, ymm5, ymm15                       
+  vpand        ymm6, ymm6, ymm15                    
+  vpand        ymm7, ymm7, ymm15
+  vpaddd       ymm8, ymm8, ymm4
+  vpaddd       ymm9, ymm9, ymm5
+  vpaddd       ymm10, ymm10, ymm6
+  vpaddd       ymm11, ymm11, ymm7
+#else
   vpmuldq      ymm4, ymm8, ymm13 // barr_reduce(sub)
   vpmuldq      ymm5, ymm9, ymm13
   vpmuldq      ymm6, ymm10, ymm13
@@ -976,6 +1073,7 @@ loop_idgt1234:
   vpsubq       ymm9, ymm9, ymm5
   vpsubq       ymm10, ymm10, ymm6
   vpsubq       ymm11, ymm11, ymm7
+#endif
 #endif
 
   vperm2i128   ymm4, ymm0, ymm8, 0x31 // sub = x[i] - x[i+m]
@@ -1041,22 +1139,18 @@ loop_idgt1234:
   vpsubq       ymm2, ymm2, ymm6
   vpsubq       ymm3, ymm3, ymm7
   
-  vpmuldq      ymm4, ymm8, ymm13 // barr_reduce(sub)
-  vpmuldq      ymm5, ymm9, ymm13
-  vpmuldq      ymm6, ymm10, ymm13
-  vpmuldq      ymm7, ymm11, ymm13
-  vpsrlq       ymm4, ymm4, PARAM_BARR_DIV
-  vpsrlq       ymm5, ymm5, PARAM_BARR_DIV
-  vpsrlq       ymm6, ymm6, PARAM_BARR_DIV
-  vpsrlq       ymm7, ymm7, PARAM_BARR_DIV
-  vpmuludq     ymm4, ymm4, ymm15
-  vpmuludq     ymm5, ymm5, ymm15
-  vpmuludq     ymm6, ymm6, ymm15
-  vpmuludq     ymm7, ymm7, ymm15
-  vpsubq       ymm4, ymm8, ymm4
-  vpsubq       ymm5, ymm9, ymm5
-  vpsubq       ymm6, ymm10, ymm6
-  vpsubq       ymm7, ymm11, ymm7
+  vpsrad       ymm4, ymm8, 31                         // If result < 0 then add q                   
+  vpsrad       ymm5, ymm9, 31                       
+  vpsrad       ymm6, ymm10, 31                       
+  vpsrad       ymm7, ymm11, 31   
+  vpand        ymm4, ymm4, ymm15                                             
+  vpand        ymm5, ymm5, ymm15                       
+  vpand        ymm6, ymm6, ymm15                    
+  vpand        ymm7, ymm7, ymm15
+  vpaddd       ymm4, ymm8, ymm4
+  vpaddd       ymm5, ymm9, ymm5
+  vpaddd       ymm6, ymm10, ymm6
+  vpaddd       ymm7, ymm11, ymm7
 #else
   vmovdqa      ymm4, ymm8
   vmovdqa      ymm5, ymm9
@@ -1131,22 +1225,18 @@ loop_idgt1234:
   vpsubq       ymm2, ymm2, ymm6
   vpsubq       ymm3, ymm3, ymm7
   
-  vpmuldq      ymm4, ymm8, ymm13 // barr_reduce(sub)
-  vpmuldq      ymm5, ymm9, ymm13
-  vpmuldq      ymm6, ymm10, ymm13
-  vpmuldq      ymm7, ymm11, ymm13
-  vpsrlq       ymm4, ymm4, PARAM_BARR_DIV
-  vpsrlq       ymm5, ymm5, PARAM_BARR_DIV
-  vpsrlq       ymm6, ymm6, PARAM_BARR_DIV
-  vpsrlq       ymm7, ymm7, PARAM_BARR_DIV
-  vpmuldq     ymm4, ymm4, ymm15
-  vpmuldq     ymm5, ymm5, ymm15
-  vpmuldq     ymm6, ymm6, ymm15
-  vpmuldq     ymm7, ymm7, ymm15
-  vpsubq       ymm4, ymm8, ymm4
-  vpsubq       ymm5, ymm9, ymm5
-  vpsubq       ymm6, ymm10, ymm6
-  vpsubq       ymm7, ymm11, ymm7
+  vpsrad       ymm4, ymm8, 31                         // If result < 0 then add q                   
+  vpsrad       ymm5, ymm9, 31                       
+  vpsrad       ymm6, ymm10, 31                       
+  vpsrad       ymm7, ymm11, 31   
+  vpand        ymm4, ymm4, ymm15                                             
+  vpand        ymm5, ymm5, ymm15                       
+  vpand        ymm6, ymm6, ymm15                    
+  vpand        ymm7, ymm7, ymm15
+  vpaddd       ymm4, ymm8, ymm4
+  vpaddd       ymm5, ymm9, ymm5
+  vpaddd       ymm6, ymm10, ymm6
+  vpaddd       ymm7, ymm11, ymm7
 #else
   vmovdqa      ymm4, ymm8
   vmovdqa      ymm5, ymm9
@@ -1257,7 +1347,7 @@ loop_idgt1234:
   add          rax, 4*32
   dec          r10
   jnz          loop_idgt1234
-  
+
 //Round 5
   xor          rax, rax
   xor          r8, r8
@@ -1452,7 +1542,7 @@ loop_idgt6:
   vpsubq       ymm4, ymm8, ymm4
   vpsubq       ymm5, ymm9, ymm5
   vpsubq       ymm6, ymm10, ymm6
-  vpsubq       ymm7, ymm11, ymm7*/
+  vpsubq       ymm7, ymm11, ymm7
 #else
   vmovdqa      ymm4, ymm8
   vmovdqa      ymm5, ymm9
@@ -1637,7 +1727,7 @@ loop_idgt789:
   vpsubq       ymm4, ymm8, ymm4
   vpsubq       ymm5, ymm9, ymm5
   vpsubq       ymm6, ymm10, ymm6
-  vpsubq       ymm7, ymm11, ymm7*/
+  vpsubq       ymm7, ymm11, ymm7
 #else
   vmovdqa      ymm4, ymm8
   vmovdqa      ymm5, ymm9
@@ -1702,22 +1792,18 @@ loop_idgt789:
   vpsubq       ymm2, ymm2, ymm6
   vpsubq       ymm3, ymm3, ymm7
   
-  vpmuldq      ymm4, ymm8, ymm13 // barr_reduce(sub)
-  vpmuldq      ymm5, ymm9, ymm13
-  vpmuldq      ymm6, ymm10, ymm13
-  vpmuldq      ymm7, ymm11, ymm13
-  vpsrlq       ymm4, ymm4, PARAM_BARR_DIV
-  vpsrlq       ymm5, ymm5, PARAM_BARR_DIV
-  vpsrlq       ymm6, ymm6, PARAM_BARR_DIV
-  vpsrlq       ymm7, ymm7, PARAM_BARR_DIV
-  vpmuldq     ymm4, ymm4, ymm15
-  vpmuldq     ymm5, ymm5, ymm15
-  vpmuldq     ymm6, ymm6, ymm15
-  vpmuldq     ymm7, ymm7, ymm15
-  vpsubq       ymm4, ymm8, ymm4
-  vpsubq       ymm5, ymm9, ymm5
-  vpsubq       ymm6, ymm10, ymm6
-  vpsubq       ymm7, ymm11, ymm7
+  vpsrad       ymm4, ymm8, 31                         // If result < 0 then add q                   
+  vpsrad       ymm5, ymm9, 31                       
+  vpsrad       ymm6, ymm10, 31                       
+  vpsrad       ymm7, ymm11, 31   
+  vpand        ymm4, ymm4, ymm15                                             
+  vpand        ymm5, ymm5, ymm15                       
+  vpand        ymm6, ymm6, ymm15                    
+  vpand        ymm7, ymm7, ymm15
+  vpaddd       ymm4, ymm8, ymm4
+  vpaddd       ymm5, ymm9, ymm5
+  vpaddd       ymm6, ymm10, ymm6
+  vpaddd       ymm7, ymm11, ymm7
   
   vmovdqa      [reg_p1+rax],     ymm0
   vmovdqa      [reg_p1+rax+8*128], ymm1
