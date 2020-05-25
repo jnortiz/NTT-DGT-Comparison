@@ -78,20 +78,18 @@ sdigit_t barr_reduce(sdigit_t a)
 
 
 void dgt(poly x)
-{
-  
-  int32_t a, sub_re, sub_img;
+{  
   int i, index, j, m, window;
 
   window = 1;
   for(m = 1024; m >= 2; m >>= 1) {
     index = 0;
     for(j = 0; j < m; j += 2) {
-      a = gj[index];
+      int32_t a = gj[index];
 
       for(i = j; i < PARAM_N; i += (m << 1)) {
-        sub_re = x[i] - x[i+m];
-        sub_img = x[i+1] - x[i+m+1];
+        int32_t sub_re = x[i] - x[i+m];
+        int32_t sub_img = x[i+1] - x[i+m+1];
         
         x[i] = barr_reduce(x[i] + x[i+m]);
         x[i+1] = barr_reduce(x[i+1] + x[i+m+1]);
@@ -108,25 +106,26 @@ void dgt(poly x)
 
 void idgt(poly x)
 {
-
-  int32_t a, mul_re, mul_img;
   int i, index, j, m, window;
 
   window = (1024 >> 1);
   for(m = 2; m <= 1024; m <<= 1) {
     index = 0;
     for(j = 0; j < m; j += 2) {
-      a = invgj[index];
+      int32_t a = invgj[index];
       
       for(i = j; i < PARAM_N; i += (m << 1)) {
-        mul_re = reduce((int64_t)x[i+m] * a);
-        mul_img = reduce((int64_t)x[i+m+1] * a);
+        int32_t mul_re = reduce((int64_t)x[i+m] * a);
+        int32_t mul_img = reduce((int64_t)x[i+m+1] * a);
         
         x[i+m] = x[i] - mul_re; // Omit reduction, be lazy
         x[i+m+1] = x[i+1] - mul_img; // Omit reduction, be lazy
 
-        x[i] = barr_reduce(x[i] + mul_re);
-        x[i+1] = barr_reduce(x[i+1] + mul_img);        
+        x[i] = x[i] + mul_re - PARAM_Q;
+        x[i] += (x[i] >> (RADIX32-1)) & PARAM_Q;
+        
+        x[i+1] = x[i+1] + mul_img - PARAM_Q;
+        x[i+1] += (x[i+1] >> (RADIX32-1)) & PARAM_Q;
       }
       index += window;
     }
@@ -136,11 +135,11 @@ void idgt(poly x)
 
     index = 0;
     for(j = 0; j < m; j += 2) {
-      a = invgj[index];
+      int32_t a = invgj[index];
       
       for(i = j; i < PARAM_N; i += (m << 1)) {
-        mul_re = reduce((int64_t)x[i+m] * a);
-        mul_img = reduce((int64_t)x[i+m+1] * a);
+        int32_t mul_re = reduce((int64_t)x[i+m] * a);
+        int32_t mul_img = reduce((int64_t)x[i+m+1] * a);
         
         x[i+m] = barr_reduce(x[i] - mul_re);
         x[i+m+1] = barr_reduce(x[i+1] - mul_img);

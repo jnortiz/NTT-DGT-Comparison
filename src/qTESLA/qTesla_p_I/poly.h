@@ -8,7 +8,6 @@
 typedef	int32_t poly[PARAM_N];
 typedef	int32_t poly_k[PARAM_N*PARAM_K];
 
-int32_t sub_reduce(int64_t a);
 int32_t reduce(int64_t a);
 sdigit_t barr_reduce(sdigit_t a);
 int64_t barr_reduce64(int64_t a);
