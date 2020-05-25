@@ -22,7 +22,7 @@ AR=ar rcs
 RANLIB=ranlib
 
 CFLAGS = -std=gnu11 -O3 -D $(ARCHITECTURE) -D __LINUX__ -fomit-frame-pointer
-LDFLAGS=-lm -lssl -lcrypto 
+LDFLAGS=-lm -L/usr/lib/ -lssl -lcrypto 
 
 ifeq "$(CC)" "gcc"
     CFLAGS+= -march=native
@@ -33,8 +33,7 @@ ifeq "$(STATS)" "TRUE"
     DFLAG=-DSTATS
 endif
 
-OBJECTS_p_I = objs_p_I/sign.o objs_p_I/pack.o objs_p_I/sample.o objs_p_I/gauss.o objs_p_I/poly.o objs_p_I/consts.o objs/fips202.o objs/random.o 
-SOURCE_MUL = tests/cpucycles.c tests/test_mul.c
+OBJECTS_p_I = objs_p_I/sign.o objs_p_I/pack.o objs_p_I/sample.o objs_p_I/gauss.o objs_p_I/poly.o objs_p_I/consts.o objs/fips202.o objs/random.o
 SOURCE_TEST = tests/cpucycles.c tests/test_qtesla.c
 SOURCE_KATS_GEN  = tests/rng.c tests/PQCgenKAT_sign.c
 SOURCE_KATS_TEST = tests/rng.c tests/PQCtestKAT_sign.c
@@ -60,7 +59,6 @@ lib_p_I: $(OBJECTS_p_I)
 	$(RANLIB) lib_p_I/libqtesla.a
 
 tests: lib_p_I
-	$(CC) $(CFLAGS) -L./lib_p_I -D _qTESLA_p_I_ $(SOURCE_MUL) $(DFLAG) -lqtesla $(LDFLAGS) -o test_mul $(ARM_SETTING)
 	$(CC) $(CFLAGS) -L./lib_p_I -D _qTESLA_p_I_ $(SOURCE_TEST) $(DFLAG) -lqtesla $(LDFLAGS) -o test_qtesla-p-I $(ARM_SETTING)
 	$(CC) $(CFLAGS) -L./lib_p_I -D _qTESLA_p_I_ $(SOURCE_KATS_GEN) $(DFLAG) -lqtesla $(LDFLAGS) -o PQCgenKAT_sign-p-I $(ARM_SETTING)
 	$(CC) $(CFLAGS) -L./lib_p_I -D _qTESLA_p_I_ $(SOURCE_KATS_TEST) $(DFLAG) -lqtesla $(LDFLAGS) -o PQCtestKAT_sign-p-I $(ARM_SETTING)
@@ -68,4 +66,4 @@ tests: lib_p_I
 .PHONY: clean
 
 clean:
-	rm -rf objs* lib* test_qtesla-* test_mul* PQCgenKAT_sign-* PQCtestKAT_sign-* PQCsignKAT_qTesla*
+	rm -rf objs* lib* test_qtesla-* PQCgenKAT_sign-* PQCtestKAT_sign-* PQCsignKAT_qTesla*
