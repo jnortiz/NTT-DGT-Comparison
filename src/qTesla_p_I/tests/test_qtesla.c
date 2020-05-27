@@ -202,12 +202,18 @@ void test_functions()
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
     poly_dgt(y_dgt, y);
+    cycles0[i] = cpucycles() - cycles0[i];
+  }
+  print_results("Poly DGT: ", cycles0, NRUNS);
+
+  for (i = 0; i < NRUNS; i++) {
+    cycles0[i] = cpucycles();
     poly_mul(t, a, y_dgt);
     cycles0[i] = cpucycles() - cycles0[i];
   }
   print_results("Poly mul: ", cycles0, NRUNS);
 
-  for (i = 0; i < NRUNS; i++) {
+ for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
     poly_add(t, a, t);
     cycles0[i] = cpucycles() - cycles0[i];
