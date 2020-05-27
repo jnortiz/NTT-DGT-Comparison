@@ -117,12 +117,12 @@ void dgt(poly x)
 }
 
 
-void idgt(poly poly) 
+void idgt(poly poly)
 {
   int distance, j1, jtwiddle, j;
   int32_t sub_re, sub_img;
 
-  for(distance = 2; distance < PARAM_N; distance <<= 1)
+  for(distance = 2; distance < 512; distance <<= 1)
   {
     for(j1 = 0; j1 < distance; j1 += 2)
     {
@@ -131,17 +131,51 @@ void idgt(poly poly)
       {
         sub_re = poly[j];
         sub_img = poly[j+1];
-        
-        poly[j] = barr_reduce(sub_re + poly[j+distance]);
-        poly[j+1] = barr_reduce(sub_img + poly[j+distance+1]);
+
+        poly[j] = sub_re + poly[j+distance]; // Be lazy in the odd levels
+        poly[j+1] = sub_img + poly[j+distance+1];
+
+        poly[j+distance] = reduce((int64_t)invgj[jtwiddle] * (sub_re - poly[j+distance]));
+        poly[j+distance+1] = reduce((int64_t)invgj[jtwiddle++] * (sub_img - poly[j+distance+1]));
+      }
+    }
+
+    distance <<= 1;
+
+    for(j1 = 0; j1 < distance; j1 += 2)
+    {
+      jtwiddle = 0;
+      for(j = j1; j < PARAM_N; j += distance << 1)
+      {
+        sub_re = poly[j];
+        sub_img = poly[j+1];
+
+        poly[j] = barr_reduce64(sub_re + poly[j+distance]);
+        poly[j+1] = barr_reduce64(sub_img + poly[j+distance+1]);
 
         poly[j+distance] = reduce((int64_t)invgj[jtwiddle] * (sub_re - poly[j+distance]));
         poly[j+distance+1] = reduce((int64_t)invgj[jtwiddle++] * (sub_img - poly[j+distance+1]));
       }
     }
   }
-}
 
+  // Be lazy in the last level
+  for(j1 = 0; j1 < distance; j1 += 2)
+  {
+    jtwiddle = 0;
+    for(j = j1; j < PARAM_N; j += distance << 1)
+    {
+      sub_re = poly[j];
+      sub_img = poly[j+1];
+
+      poly[j] = sub_re + poly[j+distance];
+      poly[j+1] = sub_img + poly[j+distance+1];
+
+      poly[j+distance] = reduce((int64_t)invgj[jtwiddle] * (sub_re - poly[j+distance]));
+      poly[j+distance+1] = reduce((int64_t)invgj[jtwiddle++] * (sub_img - poly[j+distance+1]));
+    }
+  }
+}
 
 static void poly_pointwise(poly result, const poly x, const poly y)
 { // Pointwise polynomial multiplication result = x.y
