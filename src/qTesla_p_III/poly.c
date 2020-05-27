@@ -105,32 +105,6 @@ void dgt(poly x)
         x[j+1] = barr_reduce64(x[j+1] + temp_img);
       }
     }
-    distance >>= 1;
-    m <<= 1;
-    for(k = 0; k < m; ++k)
-    {
-      j1 = k*distance << 1;
-      j2 = j1+distance-1;
-
-      a = gj[k];
-      for(j = j1; j <= j2; j = j+2)
-      {
-        temp_re = reduce((int64_t)a * x[j+distance]);
-        temp_img = reduce((int64_t)a * x[j+distance+1]);
-
-        x[j+distance] = x[j] - temp_re;
-        x[j+distance] += (x[j+distance] >> (RADIX32-1)) & PARAM_Q;
-
-        x[j+distance+1] = x[j+1] - temp_img;        
-        x[j+distance+1] += (x[j+distance+1] >> (RADIX32-1)) & PARAM_Q;
-
-        x[j] = x[j] + temp_re - PARAM_Q;
-        x[j] += (x[j] >> (RADIX32-1)) & PARAM_Q;
-        
-        x[j+1] = x[j+1] + temp_img - PARAM_Q;
-        x[j+1] += (x[j+1] >> (RADIX32-1)) & PARAM_Q;
-      }
-    }
     distance >>= 1;    
   }
 }
@@ -163,27 +137,7 @@ void idgt(poly x)
         x[j+distance+1] = reduce((int64_t)a * sub_img);
       }
     }
-    m >>= 1;
-    distance <<= 1;
-    for(k = 0; k < m; ++k)
-    {
-      j1 = k*distance << 1;
-      j2 = j1+distance-1;
-
-      a = invgj[k];
-      for(j = j1; j <= j2; j += 2)
-      {
-        sub_re = x[j] - x[j+distance];
-        sub_img = x[j+1] - x[j+distance+1];
-        
-        x[j] = x[j] + x[j+distance] - PARAM_Q;
-        x[j+1] = x[j+1] + x[j+distance+1] - PARAM_Q;
-
-        x[j+distance] = reduce((int64_t)a * sub_re);
-        x[j+distance+1] = reduce((int64_t)a * sub_img);
-      }
-    }
-    m >>= 1;
+    m >>= 1;    
   }
 }
 
