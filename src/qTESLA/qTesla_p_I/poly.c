@@ -86,7 +86,7 @@ void dgt(poly x)
   int32_t a, temp_re, temp_img;
   
   distance = 512;
-  for(m = 1; m <= 256; m <<= 1)
+  for(m = 1; m < 256; m <<= 1)
   {
     for(k = 0; k < m; ++k)
     {
