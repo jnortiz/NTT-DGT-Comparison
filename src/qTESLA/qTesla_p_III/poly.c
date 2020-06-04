@@ -186,12 +186,12 @@ void poly_mul(poly result, const poly a, const poly b)
 
   for(i = 0; i < PARAM_N; i += 2) {             
     mul[i] = reduce(
-      ((int64_t)a[i] * b[i]) - 
-      ((int64_t)a[i+1] * b[i+1])
-    );
+      (int64_t)a[i] * b[i] - 
+      (int64_t)a[i+1] * b[i+1]
+    ) - PARAM_Q;
     mul[i+1] = reduce(
-      ((int64_t)a[i] * b[i+1]) + 
-      ((int64_t)a[i+1] * b[i])
+      (int64_t)a[i] * b[i+1] + 
+      (int64_t)a[i+1] * b[i]
     ) - PARAM_Q;
   }
 
