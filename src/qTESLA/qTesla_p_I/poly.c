@@ -86,7 +86,7 @@ void dgt(poly x)
   int32_t a, temp_re, temp_img;
   
   distance = 512;
-  for(m = 1; m < 256; m <<= 1)
+  for(m = 1; m < 512; m <<= 1)
   {
     for(k = 0; k < m; ++k)
     {
@@ -100,27 +100,7 @@ void dgt(poly x)
         temp_img = reduce((int64_t)a * x[j+distance+1]);
 
         x[j+distance] = x[j] - temp_re;
-        x[j+distance+1] = x[j + 1] - temp_img;
-        
-        x[j] = x[j] + temp_re;
-        x[j+1] = x[j + 1] + temp_img;        
-      }
-    }
-    distance >>= 1;
-    m <<= 1;
-    for(k = 0; k < m; ++k)
-    {
-      j1 = k*distance << 1;
-      j2 = j1 + distance;
-
-      a = gj[k];
-      for(j = j1; j < j2; j = j+2)
-      {
-        temp_re = reduce((int64_t)a * x[j+distance]);
-        temp_img = reduce((int64_t)a * x[j+distance+1]);
-
-        x[j+distance] = x[j] - temp_re;
- 	x[j+distance] += (x[j+distance] >> (RADIX32-1)) & PARAM_Q;
+        x[j+distance] += (x[j+distance] >> (RADIX32-1)) & PARAM_Q;
 
         x[j+distance+1] = x[j + 1] - temp_img;
         x[j+distance+1] += (x[j+distance+1] >> (RADIX32-1)) & PARAM_Q;
@@ -134,31 +114,6 @@ void dgt(poly x)
     }
     distance >>= 1;
   }
-
-  for(k = 0; k < m; ++k)
-  {
-    j1 = k*distance << 1;
-    j2 = j1 + distance;
-
-    a = gj[k];
-    for(j = j1; j < j2; j = j+2)
-    {
-      temp_re = reduce((int64_t)a * x[j+distance]);
-      temp_img = reduce((int64_t)a * x[j+distance+1]);
-
-      x[j+distance] = x[j] - temp_re;
-      x[j+distance] += (x[j+distance] >> (RADIX32-1)) & PARAM_Q;
-
-      x[j+distance+1] = x[j + 1] - temp_img;
-      x[j+distance+1] += (x[j+distance+1] >> (RADIX32-1)) & PARAM_Q;
-        
-      x[j] = x[j] + temp_re - PARAM_Q;
-      x[j] += (x[j] >> (RADIX32-1)) & PARAM_Q;
-
-      x[j+1] = x[j + 1] + temp_img - PARAM_Q;        
-      x[j+1] += (x[j+1] >> (RADIX32-1)) & PARAM_Q;
-    }
-  }
 }
 
 
@@ -167,24 +122,8 @@ void idgt(poly poly)
   int distance, j1, jtwiddle, j;
   int32_t sub_re, sub_img;
 
-  for(distance = 2; distance < 512; distance <<= 1)
+  for(distance = 2; distance < PARAM_N; distance <<= 1)
   {
-    for(j1 = 0; j1 < distance; j1 += 2)
-    {
-      jtwiddle = 0;
-      for(j = j1; j < PARAM_N; j += distance << 1)
-      {
-        sub_re = poly[j];
-        sub_img = poly[j+1];
-
-        poly[j] = sub_re + poly[j+distance]; // Be lazy in the odd levels
-        poly[j+1] = sub_img + poly[j+distance+1];
-
-        poly[j+distance] = reduce((int64_t)invgj[jtwiddle] * (sub_re - poly[j+distance]));
-        poly[j+distance+1] = reduce((int64_t)invgj[jtwiddle++] * (sub_img - poly[j+distance+1]));
-      }
-    }
-    distance <<= 1;
     for(j1 = 0; j1 < distance; j1 += 2)
     {
       jtwiddle = 0;
@@ -201,23 +140,8 @@ void idgt(poly poly)
       }
     }
   }
-  // Be lazy in the last level
-  for(j1 = 0; j1 < distance; j1 += 2)
-  {
-    jtwiddle = 0;
-    for(j = j1; j < PARAM_N; j += distance << 1)
-    {
-      sub_re = poly[j];
-      sub_img = poly[j+1];
-
-      poly[j] = sub_re + poly[j+distance];
-      poly[j+1] = sub_img + poly[j+distance+1];
-
-      poly[j+distance] = reduce((int64_t)invgj[jtwiddle] * (sub_re - poly[j+distance]));
-      poly[j+distance+1] = reduce((int64_t)invgj[jtwiddle++] * (sub_img - poly[j+distance+1]));
-    }
-  }
 }
+
 
 static void poly_pointwise(poly result, const poly x, const poly y)
 { // Pointwise polynomial multiplication result = x.y
