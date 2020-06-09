@@ -24,6 +24,7 @@ void dgt(uint16_t *x)
   distance = 256;
   for(m = 1; m < 256; m <<= 1)
   {
+    // Even level
     for(k = 0; k < m; ++k)
     {
       j1 = k*distance << 1;
@@ -32,11 +33,33 @@ void dgt(uint16_t *x)
       a = gj[k];
       for(j = j1; j <= j2; j = j+2)
       {
-        temp_re = montgomery_reduce((uint32_t)a * x[j+distance]);
+        temp_re =  montgomery_reduce((uint32_t)a * x[j+distance]);
         temp_img = montgomery_reduce((uint32_t)a * x[j+distance+1]);
 
-        x[j+distance] = (x[j] + (3*NEWHOPE_Q - temp_re)) % NEWHOPE_Q;
-        x[j+distance+1] = (x[j+1] + (3*NEWHOPE_Q - temp_img)) % NEWHOPE_Q;
+        x[j+distance] = x[j] + 3*NEWHOPE_Q - temp_re;
+        x[j+distance+1] = x[j+1] + 3*NEWHOPE_Q - temp_img;
+        
+        x[j] = x[j] + temp_re;
+        x[j+1] = x[j+1] + temp_img;
+      }
+    }
+    distance >>= 1;
+    m <<= 1;
+    // Odd level
+    for(k = 0; k < m; ++k)
+    {
+      j1 = k*distance << 1;
+      j2 = j1+distance-1;
+
+      a = gj[k];
+      for(j = j1; j <= j2; j = j+2)
+      {
+        temp_re =  montgomery_reduce((uint32_t)a * x[j+distance]);
+        temp_img = montgomery_reduce((uint32_t)a * x[j+distance+1]);
+        
+        // NewHope forward NTT adopts the Gentleman-Sande butterflies, which support laziness after subtractions in all levels, differently of the Cooley-Tukey butterfly
+        x[j+distance] = (x[j] + 3*NEWHOPE_Q - temp_re) % NEWHOPE_Q;         
+        x[j+distance+1] = (x[j+1] + 3*NEWHOPE_Q - temp_img) % NEWHOPE_Q;
         
         x[j] = (x[j] + temp_re) % NEWHOPE_Q;
         x[j+1] = (x[j+1] + temp_img) % NEWHOPE_Q;
@@ -53,13 +76,31 @@ void idgt(uint16_t *poly)
 
   for(distance = 2; distance < NEWHOPE_N; distance <<= 1)
   {
+    // Even level
     for(j1 = 0; j1 < distance; j1 += 2)
     {
       jtwiddle = 0;
       for(j = j1; j < NEWHOPE_N; j += distance << 1)
       {
-        sub_re = (poly[j] + (3*NEWHOPE_Q - poly[j+distance])) % NEWHOPE_Q;
-        sub_img = (poly[j+1] + (3*NEWHOPE_Q - poly[j+distance+1])) % NEWHOPE_Q;
+        sub_re = poly[j] + 3*NEWHOPE_Q - poly[j+distance]; // Omit reduction (be lazy)
+        sub_img = poly[j+1] + 3*NEWHOPE_Q - poly[j+distance+1]; // Omit reduction (be lazy)
+
+        poly[j] = poly[j] + poly[j+distance]; // Omit reduction (be lazy)
+        poly[j+1] = poly[j+1] + poly[j+distance+1]; // Omit reduction (be lazy)
+
+        poly[j+distance] = montgomery_reduce((uint32_t)invgj[jtwiddle] * sub_re);
+        poly[j+distance+1] = montgomery_reduce((uint32_t)invgj[jtwiddle++] * sub_img);
+      }
+    }
+    distance <<= 1;
+    // Odd level
+    for(j1 = 0; j1 < distance; j1 += 2)
+    {
+      jtwiddle = 0;
+      for(j = j1; j < NEWHOPE_N; j += distance << 1)
+      {
+        sub_re = poly[j] + 3*NEWHOPE_Q - poly[j+distance]; // Omit reduction (be lazy)
+        sub_img = poly[j+1] + 3*NEWHOPE_Q - poly[j+distance+1]; // Omit reduction (be lazy)
 
         poly[j] = (poly[j] + poly[j+distance]) % NEWHOPE_Q;
         poly[j+1] = (poly[j+1] + poly[j+distance+1]) % NEWHOPE_Q;
@@ -67,7 +108,7 @@ void idgt(uint16_t *poly)
         poly[j+distance] = montgomery_reduce((uint32_t)invgj[jtwiddle] * sub_re);
         poly[j+distance+1] = montgomery_reduce((uint32_t)invgj[jtwiddle++] * sub_img);
       }
-    }
+    }    
   }
 }
 
@@ -82,6 +123,7 @@ void dgt(uint16_t *x)
   distance = 512;
   for(m = 1; m < 512; m <<= 1)
   {
+    // Even level
     for(k = 0; k < m; ++k)
     {
       j1 = k*distance << 1;
@@ -93,14 +135,38 @@ void dgt(uint16_t *x)
         temp_re = montgomery_reduce((uint32_t)a * x[j+distance]);
         temp_img = montgomery_reduce((uint32_t)a * x[j+distance+1]);
 
-        x[j+distance] = (x[j] + (3*NEWHOPE_Q - temp_re)) % NEWHOPE_Q;
-        x[j+distance+1] = (x[j+1] + (3*NEWHOPE_Q - temp_img)) % NEWHOPE_Q;
+        x[j+distance] = x[j] + 3*NEWHOPE_Q - temp_re; // Omit reduction (be lazy)
+        x[j+distance+1] = x[j+1] + 3*NEWHOPE_Q - temp_img; // Omit reduction (be lazy)
         
-        x[j] = (x[j] + temp_re) % NEWHOPE_Q;
-        x[j+1] = (x[j+1] + temp_img) % NEWHOPE_Q;
+        x[j] = x[j] + temp_re; // Omit reduction (be lazy)
+        x[j+1] = x[j+1] + temp_img; // Omit reduction (be lazy)
       }
     }
     distance >>= 1;
+    m <<= 1;
+    if(m < 512)
+    {
+      // Odd level
+      for(k = 0; k < m; ++k)
+      {
+        j1 = k*distance << 1;
+        j2 = j1+distance-1;
+
+        a = gj[k];
+        for(j = j1; j <= j2; j = j+2)
+        {
+          temp_re = montgomery_reduce((uint32_t)a * x[j+distance]);
+          temp_img = montgomery_reduce((uint32_t)a * x[j+distance+1]);
+
+          x[j+distance] = (x[j] + 3*NEWHOPE_Q - temp_re) % NEWHOPE_Q;
+          x[j+distance+1] = (x[j+1] + 3*NEWHOPE_Q - temp_img) % NEWHOPE_Q;
+          
+          x[j] = (x[j] + temp_re) % NEWHOPE_Q;
+          x[j+1] = (x[j+1] + temp_img) % NEWHOPE_Q;
+        }
+      }
+      distance >>= 1;      
+    }
   }  
 }
 
@@ -111,19 +177,40 @@ void idgt(uint16_t *poly)
 
   for(distance = 2; distance < NEWHOPE_N; distance <<= 1)
   {
+    // Even level
     for(j1 = 0; j1 < distance; j1 += 2)
     {
       jtwiddle = 0;
       for(j = j1; j < NEWHOPE_N; j += distance << 1)
       {
-        sub_re = (poly[j] + (3*NEWHOPE_Q - poly[j+distance])) % NEWHOPE_Q;
-        sub_img = (poly[j+1] + (3*NEWHOPE_Q - poly[j+distance+1])) % NEWHOPE_Q;
+        sub_re = poly[j] + 3*NEWHOPE_Q - poly[j+distance]; // Omit reduction (be lazy)
+        sub_img = poly[j+1] + 3*NEWHOPE_Q - poly[j+distance+1]; // Omit reduction (be lazy)
 
-        poly[j] = (poly[j] + poly[j+distance]) % NEWHOPE_Q;
-        poly[j+1] = (poly[j+1] + poly[j+distance+1]) % NEWHOPE_Q;
+        poly[j] = poly[j] + poly[j+distance]; // Omit reduction (be lazy)
+        poly[j+1] = poly[j+1] + poly[j+distance+1]; // Omit reduction (be lazy)
 
         poly[j+distance] = montgomery_reduce((uint32_t)invgj[jtwiddle] * sub_re);
         poly[j+distance+1] = montgomery_reduce((uint32_t)invgj[jtwiddle++] * sub_img);
+      }
+    }
+    distance <<= 1;
+    if(distance < NEWHOPE_N)
+    {
+      // Odd level
+      for(j1 = 0; j1 < distance; j1 += 2)
+      {
+        jtwiddle = 0;
+        for(j = j1; j < NEWHOPE_N; j += distance << 1)
+        {
+          sub_re = poly[j] + 3*NEWHOPE_Q - poly[j+distance]; // Omit reduction (be lazy)
+          sub_img = poly[j+1] + 3*NEWHOPE_Q - poly[j+distance+1]; // Omit reduction (be lazy)
+
+          poly[j] = (poly[j] + poly[j+distance]) % NEWHOPE_Q;
+          poly[j+1] = (poly[j+1] + poly[j+distance+1]) % NEWHOPE_Q;
+
+          poly[j+distance] = montgomery_reduce((uint32_t)invgj[jtwiddle] * sub_re);
+          poly[j+distance+1] = montgomery_reduce((uint32_t)invgj[jtwiddle++] * sub_img);
+        }
       }
     }
   }

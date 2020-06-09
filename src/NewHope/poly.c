@@ -328,58 +328,9 @@ void poly_sample(poly *r, const unsigned char *seed, unsigned char nonce)
   }
 }
 
-/*************************************************
-* Name:        poly_sample_dgt
-* 
-* Description: Sample a polynomial deterministically from a seed and a nonce,
-*              with output polynomial close to centered binomial distribution
-*              with parameter k=8
-*
-* Arguments:   - poly *r:                   pointer to output polynomial
-*              - const unsigned char *seed: pointer to input seed 
-*              - unsigned char nonce:       one-byte input nonce
-**************************************************/
-void poly_sample_dgt(poly *r, const unsigned char *seed, unsigned char nonce)
-{
-#if NEWHOPE_K != 8
-#error "poly_sample in poly.c only supports k=8"
-#endif
-  unsigned char buf[128], a, b, c, d;
-  uint16_t x, y;
-  int i, j, k;
-
-  unsigned char extseed[NEWHOPE_SYMBYTES+2];
-
-  for(i=0;i<NEWHOPE_SYMBYTES;i++)
-    extseed[i] = seed[i];
-  extseed[NEWHOPE_SYMBYTES] = nonce;
-
-  k = 0;
-  for(i=0;i<NEWHOPE_N/64;i++) /* Generate noise in blocks of 64 coefficients */
-  {
-    extseed[NEWHOPE_SYMBYTES+1] = i;
-    shake256(buf,128,extseed,NEWHOPE_SYMBYTES+2);
-    for(j=0;j<64;j+=2)
-    {
-      a = buf[2*j];
-      b = buf[2*j+1];
-      c = buf[2*j+2];
-      d = buf[2*j+3];
-      x = hw(a) + NEWHOPE_Q - hw(b);
-      y = hw(c) + NEWHOPE_Q - hw(d);
-
-      r->coeffs[64*i+j] = montgomery_reduce((uint32_t)x * nthroots[k]) +
-                          (3*NEWHOPE_Q - montgomery_reduce((uint32_t)y * nthroots[k+1]));
-      r->coeffs[64*i+j+1] = montgomery_reduce((uint32_t)x * nthroots[k+1] + (uint32_t)y * nthroots[k]);
-      k += 2;
-    }
-  } 
-
-  dgt((uint16_t *)r->coeffs);
-}
 
 /*************************************************
-* Name:        poly_mul
+* Name:        poly_mul_pointwise
 * 
 * Description: Multiply two polynomials point-wise (i.e., coefficient-wise).
                Inputs are assumed to be NEWHOPE_N/2 Gaussian integers.
@@ -388,10 +339,8 @@ void poly_sample_dgt(poly *r, const unsigned char *seed, unsigned char nonce)
 *              - const poly *a: pointer to first input polynomial
 *              - const poly *b: pointer to second input polynomial
 **************************************************/
-void poly_mul(poly *r, const poly *a, const poly *b)
+void poly_mul_pointwise(poly *r, const poly *a, const poly *b)
 {
-  /* Notice that the output of the function poly_mul_pointwise is only Montgomery reduced.
-  But, after every addition, authors perform a reduction using the % operator. */
   int i;
   uint32_t t, s;
 
@@ -400,11 +349,11 @@ void poly_mul(poly *r, const poly *a, const poly *b)
     t = montgomery_reduce(3186*a->coeffs[i]); // R^2 mod p = 3186
     s = montgomery_reduce(3186*a->coeffs[i+1]);
 
-    r->coeffs[i]   = coeff_freeze(montgomery_reduce((uint32_t)t * b->coeffs[i]) +
-                    (3*NEWHOPE_Q - montgomery_reduce((uint32_t)s * b->coeffs[i+1])));
+    r->coeffs[i]   = (montgomery_reduce((uint32_t)t * b->coeffs[i]) +
+                      3*NEWHOPE_Q - montgomery_reduce((uint32_t)s * b->coeffs[i+1])) % NEWHOPE_Q;
 
-    r->coeffs[i+1] = coeff_freeze(montgomery_reduce((uint32_t)t * b->coeffs[i+1]) + 
-                    montgomery_reduce((uint32_t)s * b->coeffs[i]));
+    r->coeffs[i+1] = (montgomery_reduce((uint32_t)t * b->coeffs[i+1]) + 
+                      montgomery_reduce((uint32_t)s * b->coeffs[i])) % NEWHOPE_Q;
   }  
 }
 
@@ -459,18 +408,16 @@ void poly_dgt(poly *r)
     copy[i] = r->coeffs[i];
   }  
 
-  int K = NEWHOPE_N/2;
-
   j = 0;
   for(i = 0; i < NEWHOPE_N; i += 2) 
   {
-      // The nthroots are already multiplied by the Montgomery constant R
-      r->coeffs[i]   = coeff_freeze(montgomery_reduce((uint32_t)copy[j] * nthroots[i]) + 
-                       (3*NEWHOPE_Q - montgomery_reduce((uint32_t)copy[j+K] * nthroots[i+1])));
+      r->coeffs[i]   = (montgomery_reduce((uint32_t)copy[j] * nthroots[i]) + 
+                       (3*NEWHOPE_Q - montgomery_reduce((uint32_t)copy[j+NEWHOPE_N/2] * nthroots[i+1]))) % NEWHOPE_Q;
       
-      r->coeffs[i+1] = coeff_freeze(montgomery_reduce((uint32_t)copy[j] * nthroots[i+1]) + 
-                       montgomery_reduce((uint32_t)copy[j+K] * nthroots[i]));
-
+      r->coeffs[i+1] = montgomery_reduce(
+                        (uint32_t)copy[j] * nthroots[i+1] + 
+                        (uint32_t)copy[j+NEWHOPE_N/2] * nthroots[i]
+                        );
       j++;
   } 
 
@@ -498,19 +445,15 @@ void poly_invdgt(poly *r)
     copy[i] = r->coeffs[i];
   }
 
-  int K = NEWHOPE_N/2;
-
   j = 0;
   for(i = 0; i < NEWHOPE_N; i += 2) {
-      r->coeffs[j] = coeff_freeze(
-               montgomery_reduce((uint32_t)copy[i] * invnthroots[i]) + 
-               (3*NEWHOPE_Q - montgomery_reduce((uint32_t)copy[i+1] * invnthroots[i+1]))
-               );
+      r->coeffs[j] = montgomery_reduce((uint32_t)copy[i] * invnthroots[i]) + 
+                     3*NEWHOPE_Q - montgomery_reduce((uint32_t)copy[i+1] * invnthroots[i+1]);
 
-      r->coeffs[j+K] = coeff_freeze(
-               montgomery_reduce((uint32_t)copy[i] * invnthroots[i+1]) + 
-               montgomery_reduce((uint32_t)copy[i+1] * invnthroots[i])
-               );
+      r->coeffs[j+NEWHOPE_N/2] = montgomery_reduce(
+                       (uint32_t)copy[i] * invnthroots[i+1] + 
+                       (uint32_t)copy[i+1] * invnthroots[i]
+                       );
       j++;
   }
 }

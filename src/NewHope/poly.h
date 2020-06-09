@@ -16,10 +16,9 @@ void poly_uniform(poly *a, const unsigned char *seed);
 void poly_sample(poly *r, const unsigned char *seed, unsigned char nonce);
 void poly_add(poly *r, const poly *a, const poly *b);
 
-void poly_sample_dgt(poly *r, const unsigned char *seed, unsigned char nonce);
 void poly_dgt(poly *r);
 void poly_invdgt(poly *r);
-void poly_mul(poly *r, const poly *a, const poly *b);
+void poly_mul_pointwise(poly *r, const poly *a, const poly *b);
 
 void poly_frombytes(poly *r, const unsigned char *a);
 void poly_tobytes(unsigned char *r, const poly *p);
