@@ -204,7 +204,7 @@ void test_functions()
     poly_dgt(y_dgt, y);
     cycles0[i] = cpucycles() - cycles0[i];
   }
-  print_results("Poly DGT: ", cycles0, NRUNS);
+  print_results("poly_dgt: ", cycles0, NRUNS);
 
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
@@ -218,14 +218,14 @@ void test_functions()
     poly_invdgt(y_dgt, y);
     cycles0[i] = cpucycles() - cycles0[i];
   }
-  print_results("Poly IDGT: ", cycles0, NRUNS);  
+  print_results("poly_invdgt: ", cycles0, NRUNS);  
 
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
     poly_mul(t, a, y_dgt);
     cycles0[i] = cpucycles() - cycles0[i];
   }
-  print_results("Poly mul: ", cycles0, NRUNS);    
+  print_results("poly_mul: ", cycles0, NRUNS);    
 
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();

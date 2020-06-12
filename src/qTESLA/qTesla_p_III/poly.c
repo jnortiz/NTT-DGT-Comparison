@@ -136,11 +136,22 @@ void idgt(poly poly)
 }
 
 
-static void poly_pointwise(poly result, const poly x, const poly y)
+void poly_pointwise(poly result, const poly x, const poly y)
 { // Pointwise polynomial multiplication result = x.y
+  
+  int i;
 
-  for (int i=0; i<PARAM_N; i++)
-    result[i] = reduce((int64_t)x[i]*y[i]);
+  for(i = 0; i < PARAM_N; i+=2) {             
+    result[i] = reduce(
+      (int64_t)x[i] * y[i] -
+      (int64_t)x[i+1] * y[i+1]
+    ) - PARAM_Q;
+
+    result[i+1] = reduce(
+      (int64_t)x[i] * y[i+1] + 
+      (int64_t)x[i+1] * y[i]
+    ) - PARAM_Q;
+  }  
 }
 
 
@@ -166,37 +177,54 @@ void poly_dgt(poly x_dgt, const poly x)
 }
 
 
-void poly_mul(poly result, const poly a, const poly b)
+void poly_invdgt(poly result, const poly x)
 {
-  
-  poly mul;
-  int i;
 
-  for(i = 0; i < PARAM_N; i += 2) {             
-    mul[i] = reduce(
-      (int64_t)a[i] * b[i] - 
-      (int64_t)a[i+1] * b[i+1]
-    ) - PARAM_Q;
-    mul[i+1] = reduce(
-      (int64_t)a[i] * b[i+1] + 
-      (int64_t)a[i+1] * b[i]
-    ) - PARAM_Q;
-  }
+  poly aux_mul;
+  int i, j;
 
-  /* Recovering the multiplication result in Z[x]/<x^n+1> */
-  idgt(mul);
+  idgt(result);
 
-  /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
+  for(i = 0; i < PARAM_N; ++i)
+    aux_mul[i] = result[i];  
+
   i = 0;
   for(int j = 0; j < 1024; ++j) {
       result[j] = reduce(
-               (int64_t)mul[i] * invnthroots[i] -
-               (int64_t)mul[i+1] * invnthroots[i+1]
+               (int64_t)aux_mul[i] * invnthroots[i] -
+               (int64_t)aux_mul[i+1] * invnthroots[i+1]
                );
 
       result[j+1024] = reduce(
-               (int64_t)mul[i] * invnthroots[i+1] + 
-               (int64_t)mul[i+1] * invnthroots[i]
+               (int64_t)aux_mul[i] * invnthroots[i+1] + 
+               (int64_t)aux_mul[i+1] * invnthroots[i]
+               );
+      i += 2;
+  }
+}
+
+void poly_mul(poly result, const poly a, const poly b)
+{
+  
+  poly aux_mul;
+  int i, j;  
+  
+  poly_pointwise(result, a, b);
+  idgt(result);
+
+  for(i = 0; i < PARAM_N; ++i)
+    aux_mul[i] = result[i];
+
+  i = 0;
+  for(int j = 0; j < 1024; ++j) {
+      result[j] = reduce(
+               (int64_t)aux_mul[i] * invnthroots[i] -
+               (int64_t)aux_mul[i+1] * invnthroots[i+1]
+               );
+
+      result[j+1024] = reduce(
+               (int64_t)aux_mul[i] * invnthroots[i+1] + 
+               (int64_t)aux_mul[i+1] * invnthroots[i]
                );
       i += 2;
   }

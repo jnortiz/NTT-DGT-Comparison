@@ -222,6 +222,13 @@ void test_functions()
 
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
+    poly_mul(t, a, y_ntt);
+    cycles0[i] = cpucycles() - cycles0[i];
+  }
+  print_results("poly_mul: ", cycles0, NRUNS);  
+
+  for (i = 0; i < NRUNS; i++) {
+    cycles0[i] = cpucycles();
     poly_add(t, a, t);
     cycles0[i] = cpucycles() - cycles0[i];
   }

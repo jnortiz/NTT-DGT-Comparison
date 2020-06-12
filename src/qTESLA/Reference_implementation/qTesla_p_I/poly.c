@@ -146,6 +146,7 @@ void poly_ntt(poly x_ntt, const poly x)
   ntt(x_ntt, zeta);
 }
 
+
 void poly_invntt(poly x_ntt, const poly x)
 { // Call to INTT function. Avoids input destruction 
 
@@ -153,6 +154,7 @@ void poly_invntt(poly x_ntt, const poly x)
     x_ntt[i] = x[i];
   nttinv(x_ntt, zetainv);
 }
+
 
 void poly_mul(poly result, const poly x, const poly y)
 { // Polynomial multiplication result = x*y, with in place reduction for (X^N+1)
