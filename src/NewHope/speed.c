@@ -58,9 +58,23 @@ int main()
   unsigned char* senda = (unsigned char*) malloc(NTESTS*CRYPTO_PUBLICKEYBYTES);
   unsigned char* sendb = (unsigned char*) malloc(NTESTS*CRYPTO_CIPHERTEXTBYTES);
 
-  poly ap;
+  poly ap, bp, cp;
 
   int i;
+
+  for(i=0; i<NTESTS; i++)
+  {
+    t[i] = cpucycles();
+    poly_uniform(&ap, seed);
+  }
+  print_results("gen_a:         ", t, NTESTS);
+ 
+  for(i=0; i<NTESTS; i++)
+  {
+    t[i] = cpucycles();
+    poly_sample(&bp, seed, 0);
+  }
+  print_results("poly_sample:         ", t, NTESTS);
 
   for(i=0; i<NTESTS; i++)
   {
@@ -75,19 +89,13 @@ int main()
     poly_invdgt(&ap);
   }
   print_results("INVDGT:        ", t, NTESTS);
- 
+
   for(i=0; i<NTESTS; i++)
   {
     t[i] = cpucycles();
-    poly_uniform(&ap, seed);
+    poly_mul_pointwise(&cp, &ap, &bp);
   }
-  print_results("gen_a:         ", t, NTESTS);
- 
-  for(i=0; i<NTESTS; i++)
-  {
-    t[i] = cpucycles();
-    poly_sample(&ap, seed, 0);
-  }
+  print_results("poly_mul_pointwise:        ", t, NTESTS);   
 
   for(i=0; i<NTESTS; i++)
   {
