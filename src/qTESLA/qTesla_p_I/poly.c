@@ -213,15 +213,28 @@ void poly_invdgt(poly result, const poly x)
 void poly_mul(poly result, const poly x, const poly y)
 { /* It is assumed that both signals are already in the DGT domain. 
      The DGT counterpart of poly_b was computed in sign.c. */
+  
   poly aux_mul;
-  int i, j;
+  int i;
 
-  poly_pointwise(result, x, y);
-  idgt(result);
+  /* Calculating the point-wise multiplication of input signals */
+  for(i = 0; i < PARAM_N; i+=2) {             
+    aux_mul[i] = reduce(
+      (int64_t)x[i] * y[i] -
+      (int64_t)x[i+1] * y[i+1]
+    );
 
-  for(i = 0; i < PARAM_N; ++i)
-    aux_mul[i] = result[i];
+    aux_mul[i+1] = reduce(
+      (int64_t)x[i] * y[i+1] + 
+      (int64_t)x[i+1] * y[i]
+    );
+  }
 
+  /* Recovering the multiplication result in Z[x]/<x^n+1> */
+  idgt(aux_mul);
+
+  /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
+  int j = 0;
   for(i = 0; i < PARAM_N; i+=2) {
       result[j] = reduce(
                (int64_t)aux_mul[i] * invnthroots[i] -
