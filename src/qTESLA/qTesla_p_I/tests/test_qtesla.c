@@ -208,12 +208,26 @@ void test_functions()
 
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
+    poly_pointwise(t, a, y_dgt);
+    cycles0[i] = cpucycles() - cycles0[i];
+  }
+  print_results("poly_pointwise: ", cycles0, NRUNS);
+
+  for (i = 0; i < NRUNS; i++) {
+    cycles0[i] = cpucycles();
+    poly_invdgt(y_dgt, y);
+    cycles0[i] = cpucycles() - cycles0[i];
+  }
+  print_results("Poly IDGT: ", cycles0, NRUNS);  
+
+  for (i = 0; i < NRUNS; i++) {
+    cycles0[i] = cpucycles();
     poly_mul(t, a, y_dgt);
     cycles0[i] = cpucycles() - cycles0[i];
   }
-  print_results("Poly mul: ", cycles0, NRUNS);
+  print_results("Poly mul: ", cycles0, NRUNS);    
 
- for (i = 0; i < NRUNS; i++) {
+  for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
     poly_add(t, a, t);
     cycles0[i] = cpucycles() - cycles0[i];

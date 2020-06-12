@@ -110,7 +110,7 @@ void nttinv(poly a, const poly w)
 }
 
 
-static void poly_pointwise(poly result, const poly x, const poly y)
+void poly_pointwise(poly result, const poly x, const poly y)
 { // Pointwise polynomial multiplication result = x.y
 
   for (int i=0; i<PARAM_N; i++)
@@ -126,6 +126,13 @@ void poly_ntt(poly x_ntt, const poly x)
   ntt(x_ntt, zeta);
 }
 
+void poly_invntt(poly x_ntt, const poly x)
+{ // Call to INTT function. Avoids input destruction 
+
+  for (int i=0; i<PARAM_N; i++)
+    x_ntt[i] = x[i];
+  nttinv(x_ntt, zetainv);
+}
 
 void poly_mul(poly result, const poly x, const poly y)
 { // Polynomial multiplication result = x*y, with in place reduction for (X^N+1)

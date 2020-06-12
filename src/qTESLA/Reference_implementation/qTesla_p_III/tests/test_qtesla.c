@@ -204,7 +204,21 @@ void test_functions()
     poly_ntt(y_ntt, y);
     cycles0[i] = cpucycles() - cycles0[i];
   }
-  print_results("Poly NTT: ", cycles0, NRUNS);
+  print_results("poly_ntt: ", cycles0, NRUNS);
+
+  for (i = 0; i < NRUNS; i++) {
+    cycles0[i] = cpucycles();
+    poly_invntt(y_ntt, y);
+    cycles0[i] = cpucycles() - cycles0[i];
+  }
+  print_results("poly_invntt: ", cycles0, NRUNS);  
+
+  for (i = 0; i < NRUNS; i++) {
+    cycles0[i] = cpucycles();
+    poly_pointwise(t, a, y_ntt);
+    cycles0[i] = cpucycles() - cycles0[i];
+  }
+  print_results("poly_pointwise: ", cycles0, NRUNS);
 
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
@@ -212,7 +226,6 @@ void test_functions()
     cycles0[i] = cpucycles() - cycles0[i];
   }
   print_results("Poly mul: ", cycles0, NRUNS);
-
 
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();

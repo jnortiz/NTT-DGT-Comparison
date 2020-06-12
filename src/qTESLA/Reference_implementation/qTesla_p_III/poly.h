@@ -14,6 +14,8 @@ int64_t barr_reduce64(int64_t a);
 void ntt(poly a, const poly w);
 void nttinv(poly a, const poly w);
 void poly_ntt(poly x_ntt, const poly x);
+void poly_invntt(poly x_ntt, const poly x);
+void poly_pointwise(poly result, const poly x, const poly y);
 void poly_mul(poly result, const poly x, const poly y);
 void poly_add(poly result, const poly x, const poly y);
 void poly_add_correct(poly result, const poly x, const poly y);
