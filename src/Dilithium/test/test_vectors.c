@@ -1,4 +1,6 @@
+#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include "../params.h"
 #include "../sign.h"
 #include "../poly.h"
@@ -10,8 +12,8 @@
 
 int main(void) {
   unsigned int i, j, k, l;
-  unsigned char seed[CRHBYTES];
-  unsigned char buf[CRYPTO_BYTES];
+  uint8_t seed[CRHBYTES];
+  uint8_t buf[CRYPTO_BYTES];
   poly c, tmp;
   polyvecl s, y, mat[K];
   polyveck w, w1, w0, t1, t0, h;
@@ -54,6 +56,10 @@ int main(void) {
       if(tmp.coeffs[j] != s.vec[0].coeffs[j])
         fprintf(stderr, "ERROR in polyeta_(un)pack!\n");
 
+    polyvecl_freeze(&s);
+    if(polyvecl_chknorm(&s, ETA+1))
+      fprintf(stderr, "ERROR in polyvecl_chknorm(&s ,ETA+1)!\n");
+
     printf("s = ((");
     for(j = 0; j < L; ++j) {
       for(k = 0; k < N; ++k) {
@@ -76,6 +82,9 @@ int main(void) {
       if(tmp.coeffs[j] != y.vec[0].coeffs[j])
         fprintf(stderr, "ERROR in polyz_(un)pack!\n");
 
+    if(polyvecl_chknorm(&y, GAMMA1))
+      fprintf(stderr, "ERROR in polyvecl_chknorm(&y, GAMMA1)!\n");
+
     printf("y = ((");
     for(j = 0; j < L; ++j) {
       for(k = 0; k < N; ++k) {
@@ -90,9 +99,9 @@ int main(void) {
 
     polyvecl_dgt(&y);
     for(j = 0; j < K; ++j) {
-      polyvecl_pointwise_acc_invmontgomery(w.vec+j, mat+j, &y);
+      polyvecl_pointwise_acc_montgomery(w.vec+j, mat+j, &y);
       poly_reduce(w.vec+j);
-      poly_invdgt_montgomery(w.vec+j);
+      poly_invdgt_tomont(w.vec+j);
     }
 
     polyveck_csubq(&w);
@@ -114,8 +123,11 @@ int main(void) {
         fprintf(stderr, "ERROR in polyw1_pack!\n");
     }
 
-    if(poly_chknorm(&w1.vec[0], 16))
-      fprintf(stderr, "ERROR in poly_chknorm(.,16)!\n");
+    if(polyveck_chknorm(&w1, 16))
+      fprintf(stderr, "ERROR in polyveck_chknorm(&w1, 16)!\n");
+    polyveck_csubq(&w0);
+    if(polyveck_chknorm(&w0, ALPHA/2+1))
+      fprintf(stderr, "ERROR in polyveck_chknorm(&w0 ,ALPHA/2+1)!\n");
 
     printf("w1 = ((");
     for(j = 0; j < K; ++j) {
@@ -129,7 +141,8 @@ int main(void) {
     printf("w0 = ((");
     for(j = 0; j < K; ++j) {
       for(k = 0; k < N; ++k) {
-        u = w0.vec[j].coeffs[k] - Q;
+        u = w0.vec[j].coeffs[k];
+        if(u > (Q-1)/2) u -= Q;
         printf("%7d", u);
         if(k < N-1) printf(", ");
         else if(j < K-1) printf("),\n      (");
@@ -158,6 +171,12 @@ int main(void) {
         fprintf(stderr, "ERROR in polyt0_(un)pack!\n");
     }
 
+    if(polyveck_chknorm(&t1, 512))
+      fprintf(stderr, "ERROR in polyveck_chknorm(&t1, 512)!\n");
+    polyveck_csubq(&t0);
+    if(polyveck_chknorm(&t0, (1U << (D-1)) + 1))
+      fprintf(stderr, "ERROR in polyveck_chknorm(&t0, 1 << (D-1) + 1)!\n");
+
     printf("t1 = ((");
     for(j = 0; j < K; ++j) {
       for(k = 0; k < N; ++k) {
@@ -170,7 +189,8 @@ int main(void) {
     printf("t0 = ((");
     for(j = 0; j < K; ++j) {
       for(k = 0; k < N; ++k) {
-        u = t0.vec[j].coeffs[k] - Q;
+        u = t0.vec[j].coeffs[k];
+        if(u > (Q-1)/2) u -= Q;
         printf("%5d", u);
         if(k < N-1) printf(", ");
         else if(j < K-1) printf("),\n      (");
@@ -178,11 +198,7 @@ int main(void) {
       }
     }
 
-    polyveck_freeze(&t0);
-    if(poly_chknorm(&t0.vec[0], (1U << (D-1)) + 1))
-      fprintf(stderr, "ERROR in poly_chknorm(., 1 << (D-1) + 1)!\n");
-
-    challenge(&c, seed, &w);
+    challenge(&c, seed, &w1);
     printf("c = (");
     for(j = 0; j < N; ++j) {
       u = c.coeffs[j];
@@ -194,10 +210,12 @@ int main(void) {
 
     polyveck_make_hint(&h, &w0, &w1);
     pack_sig(buf, &y, &h, &c);
-    unpack_sig(&y, &h, &tmp, buf);
+    unpack_sig(&y, &w, &tmp, buf);
     for(j = 0; j < N; j++)
       if(c.coeffs[j] != tmp.coeffs[j])
         fprintf(stderr, "ERROR in (un)pack_sig!\n");
+    if(memcmp(&h,&w,sizeof(h)))
+      fprintf(stderr, "ERROR in (un)pack_sig!\n");
 
     printf("\n");
   }

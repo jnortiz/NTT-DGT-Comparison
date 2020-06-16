@@ -1,30 +1,12 @@
 #include <stdint.h>
-#include "fips202.h"
 #include "params.h"
 #include "sign.h"
+#include "packing.h"
+#include "polyvec.h"
+#include "poly.h"
 #include "randombytes.h"
 #include "symmetric.h"
-#include "poly.h"
-#include "polyvec.h"
-#include "packing.h"
-
-/*************************************************
-* Name:        expand_mat
-*
-* Description: Implementation of ExpandA. Generates matrix A with uniformly
-*              random coefficients a_{i,j} by performing rejection
-*              sampling on the output stream of SHAKE128(rho|i|j).
-*
-* Arguments:   - polyvecl mat[K]: output matrix
-*              - const unsigned char rho[]: byte array containing seed rho
-**************************************************/
-void expand_mat(polyvecl mat[K], const unsigned char rho[SEEDBYTES]) {
-  unsigned int i, j;
-
-  for(i = 0; i < K; ++i)
-    for(j = 0; j < L; ++j)
-      poly_uniform(&mat[i].vec[j], rho, (i << 8) + j);
-}
+#include "fips202.h"
 
 /*************************************************
 * Name:        challenge
@@ -34,30 +16,31 @@ void expand_mat(polyvecl mat[K], const unsigned char rho[SEEDBYTES]) {
 *              SHAKE256(mu|w1).
 *
 * Arguments:   - poly *c: pointer to output polynomial
-*              - const unsigned char mu[]: byte array containing mu
+*              - const uint8_t mu[]: byte array containing mu
 *              - const polyveck *w1: pointer to vector w1
 **************************************************/
 void challenge(poly *c,
-               const unsigned char mu[CRHBYTES],
+               const uint8_t mu[CRHBYTES],
                const polyveck *w1)
 {
   unsigned int i, b, pos;
   uint64_t signs;
-  unsigned char inbuf[CRHBYTES + K*POLW1_SIZE_PACKED];
-  unsigned char outbuf[SHAKE256_RATE];
+  uint8_t buf[CRHBYTES + K*POLYW1_PACKEDBYTES];
   keccak_state state;
 
   for(i = 0; i < CRHBYTES; ++i)
-    inbuf[i] = mu[i];
+    buf[i] = mu[i];
   for(i = 0; i < K; ++i)
-    polyw1_pack(inbuf + CRHBYTES + i*POLW1_SIZE_PACKED, &w1->vec[i]);
+    polyw1_pack(buf + CRHBYTES + i*POLYW1_PACKEDBYTES, &w1->vec[i]);
 
-  shake256_absorb(&state, inbuf, sizeof(inbuf));
-  shake256_squeezeblocks(outbuf, 1, &state);
+  shake256_init(&state);
+  shake256_absorb(&state, buf, sizeof(buf));
+  shake256_finalize(&state);
+  shake256_squeezeblocks(buf, 1, &state);
 
   signs = 0;
   for(i = 0; i < 8; ++i)
-    signs |= (uint64_t)outbuf[i] << 8*i;
+    signs |= (uint64_t)buf[i] << 8*i;
 
   pos = 8;
 
@@ -67,16 +50,16 @@ void challenge(poly *c,
   for(i = 196; i < 256; ++i) {
     do {
       if(pos >= SHAKE256_RATE) {
-        shake256_squeezeblocks(outbuf, 1, &state);
+        shake256_squeezeblocks(buf, 1, &state);
         pos = 0;
       }
 
-      b = outbuf[pos++];
+      b = buf[pos++];
     } while(b > i);
 
     c->coeffs[i] = c->coeffs[b];
     c->coeffs[b] = 1;
-    c->coeffs[b] ^= -(signs & 1) & (1 ^ (Q-1));
+    c->coeffs[b] ^= -((uint32_t)signs & 1) & (1 ^ (Q-1));
     signs >>= 1;
   }
 }
@@ -95,15 +78,15 @@ void challenge(poly *c,
 **************************************************/
 int crypto_sign_keypair(unsigned char *pk, unsigned char *sk) {
   unsigned int i;
-  unsigned char seedbuf[3*SEEDBYTES];
-  unsigned char tr[CRHBYTES];
-  const unsigned char *rho, *rhoprime, *key;
+  uint8_t seedbuf[3*SEEDBYTES];
+  uint8_t tr[CRHBYTES];
+  const uint8_t *rho, *rhoprime, *key;
   uint16_t nonce = 0;
   polyvecl mat[K];
   polyvecl s1, s1hat;
-  polyveck s2, t, t1, t0;
+  polyveck s2, t1, t0;
 
-  /* Expand 32 bytes of randomness into rho, rhoprime and key */
+  /* Get randomness for rho, rhoprime and key */
   randombytes(seedbuf, 3*SEEDBYTES);
   rho = seedbuf;
   rhoprime = seedbuf + SEEDBYTES;
@@ -122,23 +105,141 @@ int crypto_sign_keypair(unsigned char *pk, unsigned char *sk) {
   s1hat = s1;
   polyvecl_dgt(&s1hat);
   for(i = 0; i < K; ++i) {
-    polyvecl_pointwise_acc_invmontgomery(&t.vec[i], &mat[i], &s1hat);
-    poly_reduce(&t.vec[i]);
-    poly_invdgt_montgomery(&t.vec[i]);
+    polyvecl_pointwise_acc_montgomery(&t1.vec[i], &mat[i], &s1hat);
+    poly_reduce(&t1.vec[i]);
+    poly_invdgt_tomont(&t1.vec[i]);
   }
 
   /* Add error vector s2 */
-  polyveck_add(&t, &t, &s2);
+  polyveck_add(&t1, &t1, &s2);
 
   /* Extract t1 and write public key */
-  polyveck_freeze(&t);
-  polyveck_power2round(&t1, &t0, &t);
+  polyveck_freeze(&t1);
+  polyveck_power2round(&t1, &t0, &t1);
   pack_pk(pk, rho, &t1);
 
   /* Compute CRH(rho, t1) and write secret key */
   crh(tr, pk, CRYPTO_PUBLICKEYBYTES);
   pack_sk(sk, rho, key, tr, &s1, &s2, &t0);
 
+  return 0;
+}
+
+/*************************************************
+* Name:        crypto_sign_signature
+*
+* Description: Computes signature.
+*
+* Arguments:   - unsigned char *sig:         pointer to output signature (of length CRYPTO_BYTES)
+*              - unsigned long long *siglen: pointer to output length of signed message
+*              - unsigned char *m:           pointer to message to be signed
+*              - unsigned long long mlen:    length of message
+*              - unsigned char *sk:          pointer to bit-packed secret key
+*
+* Returns 0 (success)
+**************************************************/
+int crypto_sign_signature(unsigned char *sig,
+                          unsigned long long *siglen,
+                          const unsigned char *m,
+                          unsigned long long mlen,
+                          const unsigned char *sk)
+{
+  unsigned long long i;
+  unsigned int n;
+  uint8_t seedbuf[2*SEEDBYTES + 3*CRHBYTES];
+  uint8_t *rho, *tr, *key, *mu, *rhoprime;
+  uint16_t nonce = 0;
+  poly c, chat;
+  polyvecl mat[K], s1, y, z;
+  polyveck t0, s2, w1, w0, h;
+  keccak_state state;
+
+  rho = seedbuf;
+  tr = rho + SEEDBYTES;
+  key = tr + CRHBYTES;
+  mu = key + SEEDBYTES;
+  rhoprime = mu + CRHBYTES;
+  unpack_sk(rho, key, tr, &s1, &s2, &t0, sk);
+
+  /* Compute CRH(tr, msg) */
+  shake256_init(&state);
+  shake256_absorb(&state, tr, CRHBYTES);
+  shake256_absorb(&state, m, mlen);
+  shake256_finalize(&state);
+  shake256_squeeze(mu, CRHBYTES, &state);
+
+#ifdef DILITHIUM_RANDOMIZED_SIGNING
+  randombytes(rhoprime, CRHBYTES);
+#else
+  crh(rhoprime, key, SEEDBYTES + CRHBYTES);
+#endif
+
+  /* Expand matrix and transform vectors */
+  expand_mat(mat, rho);
+  polyvecl_dgt(&s1);
+  polyveck_dgt(&s2);
+  polyveck_dgt(&t0);
+
+rej:
+  /* Sample intermediate vector y */
+  for(i = 0; i < L; ++i)
+    poly_uniform_gamma1m1(&y.vec[i], rhoprime, nonce++);
+
+  /* Matrix-vector multiplication */
+  z = y;
+  polyvecl_dgt(&z);
+  for(i = 0; i < K; ++i) {
+    polyvecl_pointwise_acc_montgomery(&w1.vec[i], &mat[i], &z);
+    poly_reduce(&w1.vec[i]);
+    poly_invdgt_tomont(&w1.vec[i]);
+  }
+
+  /* Decompose w and call the random oracle */
+  polyveck_csubq(&w1);
+  polyveck_decompose(&w1, &w0, &w1);
+  challenge(&c, mu, &w1);
+  chat = c;
+  poly_dgt(&chat);
+
+  /* Compute z, reject if it reveals secret */
+  for(i = 0; i < L; ++i) {
+    poly_pointwise_montgomery(&z.vec[i], &chat, &s1.vec[i]);
+    poly_invdgt_tomont(&z.vec[i]);
+  }
+  polyvecl_add(&z, &z, &y);
+  polyvecl_freeze(&z);
+  if(polyvecl_chknorm(&z, GAMMA1 - BETA))
+    goto rej;
+
+  /* Check that subtracting cs2 does not change high bits of w and low bits
+   * do not reveal secret information */
+  for(i = 0; i < K; ++i) {
+    poly_pointwise_montgomery(&h.vec[i], &chat, &s2.vec[i]);
+    poly_invdgt_tomont(&h.vec[i]);
+  }
+  polyveck_sub(&w0, &w0, &h);
+  polyveck_freeze(&w0);
+  if(polyveck_chknorm(&w0, GAMMA2 - BETA))
+    goto rej;
+
+  /* Compute hints for w1 */
+  for(i = 0; i < K; ++i) {
+    poly_pointwise_montgomery(&h.vec[i], &chat, &t0.vec[i]);
+    poly_invdgt_tomont(&h.vec[i]);
+  }
+  polyveck_csubq(&h);
+  if(polyveck_chknorm(&h, GAMMA2))
+    goto rej;
+
+  polyveck_add(&w0, &w0, &h);
+  polyveck_csubq(&w0);
+  n = polyveck_make_hint(&h, &w0, &w1);
+  if(n > OMEGA)
+    goto rej;
+
+  /* Write signature */
+  pack_sig(sig, &z, &h, &c);
+  *siglen = CRYPTO_BYTES;
   return 0;
 }
 
@@ -165,106 +266,86 @@ int crypto_sign(unsigned char *sm,
                 const unsigned char *sk)
 {
   unsigned long long i;
-  unsigned int n;
-  unsigned char seedbuf[2*SEEDBYTES + 3*CRHBYTES];
-  unsigned char *rho, *tr, *key, *mu, *rhoprime;
-  uint16_t nonce = 0;
-  poly c, chat;
-  polyvecl mat[K], s1, y, yhat, z;
-  polyveck t0, s2, w, w1, w0;
-  polyveck h, cs2, ct0;
 
-  rho = seedbuf;
-  tr = rho + SEEDBYTES;
-  key = tr + CRHBYTES;
-  mu = key + SEEDBYTES;
-  rhoprime = mu + CRHBYTES;
-  unpack_sk(rho, key, tr, &s1, &s2, &t0, sk);
+  for(i = 0; i < mlen; ++i)
+    sm[CRYPTO_BYTES + mlen - 1 - i] = m[mlen - 1 - i];
+  crypto_sign_signature(sm, smlen, sm + CRYPTO_BYTES, mlen, sk);
+  *smlen += mlen;
+  return 0;
+}
 
-  /* Copy tr and message into the sm buffer,
-   * backwards since m and sm can be equal in SUPERCOP API */
-  for(i = 1; i <= mlen; ++i)
-    sm[CRYPTO_BYTES + mlen - i] = m[mlen - i];
-  for(i = 0; i < CRHBYTES; ++i)
-    sm[CRYPTO_BYTES - CRHBYTES + i] = tr[i];
+/*************************************************
+* Name:        crypto_sign_verify
+*
+* Description: Verifies signature.
+*
+* Arguments:   - unsigned char *m: pointer to input signature
+*              - unsigned long long siglen: length of signature
+*              - const unsigned char *m: pointer to message
+*              - unsigned long long mlen: length of message
+*              - const unsigned char *pk: pointer to bit-packed public key
+*
+* Returns 0 if signature could be verified correctly and -1 otherwise
+**************************************************/
+int crypto_sign_verify(const unsigned char *sig,
+                       unsigned long long siglen,
+                       const unsigned char *m,
+                       unsigned long long mlen,
+                       const unsigned char *pk)
+{
+  unsigned long long i;
+  uint8_t rho[SEEDBYTES];
+  uint8_t mu[CRHBYTES];
+  poly c, cp;
+  polyvecl mat[K], z;
+  polyveck t1, h, w1;
+  keccak_state state;
 
-  /* Compute CRH(tr, msg) */
-  crh(mu, sm + CRYPTO_BYTES - CRHBYTES, CRHBYTES + mlen);
+  if(siglen != CRYPTO_BYTES)
+    return -1;
 
-#ifdef RANDOMIZED_SIGNING
-  randombytes(rhoprime, CRHBYTES);
-#else
-  crh(rhoprime, key, SEEDBYTES + CRHBYTES);
-#endif
-
-  /* Expand matrix and transform vectors */
-  expand_mat(mat, rho);
-  polyvecl_dgt(&s1);
-  polyveck_dgt(&s2);
-  polyveck_dgt(&t0);
-
-  rej:
-  /* Sample intermediate vector y */
-  for(i = 0; i < L; ++i)
-    poly_uniform_gamma1m1(&y.vec[i], rhoprime, nonce++);
-
-  /* Matrix-vector multiplication */
-  yhat = y;
-  polyvecl_dgt(&yhat);
-  for(i = 0; i < K; ++i) {
-    polyvecl_pointwise_acc_invmontgomery(&w.vec[i], &mat[i], &yhat);
-    poly_reduce(&w.vec[i]);
-    poly_invdgt_montgomery(&w.vec[i]);
-  }
-
-  /* Decompose w and call the random oracle */
-  polyveck_csubq(&w);
-  polyveck_decompose(&w1, &w0, &w);
-  challenge(&c, mu, &w1);
-  chat = c;
-  poly_dgt(&chat);
-
-  /* Check that subtracting cs2 does not change high bits of w and low bits
-   * do not reveal secret information */
-  for(i = 0; i < K; ++i) {
-    poly_pointwise_invmontgomery(&cs2.vec[i], &chat, &s2.vec[i]);
-    poly_invdgt_montgomery(&cs2.vec[i]);
-  }
-  polyveck_sub(&w0, &w0, &cs2);
-  polyveck_freeze(&w0);
-  if(polyveck_chknorm(&w0, GAMMA2 - BETA))
-    goto rej;
-
-  /* Compute z, reject if it reveals secret */
-  for(i = 0; i < L; ++i) {
-    poly_pointwise_invmontgomery(&z.vec[i], &chat, &s1.vec[i]);
-    poly_invdgt_montgomery(&z.vec[i]);
-  }
-  polyvecl_add(&z, &z, &y);
-  polyvecl_freeze(&z);
+  unpack_pk(rho, &t1, pk);
+  if(unpack_sig(&z, &h, &c, sig))
+    return -1;
   if(polyvecl_chknorm(&z, GAMMA1 - BETA))
-    goto rej;
+    return -1;
 
-  /* Compute hints for w1 */
-  for(i = 0; i < K; ++i) {
-    poly_pointwise_invmontgomery(&ct0.vec[i], &chat, &t0.vec[i]);
-    poly_invdgt_montgomery(&ct0.vec[i]);
-  }
+  /* Compute CRH(CRH(rho, t1), msg) */
+  crh(mu, pk, CRYPTO_PUBLICKEYBYTES);
+  shake256_init(&state);
+  shake256_absorb(&state, mu, CRHBYTES);
+  shake256_absorb(&state, m, mlen);
+  shake256_finalize(&state);
+  shake256_squeeze(mu, CRHBYTES, &state);
 
-  polyveck_csubq(&ct0);
-  if(polyveck_chknorm(&ct0, GAMMA2))
-    goto rej;
+  /* Matrix-vector multiplication; compute Az - c2^dt1 */
+  expand_mat(mat, rho);
 
-  polyveck_add(&w0, &w0, &ct0);
-  polyveck_csubq(&w0);
-  n = polyveck_make_hint(&h, &w0, &w1);
-  if(n > OMEGA)
-    goto rej;
+  polyvecl_dgt(&z);
+  for(i = 0; i < K ; ++i)
+    polyvecl_pointwise_acc_montgomery(&w1.vec[i], &mat[i], &z);
 
-  /* Write signature */
-  pack_sig(sm, &z, &h, &c);
+  cp = c;
+  poly_dgt(&cp);
+  polyveck_shiftl(&t1);
+  polyveck_dgt(&t1);
+  for(i = 0; i < K; ++i)
+    poly_pointwise_montgomery(&t1.vec[i], &cp, &t1.vec[i]);
 
-  *smlen = mlen + CRYPTO_BYTES;
+  polyveck_sub(&w1, &w1, &t1);
+  polyveck_reduce(&w1);
+  polyveck_invdgt_tomont(&w1);
+
+  /* Reconstruct w1 */
+  polyveck_csubq(&w1);
+  polyveck_use_hint(&w1, &w1, &h);
+
+  /* Call random oracle and verify challenge */
+  challenge(&cp, mu, &w1);
+  for(i = 0; i < N; ++i)
+    if(c.coeffs[i] != cp.coeffs[i])
+      return -1;
+
   return 0;
 }
 
@@ -289,67 +370,22 @@ int crypto_sign_open(unsigned char *m,
                      const unsigned char *pk)
 {
   unsigned long long i;
-  unsigned char rho[SEEDBYTES];
-  unsigned char mu[CRHBYTES];
-  poly c, chat, cp;
-  polyvecl mat[K], z;
-  polyveck t1, w1, h, tmp1, tmp2;
 
   if(smlen < CRYPTO_BYTES)
     goto badsig;
 
   *mlen = smlen - CRYPTO_BYTES;
-
-  unpack_pk(rho, &t1, pk);
-  if(unpack_sig(&z, &h, &c, sm))
+  if(crypto_sign_verify(sm, CRYPTO_BYTES, sm + CRYPTO_BYTES, *mlen, pk))
     goto badsig;
-  if(polyvecl_chknorm(&z, GAMMA1 - BETA))
-    goto badsig;
-
-  /* Compute CRH(CRH(rho, t1), msg) using m as "playground" buffer */
-  if(sm != m)
+  else {
+    /* All good, copy msg, return 0 */
     for(i = 0; i < *mlen; ++i)
-      m[CRYPTO_BYTES + i] = sm[CRYPTO_BYTES + i];
+      m[i] = sm[CRYPTO_BYTES + i];
+    return 0;
+  }
 
-  crh(m + CRYPTO_BYTES - CRHBYTES, pk, CRYPTO_PUBLICKEYBYTES);
-  crh(mu, m + CRYPTO_BYTES - CRHBYTES, CRHBYTES + *mlen);
-
-  /* Matrix-vector multiplication; compute Az - c2^dt1 */
-  expand_mat(mat, rho);
-
-  polyvecl_dgt(&z);
-  for(i = 0; i < K ; ++i)
-    polyvecl_pointwise_acc_invmontgomery(&tmp1.vec[i], &mat[i], &z);
-
-  chat = c;
-  poly_dgt(&chat);
-  polyveck_shiftl(&t1);
-  polyveck_dgt(&t1);
-  for(i = 0; i < K; ++i)
-    poly_pointwise_invmontgomery(&tmp2.vec[i], &chat, &t1.vec[i]);
-
-  polyveck_sub(&tmp1, &tmp1, &tmp2);
-  polyveck_reduce(&tmp1);
-  polyveck_invdgt_montgomery(&tmp1);
-
-  /* Reconstruct w1 */
-  polyveck_csubq(&tmp1);
-  polyveck_use_hint(&w1, &tmp1, &h);
-
-  /* Call random oracle and verify challenge */
-  challenge(&cp, mu, &w1);
-  for(i = 0; i < N; ++i)
-    if(c.coeffs[i] != cp.coeffs[i])
-      goto badsig;
-
-  /* All good, copy msg, return 0 */
-  for(i = 0; i < *mlen; ++i)
-    m[i] = sm[CRYPTO_BYTES + i];
-
-  return 0;
-
+badsig:
   /* Signature verification failed */
-  badsig:
   *mlen = (unsigned long long) -1;
   for(i = 0; i < smlen; ++i)
     m[i] = 0;

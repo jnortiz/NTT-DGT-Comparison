@@ -1,9 +1,13 @@
 #ifndef DGT_H
 #define DGT_H
 
-#include "inttypes.h"
+#include <stdint.h>
+#include "params.h"
 
-void dgt(uint32_t *poly);
-void idgt(uint32_t *poly);
+#define dgt DILITHIUM_NAMESPACE(dgt)
+void dgt(uint32_t p[N]);
+
+#define invdgt_tomont DILITHIUM_NAMESPACE(invdgt_tomont)
+void invdgt_tomont(uint32_t p[N]);
 
 #endif

@@ -1,7 +1,26 @@
 #include <stdint.h>
 #include "params.h"
-#include "poly.h"
 #include "polyvec.h"
+#include "poly.h"
+
+/*************************************************
+* Name:        expand_mat
+*
+* Description: Implementation of ExpandA. Generates matrix A with uniformly
+*              random coefficients a_{i,j} by performing rejection
+*              sampling on the output stream of SHAKE128(rho|j|i)
+*              or AES256CTR(rho,j|i).
+*
+* Arguments:   - polyvecl mat[K]: output matrix
+*              - const uint8_t rho[]: byte array containing seed rho
+**************************************************/
+void expand_mat(polyvecl mat[K], const uint8_t rho[SEEDBYTES]) {
+  unsigned int i, j;
+
+  for(i = 0; i < K; ++i)
+    for(j = 0; j < L; ++j)
+      poly_uniform(&mat[i].vec[j], rho, (i << 8) + j);
+}
 
 /**************************************************************/
 /************ Vectors of polynomials of length L **************/
@@ -42,7 +61,8 @@ void polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v) {
 /*************************************************
 * Name:        polyvecl_dgt
 *
-* Description: Forward DGT of all polynomials in vector of length L.
+* Description: Forward NTT of all polynomials in vector of length L. Output
+*              coefficients can be up to 16*Q larger than input coefficients.
 *
 * Arguments:   - polyvecl *v: pointer to input/output vector
 **************************************************/
@@ -54,27 +74,29 @@ void polyvecl_dgt(polyvecl *v) {
 }
 
 /*************************************************
-* Name:        polyvecl_pointwise_acc_invmontgomery
+* Name:        polyvecl_pointwise_acc_montgomery
 *
 * Description: Pointwise multiply vectors of polynomials of length L, multiply
 *              resulting vector by 2^{-32} and add (accumulate) polynomials
-*              in it. Input/output vectors are in DGT domain representation.
+*              in it. Input/output vectors are in NTT domain representation.
+*              Input coefficients are assumed to be less than 22*Q. Output
+*              coeffcient are less than 2*L*Q.
 *
 * Arguments:   - poly *w: output polynomial
 *              - const polyvecl *u: pointer to first input vector
 *              - const polyvecl *v: pointer to second input vector
 **************************************************/
-void polyvecl_pointwise_acc_invmontgomery(poly *w,
-                                          const polyvecl *u,
-                                          const polyvecl *v)
+void polyvecl_pointwise_acc_montgomery(poly *w,
+                                       const polyvecl *u,
+                                       const polyvecl *v)
 {
   unsigned int i;
   poly t;
 
-  poly_pointwise_invmontgomery(w, &u->vec[0], &v->vec[0]);
+  poly_pointwise_montgomery(w, &u->vec[0], &v->vec[0]);
 
   for(i = 1; i < L; ++i) {
-    poly_pointwise_invmontgomery(&t, &u->vec[i], &v->vec[i]);
+    poly_pointwise_montgomery(&t, &u->vec[i], &v->vec[i]);
     poly_add(w, w, &t);
   }
 }
@@ -205,7 +227,8 @@ void polyveck_shiftl(polyveck *v) {
 /*************************************************
 * Name:        polyveck_dgt
 *
-* Description: Forward DGT of all polynomials in vector of length K.
+* Description: Forward NTT of all polynomials in vector of length K. Output
+*              coefficients can be up to 16*Q larger than input coefficients.
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
@@ -217,18 +240,19 @@ void polyveck_dgt(polyveck *v) {
 }
 
 /*************************************************
-* Name:        polyveck_invdgt_montgomery
+* Name:        polyveck_invdgt_tomont
 *
-* Description: Inverse DGT and multiplication by 2^{32} of polynomials
-*              in vector of length K.
+* Description: Inverse NTT and multiplication by 2^{32} of polynomials
+*              in vector of length K. Input coefficients need to be less
+*              than 2*Q.
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
-void polyveck_invdgt_montgomery(polyveck *v) {
+void polyveck_invdgt_tomont(polyveck *v) {
   unsigned int i;
 
   for(i = 0; i < K; ++i)
-    poly_invdgt_montgomery(&v->vec[i]);
+    poly_invdgt_tomont(&v->vec[i]);
 }
 
 /*************************************************
