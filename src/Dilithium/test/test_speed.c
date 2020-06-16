@@ -8,6 +8,8 @@
 
 #define NTESTS 10000
 
+static void bench_polymul(void);
+
 uint64_t t[NTESTS];
 
 int main(void)
@@ -29,6 +31,11 @@ int main(void)
   }
   print_results("expand_mat:", t, NTESTS);
 
+  for(i = 0; i < NTESTS; ++i) {
+    t[i] = cpucycles();
+    bench_polymul();
+  }
+  print_results("bench_polymul:", t, NTESTS); 
 /*
   unsigned int j;
   polyvecl *vl = &mat[0];
@@ -90,4 +97,12 @@ int main(void)
   print_results("Verify:", t, NTESTS);
 
   return 0;
+}
+
+static void bench_polymul() {
+  poly a, b, c;
+  poly_dgt(&a);
+  poly_dgt(&b);
+  poly_pointwise_montgomery(&c, &a, &b);
+  poly_invdgt_tomont(&c);
 }

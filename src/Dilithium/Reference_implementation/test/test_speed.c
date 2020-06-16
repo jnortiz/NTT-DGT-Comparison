@@ -10,6 +10,16 @@
 
 uint64_t t[NTESTS];
 
+static void bench_polymul(void);
+
+static void bench_polymul() {
+  poly a, b, c;
+  poly_ntt(&a);
+  poly_ntt(&b);
+  poly_pointwise_montgomery(&c, &a, &b);
+  poly_invntt_tomont(&c);
+}
+
 int main(void)
 {
   unsigned int i;
@@ -28,6 +38,12 @@ int main(void)
     expand_mat(mat, seed);
   }
   print_results("expand_mat:", t, NTESTS);
+
+  for(i = 0; i < NTESTS; ++i) {
+    t[i] = cpucycles();
+    bench_polymul();
+  }
+  print_results("bench_polymul:", t, NTESTS);
 
 /*
   unsigned int j;
