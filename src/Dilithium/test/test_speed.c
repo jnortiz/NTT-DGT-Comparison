@@ -8,9 +8,15 @@
 
 #define NTESTS 10000
 
-static void bench_polymul(void);
-
 uint64_t t[NTESTS];
+
+static void bench_polymul() {
+  poly a, b, c;
+  poly_dgt(&a);
+  poly_dgt(&b);
+  poly_pointwise_montgomery(&c, &a, &b);
+  poly_invdgt_tomont(&c);
+}
 
 int main(void)
 {
@@ -97,12 +103,4 @@ int main(void)
   print_results("Verify:", t, NTESTS);
 
   return 0;
-}
-
-static void bench_polymul() {
-  poly a, b, c;
-  poly_dgt(&a);
-  poly_dgt(&b);
-  poly_pointwise_montgomery(&c, &a, &b);
-  poly_invdgt_tomont(&c);
 }
