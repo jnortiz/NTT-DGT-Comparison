@@ -14,7 +14,7 @@ AES_HEADERS = $(HEADERS) fips202.h aes256ctr.h
 
 all: \
   test/test_dilithium2 \
-  #test/test_dilithium3 \
+  test/test_dilithium3 \
   test/test_dilithium4 \
   test/test_dilithium2aes \
   test/test_dilithium3aes \

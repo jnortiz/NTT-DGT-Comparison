@@ -32,10 +32,10 @@
 static void bench_polymul(void) {
   poly a, b, c;
   poly a_dgt, b_dgt;
+
   poly_dgt(a_dgt, a);
   poly_dgt(b_dgt, b);
-  poly_pointwise(c, a_dgt, b_dgt);
-  poly_invdgt(a, c);
+  poly_mul(c, a_dgt, b_dgt);
 }
 
 
