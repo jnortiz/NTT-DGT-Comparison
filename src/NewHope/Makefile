@@ -7,12 +7,10 @@ SOURCES = poly.c reduce.c fips202.c verify.c cpapke.c dgt.c
 CCAKEM  = ccakem.c
 CPAKEM  = cpakem.c
 
-all:	PQCgenKAT_cpakem1024 \
-			PQCgenKAT_ccakem1024 \
-			test_cpakem1024 \
+all:	\
 			test_ccakem1024 \
-			speed_cpakem1024 \
 			speed_ccakem1024 \
+			PQCgenKAT_ccakem1024 \
 
 PQCgenKAT_cpakem512: $(SOURCES) $(HEADERS) PQCgenKAT_kem.c rng.c rng.h
 	ln -sf cpakem.h api.h

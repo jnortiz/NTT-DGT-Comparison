@@ -123,8 +123,9 @@ void dgt(uint16_t *x)
 
   jtwiddle = 0;
   distance = 512;
-  for(m = 1; m < 512; m <<= 1)
+  for(m = 1; m < 256; m <<= 1)
   {
+    // Even level
     for(k = 0; k < m; ++k)
     {
       j1 = (k*distance) << 1;
@@ -136,58 +137,102 @@ void dgt(uint16_t *x)
         c = montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance+1]);
         d = montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance]);
 
-        temp_re = (a+(3*NEWHOPE_Q-b)) % NEWHOPE_Q;
-        temp_img = (c+d) % NEWHOPE_Q;
+        temp_re = (a + (3*NEWHOPE_Q - b)) % NEWHOPE_Q;
+        temp_img = (c + d) % NEWHOPE_Q;
 
-        x[j+distance] = (x[j]+(3*NEWHOPE_Q-temp_re)) % NEWHOPE_Q;
-        x[j+distance+1] = (x[j+1]+(3*NEWHOPE_Q-temp_img)) % NEWHOPE_Q;
+        x[j+distance] = x[j] + (3*NEWHOPE_Q - temp_re); // Omit reduction (be lazy)
+        x[j+distance+1] = x[j+1] + (3*NEWHOPE_Q - temp_img); // Omit reduction (be lazy)
 
-        x[j] = (x[j]+temp_re) % NEWHOPE_Q;
-        x[j+1] = (x[j+1]+temp_img) % NEWHOPE_Q;
+        x[j] = x[j] + temp_re; // Omit reduction (be lazy)
+        x[j+1] = x[j+1] + temp_img; // Omit reduction (be lazy)
       }
       jtwiddle += 2;
     }
     distance >>= 1;
-  } 
+    m <<= 1;
+    // Odd level
+    for(k = 0; k < m; ++k)
+    {
+      j1 = (k*distance) << 1;
+      j2 = j1+distance-1;
+      for(j = j1; j <= j2; j = j+2)
+      {
+        a = montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance]);
+        b = montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance+1]);
+        c = montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance+1]);
+        d = montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance]);
+
+        temp_re = (a + (3*NEWHOPE_Q - b)) % NEWHOPE_Q;
+        temp_img = (c + d) % NEWHOPE_Q;
+
+        x[j+distance] = (x[j] + (3*NEWHOPE_Q - temp_re)) % NEWHOPE_Q;
+        x[j+distance+1] = (x[j+1] + (3*NEWHOPE_Q - temp_img)) % NEWHOPE_Q;
+
+        x[j] = (x[j] + temp_re) % NEWHOPE_Q;
+        x[j+1] = (x[j+1] + temp_img) % NEWHOPE_Q;
+      }
+      jtwiddle += 2;
+    }
+    distance >>= 1;    
+  }
+  // Even level
+  for(k = 0; k < m; ++k)
+  {
+    j1 = (k*distance) << 1;
+    j2 = j1+distance-1;
+    for(j = j1; j <= j2; j = j+2)
+    {
+      a = montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance]);
+      b = montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance+1]);
+      c = montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance+1]);
+      d = montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance]);
+
+      temp_re = (a + (3*NEWHOPE_Q - b)) % NEWHOPE_Q;
+      temp_img = (c + d) % NEWHOPE_Q;
+
+      x[j+distance] = x[j] + (3*NEWHOPE_Q - temp_re); // Omit reduction (be lazy)
+      x[j+distance+1] = x[j+1] + (3*NEWHOPE_Q - temp_img); // Omit reduction (be lazy)
+
+      x[j] = x[j] + temp_re; // Omit reduction (be lazy)
+      x[j+1] = x[j+1] + temp_img; // Omit reduction (be lazy)
+    }
+    jtwiddle += 2;
+  }  
 }
 
 void idgt(uint16_t *x)
 {
   int distance, j1, jtwiddle, m, j, h;
   uint16_t temp_re, temp_img, sum_re, sum_img;
-  uint16_t a, b, c, d;
 
   h = 0;
   distance = 2;
   for(m = 512; m > 1; m >>= 1)
   {
-    for(j1 = 0; j1 < distance; j1 = j1+2)
+    for(j1 = 0; j1 < distance; j1+=2)
     {
       jtwiddle = h;
-      for(j = j1; j < NEWHOPE_N; j = j+2*distance)
+      for(j = j1; j < NEWHOPE_N; j+=2*distance)
       {
         temp_re = x[j];
         temp_img = x[j+1];
 
-        x[j] = (temp_re+x[j+distance]) % NEWHOPE_Q;
-        x[j+1] = (temp_img+x[j+distance+1]) % NEWHOPE_Q;
+        x[j] = (x[j] + x[j+distance]) % NEWHOPE_Q;
+        x[j+1] = (x[j+1] + x[j+distance+1]) % NEWHOPE_Q;
 
-        sum_re = (temp_re+(3*NEWHOPE_Q-x[j+distance])) % NEWHOPE_Q;
-        sum_img = (temp_img+(3*NEWHOPE_Q-x[j+distance+1])) % NEWHOPE_Q;
+        sum_re = temp_re + 3*NEWHOPE_Q - x[j+distance];
+        sum_img = temp_img + 3*NEWHOPE_Q - x[j+distance+1];
 
-        a = montgomery_reduce((uint32_t)invgj[jtwiddle]*sum_re);
-        b = montgomery_reduce((uint32_t)invgj[jtwiddle+1]*sum_img);
-        c = montgomery_reduce((uint32_t)invgj[jtwiddle]*sum_img);
-        d = montgomery_reduce((uint32_t)invgj[jtwiddle+1]*sum_re);
-
-        x[j+distance] = a+(3*NEWHOPE_Q-b) % NEWHOPE_Q;
-        x[j+distance+1] = (c+d) % NEWHOPE_Q;
+        x[j+distance] = montgomery_reduce((uint32_t)invgj[jtwiddle]*sum_re) + 3*NEWHOPE_Q - 
+                        montgomery_reduce((uint32_t)invgj[jtwiddle+1]*sum_img);
+        x[j+distance+1] = montgomery_reduce((uint32_t)invgj[jtwiddle]*sum_img) + 
+                          montgomery_reduce((uint32_t)invgj[jtwiddle+1]*sum_re);
 
         jtwiddle += 2;
       }
     }
     h += m;
-    distance <<= 1;
+    distance <<= 1;    
   }
 
   for(j = 0; j < NEWHOPE_N; ++j)

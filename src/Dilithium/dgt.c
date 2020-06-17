@@ -24,8 +24,6 @@ void dgt(uint32_t p[N]) {
   unsigned j1, j2;
   unsigned int j, k;
   uint32_t temp_re, temp_img;
-  uint32_t a, b;
-  uint64_t  c, d;
 
   distance = 128;
   jtwiddle = 0;
@@ -37,16 +35,13 @@ void dgt(uint32_t p[N]) {
       j2 = j1 + distance - 1;
       for(j = j1; j <= j2; j = j+2)
       {
-        a = montgomery_reduce((uint64_t)gj[jtwiddle] * p[j + distance]);
-        b = montgomery_reduce((uint64_t)gj[jtwiddle + 1] * p[j + distance + 1]);
-        c = (uint64_t)gj[jtwiddle] * p[j + distance + 1];
-        d = (uint64_t)gj[jtwiddle + 1] * p[j + distance];
+        temp_re = montgomery_reduce((uint64_t)gj[jtwiddle] * p[j + distance]) + 2*Q - 
+                  montgomery_reduce((uint64_t)gj[jtwiddle + 1] * p[j + distance + 1]);
+        temp_img = montgomery_reduce((uint64_t)gj[jtwiddle] * p[j + distance + 1]) + 
+                   montgomery_reduce((uint64_t)gj[jtwiddle + 1] * p[j + distance]);
 
-        temp_re = reduce32(a + (2*Q - b));
-        temp_img = montgomery_reduce(c + d);
-
-        p[j + distance] = p[j] + (2*Q - temp_re);
-        p[j + distance + 1] = p[j + 1] + (2*Q - temp_img);
+        p[j + distance] = p[j] + (4*Q - temp_re);
+        p[j + distance + 1] = p[j + 1] + (4*Q - temp_img);
         
         p[j] = p[j] + temp_re;
         p[j + 1] = p[j + 1] + temp_img;
@@ -71,14 +66,12 @@ void invdgt_tomont(uint32_t p[N]) {
   unsigned int distance, j1, jtwiddle, m;
   unsigned int j, h;
   uint32_t temp_re, temp_img, sum_re, sum_img;
-  uint32_t a, b;
-  uint64_t c, d;
 
   distance = 2;
   h = 0;
   for(m = 128; m > 1; m >>= 1)
   {
-    for(j1 = 0; j1 < distance; j1 = j1 + 2)
+    for(j1 = 0; j1 < distance; j1 += 2)
     {
       jtwiddle = h;
       for(j = j1; j < N; j = j + 2*distance)
@@ -86,19 +79,16 @@ void invdgt_tomont(uint32_t p[N]) {
         temp_re = p[j];
         temp_img = p[j + 1];
         
-        p[j] = reduce32(temp_re + p[j + distance]);
-        p[j + 1] = reduce32(temp_img + p[j + distance + 1]);
+        p[j] = p[j] + p[j + distance];
+        p[j + 1] = p[j + 1] + p[j + distance + 1];
         
-        sum_re = temp_re + (2*Q - p[j + distance]);
-        sum_img = temp_img + (2*Q - p[j + distance + 1]);
+        sum_re = temp_re + 256*Q - p[j + distance];
+        sum_img = temp_img + 256*Q - p[j + distance + 1];
 
-        a = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_re);
-        b = montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_img);
-        c = (uint64_t)invgj[jtwiddle] * sum_img;
-        d = (uint64_t)invgj[jtwiddle + 1] * sum_re;
-
-        p[j + distance] = a + (2*Q - b);
-        p[j + distance + 1] = montgomery_reduce(c + d);
+        p[j + distance] = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_re) + 2*Q - 
+                          montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_img);
+        p[j + distance + 1] = montgomery_reduce((uint64_t)invgj[jtwiddle] * sum_img) + 
+                              montgomery_reduce((uint64_t)invgj[jtwiddle + 1] * sum_re);
 
         jtwiddle += 2;
       }
@@ -108,6 +98,6 @@ void invdgt_tomont(uint32_t p[N]) {
   }
 
   for(j = 0; j < N; ++j)
-    p[j] = montgomery_reduce((uint64_t)p[j] * 83956); // invofkmodp * 2**32 mod p
+    p[j] = montgomery_reduce((uint64_t)p[j] * 83956); // invofkmodp * 2^32 mod p
   
 }

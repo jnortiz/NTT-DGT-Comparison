@@ -339,11 +339,11 @@ void poly_mul_pointwise(poly *r, const poly *a, const poly *b)
     t = montgomery_reduce(3186*a->coeffs[i]);             
     s = montgomery_reduce(3186*a->coeffs[i+1]);
 
-    r->coeffs[i]   = (montgomery_reduce((uint32_t)t * b->coeffs[i]) +
-                    (3*NEWHOPE_Q - montgomery_reduce((uint32_t)s * b->coeffs[i+1]))) % NEWHOPE_Q;
+    r->coeffs[i]   = montgomery_reduce((uint32_t)t * b->coeffs[i]) + (3*NEWHOPE_Q - 
+                     montgomery_reduce((uint32_t)s * b->coeffs[i+1]));
 
-    r->coeffs[i+1] = (montgomery_reduce((uint32_t)t * b->coeffs[i+1]) + 
-                     montgomery_reduce((uint32_t)s * b->coeffs[i])) % NEWHOPE_Q;
+    r->coeffs[i+1] = montgomery_reduce((uint32_t)t * b->coeffs[i+1]) + 
+                     montgomery_reduce((uint32_t)s * b->coeffs[i]);
   }  
   
 }

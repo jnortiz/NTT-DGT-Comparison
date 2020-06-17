@@ -14,7 +14,7 @@ AES_HEADERS = $(HEADERS) fips202.h aes256ctr.h
 
 all: \
   test/test_dilithium2 \
-  test/test_dilithium3 \
+  #test/test_dilithium3 \
   test/test_dilithium4 \
   test/test_dilithium2aes \
   test/test_dilithium3aes \
@@ -248,3 +248,9 @@ clean:
 	rm -f PQCgenKAT_sign2aes
 	rm -f PQCgenKAT_sign3aes
 	rm -f PQCgenKAT_sign4aes
+	rm -f PQCsignKAT_Dilithium2.req
+	rm -f PQCsignKAT_Dilithium2.rsp
+	rm -f PQCsignKAT_Dilithium3.req
+	rm -f PQCsignKAT_Dilithium3.rsp
+	rm -f PQCsignKAT_Dilithium4.req
+	rm -f PQCsignKAT_Dilithium4.rsp

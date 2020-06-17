@@ -79,35 +79,83 @@ void dgt(poly x)
   int m, distance, jtwiddle;
   int j1, j2, j, k;
   int32_t temp_re, temp_img;
-  int32_t a, b, c, d;
 
   distance = 512;
   jtwiddle = 0;
-  for(m = 1; m < 512; m <<= 1)
+  for(m = 1; m < 256; m <<= 1)
   {
+    // Even level
     for(k = 0; k < m; ++k)
     {
       j1 = (k * distance) << 1;
       j2 = j1 + distance - 1;
-      for(j = j1; j <= j2; j = j+2)
+      for(j = j1; j <= j2; j += 2)
       {
-        a = reduce((int64_t)gj[jtwiddle] * x[j + distance]);
-        b = reduce((int64_t)gj[jtwiddle + 1] * x[j + distance + 1]);
-        c = reduce((int64_t)gj[jtwiddle] * x[j + distance + 1]);
-        d = reduce((int64_t)gj[jtwiddle + 1] * x[j + distance]);
+        temp_re = reduce((int64_t)gj[jtwiddle] * x[j + distance] - 
+                         (int64_t)gj[jtwiddle + 1] * x[j + distance + 1]); // Omit reduction (be lazy)
+        temp_img = reduce((int64_t)gj[jtwiddle] * x[j + distance + 1] + 
+                          (int64_t)gj[jtwiddle + 1] * x[j + distance]); // Omit reduction (be lazy)
 
-        temp_re = barr_reduce(a - b);
-        temp_img = barr_reduce(c + d);
+        x[j + distance] = x[j] - temp_re; // Omit reduction (be lazy)
+        x[j + distance + 1] = x[j + 1] - temp_img; // Omit reduction (be lazy)
 
-        x[j + distance] = barr_reduce(x[j] - temp_re);
-        x[j + distance + 1] = barr_reduce(x[j + 1] - temp_img);
-
-        x[j] = barr_reduce(x[j] + temp_re);
-        x[j + 1] = barr_reduce(x[j + 1] + temp_img);
+        x[j] = x[j] + temp_re; // Omit reduction (be lazy)
+        x[j + 1] = (x[j + 1] + temp_img); // Omit reduction (be lazy)
       }
       jtwiddle += 2;
     }
     distance >>= 1;
+    m <<= 1;
+    // Odd level
+    for(k = 0; k < m; ++k)
+    {
+      j1 = (k * distance) << 1;
+      j2 = j1 + distance - 1;
+      for(j = j1; j <= j2; j += 2)
+      {
+        temp_re = reduce((int64_t)gj[jtwiddle] * x[j + distance]) - 
+                  reduce((int64_t)gj[jtwiddle + 1] * x[j + distance + 1]);
+        temp_re += (temp_re >> (RADIX32-1)) & PARAM_Q;
+
+        temp_img = reduce((int64_t)gj[jtwiddle] * x[j + distance + 1]) + 
+                   reduce((int64_t)gj[jtwiddle + 1] * x[j + distance]) - PARAM_Q;
+        temp_img += (temp_img >> (RADIX32-1)) & PARAM_Q;
+
+        x[j + distance] = x[j] - temp_re;
+        x[j + distance] += (x[j + distance] >> (RADIX32-1)) & PARAM_Q;
+
+        x[j + distance + 1] = x[j + 1] - temp_img;
+        x[j + distance + 1] += (x[j + distance + 1] >> (RADIX32-1)) & PARAM_Q;
+        
+        x[j] = x[j] + temp_re - PARAM_Q;
+        x[j] += (x[j] >> (RADIX32-1)) & PARAM_Q;
+
+        x[j + 1] = (x[j + 1] + temp_img - PARAM_Q);
+        x[j + 1] += (x[j + 1] >> (RADIX32-1)) & PARAM_Q;
+      }
+      jtwiddle += 2;
+    }
+    distance >>= 1;    
+  }
+  // Even level
+  for(k = 0; k < m; ++k)
+  {
+    j1 = (k * distance) << 1;
+    j2 = j1 + distance - 1;
+    for(j = j1; j <= j2; j += 2)
+    {
+      temp_re = reduce((int64_t)gj[jtwiddle] * x[j + distance] - 
+                        (int64_t)gj[jtwiddle + 1] * x[j + distance + 1]); // Omit reduction (be lazy)
+      temp_img = reduce((int64_t)gj[jtwiddle] * x[j + distance + 1] + 
+                        (int64_t)gj[jtwiddle + 1] * x[j + distance]); // Omit reduction (be lazy)
+
+      x[j + distance] = x[j] - temp_re; // Omit reduction (be lazy)
+      x[j + distance + 1] = x[j + 1] - temp_img; // Omit reduction (be lazy)
+
+      x[j] = x[j] + temp_re; // Omit reduction (be lazy)
+      x[j + 1] = (x[j + 1] + temp_img); // Omit reduction (be lazy)
+    }
+    jtwiddle += 2;
   }
 }
 
@@ -116,16 +164,42 @@ void idgt(poly x)
 {
   int distance, j1, jtwiddle, m, j, h;
   int32_t temp_re, temp_img, sum_re, sum_img;
-  int32_t a, b, c, d;
 
   h = 0;
   distance = 2;
-  for(m = 512; m > 1; m >>= 1)
+  for(m = 512; m > 2; m >>= 1)
   {
-    for(j1 = 0; j1 < distance; j1 = j1 + 2)
+    // Even level
+    for(j1 = 0; j1 < distance; j1 += 2)
     {
       jtwiddle = h;
-      for(j = j1; j < PARAM_N; j = j + 2*distance)
+      for(j = j1; j < PARAM_N; j += 2*distance)
+      {
+        temp_re = x[j];
+        temp_img = x[j + 1];
+
+        x[j] = temp_re + x[j + distance]; // Omit reduction (be lazy)
+        x[j + 1] = temp_img + x[j + distance + 1]; // Omit reduction (be lazy)
+
+        sum_re = temp_re - x[j + distance]; // Omit reduction (be lazy)
+        sum_img = temp_img - x[j + distance + 1]; // Omit reduction (be lazy)
+
+        x[j + distance] = reduce((int64_t)invgj[jtwiddle] * sum_re -
+                                 (int64_t)invgj[jtwiddle + 1] * sum_img); // Omit reduction (be lazy)
+        x[j + distance + 1] = reduce((int64_t)invgj[jtwiddle] * sum_img + 
+                                     (int64_t)invgj[jtwiddle + 1] * sum_re); // Omit reduction (be lazy)
+
+        jtwiddle += 2;
+      }
+    }
+    h += m;
+    distance <<= 1;
+    m >>= 1;
+    // Odd level
+    for(j1 = 0; j1 < distance; j1 += 2)
+    {
+      jtwiddle = h;
+      for(j = j1; j < PARAM_N; j += 2*distance)
       {
         temp_re = x[j];
         temp_img = x[j + 1];
@@ -133,27 +207,43 @@ void idgt(poly x)
         x[j] = barr_reduce(temp_re + x[j + distance]);
         x[j + 1] = barr_reduce(temp_img + x[j + distance + 1]);
 
-        sum_re = barr_reduce(temp_re - x[j + distance]);
-        sum_img = barr_reduce(temp_img - x[j + distance + 1]);
+        sum_re = temp_re - x[j + distance]; // Omit reduction (be lazy)
+        sum_img = temp_img - x[j + distance + 1]; // Omit reduction (be lazy)
 
-        a = reduce((int64_t)invgj[jtwiddle] * sum_re);
-        b = reduce((int64_t)invgj[jtwiddle + 1] * sum_img);
-        c = reduce((int64_t)invgj[jtwiddle] * sum_img);
-        d = reduce((int64_t)invgj[jtwiddle + 1] * sum_re);
-
-        x[j + distance] = barr_reduce(a + 2*PARAM_Q - b);
-        x[j + distance + 1] = barr_reduce(c + d);
+        x[j + distance] = barr_reduce(reduce((int64_t)invgj[jtwiddle] * sum_re - 
+                                             (int64_t)invgj[jtwiddle + 1] * sum_img));
+        x[j + distance + 1] = barr_reduce(reduce((int64_t)invgj[jtwiddle] * sum_img + 
+                                                 (int64_t)invgj[jtwiddle + 1] * sum_re));
 
         jtwiddle += 2;
       }
     }
     h += m;
-    distance <<= 1;
+    distance <<= 1;    
   }
+  // Even level
+  for(j1 = 0; j1 < distance; j1 += 2)
+  {
+    jtwiddle = h;
+    for(j = j1; j < PARAM_N; j += 2*distance)
+    {
+      temp_re = x[j];
+      temp_img = x[j + 1];
 
-  // for(j = 0; j < PARAM_N; ++j)
-  //   x[j] = reduce((int64_t)x[j]*27264818);
+      x[j] = barr_reduce(temp_re + x[j + distance]);
+      x[j + 1] = barr_reduce(temp_img + x[j + distance + 1]);
 
+      sum_re = temp_re - x[j + distance]; // Omit reduction (be lazy)
+      sum_img = temp_img - x[j + distance + 1]; // Omit reduction (be lazy)
+
+      x[j + distance] = barr_reduce(reduce((int64_t)invgj[jtwiddle] * sum_re - 
+                                           (int64_t)invgj[jtwiddle + 1] * sum_img));
+      x[j + distance + 1] = barr_reduce(reduce((int64_t)invgj[jtwiddle] * sum_img + 
+                                               (int64_t)invgj[jtwiddle + 1] * sum_re));
+
+      jtwiddle += 2;
+    }
+  }  
 }
 
 
@@ -163,10 +253,10 @@ void poly_pointwise(poly result, const poly x, const poly y)
   int i;
 
   for(i = 0; i < PARAM_N; i+=2) {             
-    result[i] = barr_reduce(reduce((int64_t)x[i] * y[i]) -
-                reduce((int64_t)x[i+1] * y[i+1]));
-    result[i+1] = barr_reduce(reduce((int64_t)x[i] * y[i+1]) + 
-                   reduce((int64_t)x[i+1] * y[i]));
+    result[i] = reduce((int64_t)x[i] * y[i] -
+                       (int64_t)x[i+1] * y[i+1]);
+    result[i+1] = reduce((int64_t)x[i] * y[i+1] + 
+                         (int64_t)x[i+1] * y[i]);
   }  
 }
 

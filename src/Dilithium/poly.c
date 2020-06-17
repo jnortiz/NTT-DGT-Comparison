@@ -214,10 +214,10 @@ void poly_pointwise_montgomery(poly *c, const poly *a, const poly *b) {
   for(i = 0; i < N; i += 2) {
     aux_b = b->coeffs[i];
     c->coeffs[i] = montgomery_reduce((uint64_t)a->coeffs[i] * b->coeffs[i]) + (2*Q - 
-                  montgomery_reduce((uint64_t)a->coeffs[i+1] * b->coeffs[i+1]));
+                   montgomery_reduce((uint64_t)a->coeffs[i+1] * b->coeffs[i+1]));
     c->coeffs[i+1] = montgomery_reduce(
-                  (uint64_t)a->coeffs[i] * b->coeffs[i+1] + 
-                  (uint64_t)a->coeffs[i+1] * aux_b);
+                    (uint64_t)a->coeffs[i] * b->coeffs[i+1] + 
+                    (uint64_t)a->coeffs[i+1] * aux_b);
   }
 
   DBENCH_STOP(*tmul);
