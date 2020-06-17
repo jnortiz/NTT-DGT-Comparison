@@ -119,7 +119,6 @@ void dgt(uint16_t *x)
   int m, distance, jtwiddle;
   int j1, j2, j, k;
   uint16_t temp_re, temp_img;
-  uint16_t a, b, c, d;
 
   jtwiddle = 0;
   distance = 512;
@@ -132,13 +131,10 @@ void dgt(uint16_t *x)
       j2 = j1+distance-1;
       for(j = j1; j <= j2; j = j+2)
       {
-        a = montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance]);
-        b = montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance+1]);
-        c = montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance+1]);
-        d = montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance]);
-
-        temp_re = (a + (3*NEWHOPE_Q - b)) % NEWHOPE_Q;
-        temp_img = (c + d) % NEWHOPE_Q;
+        temp_re = (montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance]) + (3*NEWHOPE_Q - 
+                   montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance+1]))) % NEWHOPE_Q;
+        temp_img = (montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance+1]) + 
+                    montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance])) % NEWHOPE_Q;
 
         x[j+distance] = x[j] + (3*NEWHOPE_Q - temp_re); // Omit reduction (be lazy)
         x[j+distance+1] = x[j+1] + (3*NEWHOPE_Q - temp_img); // Omit reduction (be lazy)
@@ -157,13 +153,10 @@ void dgt(uint16_t *x)
       j2 = j1+distance-1;
       for(j = j1; j <= j2; j = j+2)
       {
-        a = montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance]);
-        b = montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance+1]);
-        c = montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance+1]);
-        d = montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance]);
-
-        temp_re = (a + (3*NEWHOPE_Q - b)) % NEWHOPE_Q;
-        temp_img = (c + d) % NEWHOPE_Q;
+        temp_re = (montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance]) + (3*NEWHOPE_Q - 
+                   montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance+1]))) % NEWHOPE_Q;
+        temp_img = (montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance+1]) + 
+                    montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance])) % NEWHOPE_Q;
 
         x[j+distance] = (x[j] + (3*NEWHOPE_Q - temp_re)) % NEWHOPE_Q;
         x[j+distance+1] = (x[j+1] + (3*NEWHOPE_Q - temp_img)) % NEWHOPE_Q;
@@ -182,13 +175,10 @@ void dgt(uint16_t *x)
     j2 = j1+distance-1;
     for(j = j1; j <= j2; j = j+2)
     {
-      a = montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance]);
-      b = montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance+1]);
-      c = montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance+1]);
-      d = montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance]);
-
-      temp_re = (a + (3*NEWHOPE_Q - b)) % NEWHOPE_Q;
-      temp_img = (c + d) % NEWHOPE_Q;
+      temp_re = (montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance]) + (3*NEWHOPE_Q - 
+                  montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance+1]))) % NEWHOPE_Q;
+      temp_img = (montgomery_reduce((uint32_t)gj[jtwiddle]*x[j+distance+1]) + 
+                  montgomery_reduce((uint32_t)gj[jtwiddle+1]*x[j+distance])) % NEWHOPE_Q;
 
       x[j+distance] = x[j] + (3*NEWHOPE_Q - temp_re); // Omit reduction (be lazy)
       x[j+distance+1] = x[j+1] + (3*NEWHOPE_Q - temp_img); // Omit reduction (be lazy)
