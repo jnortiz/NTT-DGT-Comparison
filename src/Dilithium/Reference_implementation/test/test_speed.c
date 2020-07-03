@@ -10,23 +10,21 @@
 
 uint64_t t[NTESTS];
 
-static void bench_polymul(void);
-
 static void bench_polymul() {
   poly a, b, c;
-  poly_ntt(&a);
-  poly_ntt(&b);
+  poly_dgt(&a);
+  poly_dgt(&b);
   poly_pointwise_montgomery(&c, &a, &b);
-  poly_invntt_tomont(&c);
+  poly_invdgt_tomont(&c);
 }
 
 int main(void)
 {
   unsigned int i;
-  unsigned long long smlen;
-  unsigned char pk[CRYPTO_PUBLICKEYBYTES];
-  unsigned char sk[CRYPTO_SECRETKEYBYTES];
-  unsigned char sm[CRYPTO_BYTES + CRHBYTES];
+  size_t smlen;
+  uint8_t pk[CRYPTO_PUBLICKEYBYTES];
+  uint8_t sk[CRYPTO_SECRETKEYBYTES];
+  uint8_t sm[CRYPTO_BYTES + CRHBYTES];
   uint8_t seed[CRHBYTES];
   polyvecl mat[K];
   poly *a = &mat[0].vec[0];
@@ -44,7 +42,6 @@ int main(void)
     bench_polymul();
   }
   print_results("bench_polymul:", t, NTESTS);
-
 /*
   unsigned int j;
   polyvecl *vl = &mat[0];

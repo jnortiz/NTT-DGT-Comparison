@@ -21,10 +21,10 @@ static void bench_polymul() {
 int main(void)
 {
   unsigned int i;
-  unsigned long long smlen;
-  unsigned char pk[CRYPTO_PUBLICKEYBYTES];
-  unsigned char sk[CRYPTO_SECRETKEYBYTES];
-  unsigned char sm[CRYPTO_BYTES + CRHBYTES];
+  size_t smlen;
+  uint8_t pk[CRYPTO_PUBLICKEYBYTES];
+  uint8_t sk[CRYPTO_SECRETKEYBYTES];
+  uint8_t sm[CRYPTO_BYTES + CRHBYTES];
   uint8_t seed[CRHBYTES];
   polyvecl mat[K];
   poly *a = &mat[0].vec[0];
@@ -41,7 +41,8 @@ int main(void)
     t[i] = cpucycles();
     bench_polymul();
   }
-  print_results("bench_polymul:", t, NTESTS); 
+  print_results("bench_polymul:", t, NTESTS);
+
 /*
   unsigned int j;
   polyvecl *vl = &mat[0];
