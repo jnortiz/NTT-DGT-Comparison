@@ -12,10 +12,10 @@ uint64_t t[NTESTS];
 
 static void bench_polymul() {
   poly a, b, c;
-  poly_dgt(&a);
-  poly_dgt(&b);
+  poly_ntt(&a);
+  poly_ntt(&b);
   poly_pointwise_montgomery(&c, &a, &b);
-  poly_invdgt_tomont(&c);
+  poly_invntt_tomont(&c);
 }
 
 int main(void)
