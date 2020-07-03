@@ -133,7 +133,7 @@ void poly_shiftl(poly *a) {
 /*************************************************
 * Name:        poly_dgt
 *
-* Description: Inplace forward DGT. Output coefficients can be up to
+* Description: Inplace forward dgt. Output coefficients can be up to
 *              16*Q larger than input coefficients.
 *
 * Arguments:   - poly *a: pointer to input/output polynomial
@@ -166,7 +166,7 @@ void poly_dgt(poly *a) {
 /*************************************************
 * Name:        poly_invdgt_tomont
 *
-* Description: Inplace inverse DGT and multiplication by 2^{32}.
+* Description: Inplace inverse dgt and multiplication by 2^{32}.
 *              Input coefficients need to be less than 2*Q.
 *              Output coefficients are less than 2*Q.
 *
@@ -197,7 +197,7 @@ void poly_invdgt_tomont(poly *a) {
 /*************************************************
 * Name:        poly_pointwise_montgomery
 *
-* Description: Pointwise multiplication of polynomials in DGT domain
+* Description: Pointwise multiplication of polynomials in dgt domain
 *              representation and multiplication of resulting polynomial
 *              by 2^{-32}. Output coefficients are less than 2*Q if input
 *              coefficient are less than 22*Q.
@@ -404,7 +404,7 @@ void poly_uniform(poly *a,
 {
   unsigned int i, ctr, off;
   unsigned int buflen = POLY_UNIFORM_NBLOCKS*STREAM128_BLOCKBYTES;
-  uint8_t buf[buflen + 2];
+  uint8_t buf[POLY_UNIFORM_NBLOCKS*STREAM128_BLOCKBYTES + 2];
   stream128_state state;
 
   stream128_init(&state, seed, nonce);
@@ -488,7 +488,7 @@ void poly_uniform_eta(poly *a,
 {
   unsigned int ctr;
   unsigned int buflen = POLY_UNIFORM_ETA_NBLOCKS*STREAM128_BLOCKBYTES;
-  uint8_t buf[buflen];
+  uint8_t buf[POLY_UNIFORM_ETA_NBLOCKS*STREAM128_BLOCKBYTES];
   stream128_state state;
 
   stream128_init(&state, seed, nonce);
@@ -572,7 +572,7 @@ void poly_uniform_gamma1m1(poly *a,
 {
   unsigned int i, ctr, off;
   unsigned int buflen = POLY_UNIFORM_GAMMA1M1_NBLOCKS*STREAM256_BLOCKBYTES;
-  uint8_t buf[buflen + 4];
+  uint8_t buf[POLY_UNIFORM_GAMMA1M1_NBLOCKS*STREAM256_BLOCKBYTES + 4];
   stream256_state state;
 
   stream256_init(&state, seed, nonce);
