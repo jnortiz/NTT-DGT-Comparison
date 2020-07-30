@@ -119,7 +119,7 @@ void dgt(poly2x x_dgt, poly x, int32_t *gj)
 
   for (int i = 0; i < PARAM_N; i++) {
       if (x_dgt[i] != x[i]) {
-          printf("EITA %d %ld %d %lx %x\n", i, (int32_t)x_dgt[i], x[i], x_dgt[i], x[i]);
+          printf("DIFF %d %ld %d %lx %x\n", i, (int32_t)x_dgt[i], x[i], x_dgt[i], x[i]);
           exit(0);
       } else x[i] = (int32_t)x_dgt[i];
   }
@@ -146,17 +146,11 @@ void poly_dgt(poly2x x_dgt, const poly x)
 void poly_mul(poly result, const poly x, const poly2x y)
 { /* It is assumed that both signals are already in the DGT domain. 
      The DGT counterpart of poly_b was computed in sign.c. */
-  
-  poly t;
   poly2x t_dgt;
-  int i;
-
   /* Calculating the point-wise multiplication of input signals */
   poly_pmul_asm2(t_dgt, x, y);
-
   /* Recovering the multiplication result in Z[x]/<x^n+1> */
   poly_idgt_asm(t_dgt, t_dgt, invgj);
-  
   poly_pmul_asm3(result, t_dgt, invnthroots);
 }
 

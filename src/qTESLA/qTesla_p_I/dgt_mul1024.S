@@ -813,18 +813,19 @@ loop_pmul2:
   vpmovzxdq      ymm2, XMMWORD PTR [reg_p2+rax+4*512]
   vpmovzxdq      ymm3, XMMWORD PTR [reg_p2+rax+4*512+4*4]
   vmovdqa      ymm4, YMMWORD PTR [reg_p3+4*rax]
-  vmovdqa      ymm5, YMMWORD PTR [reg_p3+4*rax+4*8]
-  vmovdqa      ymm6, YMMWORD PTR [reg_p3+4*rax+4*16]
-  vmovdqa      ymm7, YMMWORD PTR [reg_p3+4*rax+4*24]
+  vmovdqa      ymm5, YMMWORD PTR [reg_p3+4*rax+8*4]
+  vmovdqa      ymm6, YMMWORD PTR [reg_p3+4*rax+8*8]
+  vmovdqa      ymm7, YMMWORD PTR [reg_p3+4*rax+8*12]
   
   vpunpcklqdq     ymm8, ymm4, ymm5
   vpunpckhqdq     ymm9, ymm4, ymm5
   vpunpcklqdq     ymm10, ymm6, ymm7
   vpunpckhqdq     ymm11, ymm6, ymm7
-  vpermq       ymm8, ymm8, 0b11011000
-  vpermq       ymm9, ymm9, 0b11011000
-  vpermq       ymm10, ymm10, 0b11011000
-  vpermq       ymm11, ymm11, 0b11011000
+  
+  vpermq       ymm0, ymm0, 0b11011000
+  vpermq       ymm1, ymm1, 0b11011000
+  vpermq       ymm2, ymm2, 0b11011000
+  vpermq       ymm3, ymm3, 0b11011000
   
   vpmuldq      ymm4, ymm0, ymm8
   vpmuldq      ymm5, ymm1, ymm10
@@ -838,16 +839,13 @@ loop_pmul2:
   vpsubq       ymm9, ymm5, ymm7
   vpaddq       ymm10, ymm0, ymm2
   vpaddq       ymm11, ymm1, ymm3
-  vpermq       ymm8, ymm8, 0b11011000
-  vpermq       ymm9, ymm9, 0b11011000
-  vpermq       ymm10, ymm10, 0b11011000
-  vpermq       ymm11, ymm11, 0b11011000
+
   vpunpcklqdq     ymm0, ymm8, ymm10
   vpunpckhqdq     ymm1, ymm8, ymm10
   vpunpcklqdq     ymm2, ymm9, ymm11  
   vpunpckhqdq     ymm3, ymm9, ymm11  
 
-  vpmuldq      ymm4, ymm0, ymm14
+  vpmuldq      ymm4, ymm0, ymm14 // reduce
   vpmuldq      ymm5, ymm1, ymm14
   vpmuldq      ymm6, ymm2, ymm14
   vpmuldq      ymm7, ymm3, ymm14
@@ -873,12 +871,13 @@ loop_pmul2:
   jnz          loop_pmul2
   ret
 
+    
 .global poly_pmul_asm3
 poly_pmul_asm3:
   xor          rax, rax
   vmovdqa      ymm15, YMMWORD PTR [PARAM_Qx4+rip]
   vmovdqa      ymm14, YMMWORD PTR [PARAM_QINVx4+rip]
-  vmovdqa      ymm12, YMMWORD PTR [PERM_MASK+rip]
+  vmovdqa      ymm12, YMMWORD PTR [EXIT_MASK+rip]
   mov          r10, 64                        
 loop_pmul3:
   vmovdqa      ymm0, [reg_p2+4*rax]                     // Load a[j]
@@ -930,11 +929,6 @@ loop_pmul3:
   vpaddq       ymm6, ymm6, ymm10
   vpaddq       ymm7, ymm7, ymm11
   
-  vpermq       ymm4, ymm4, 0b11011000
-  vpermq       ymm5, ymm5, 0b11011000
-  vpermq       ymm6, ymm6, 0b11011000
-  vpermq       ymm7, ymm7, 0b11011000
-
   vpermd       ymm4, ymm12, ymm4
   vpermd       ymm5, ymm12, ymm5
   vpermd       ymm6, ymm12, ymm6
@@ -947,7 +941,6 @@ loop_pmul3:
   dec          r10
   jnz          loop_pmul3
   ret
-  
 
 //**********************************************************************************
 //  Inverse DGT, case N = 1024
@@ -1385,7 +1378,7 @@ loop_idgt6:
     jne         iround6loop
     
     xor         rax, rax 
-    mov         r10, 32            
+    mov         r10, 32
 loop_idgt789:
 /* Round 7  */
     vmovdqa      ymm0, [reg_p1+2*rax]

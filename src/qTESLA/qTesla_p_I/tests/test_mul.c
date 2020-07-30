@@ -76,10 +76,11 @@ static void print_results(const char *s, unsigned long long *t, size_t tlen)
 }
 
 extern const int32_t invgj[256];
+const int32_t invnthroots[1024] = { 0 };
 
 int main(void) {
   unsigned int i, j;
-  unsigned long long cycles0[NRUNS], cycles1[NRUNS], cycles2[NRUNS], cycles3[NRUNS], cycles4[NRUNS], cycles5[NRUNS];
+  unsigned long long cycles0[NRUNS], cycles1[NRUNS], cycles2[NRUNS], cycles3[NRUNS], cycles4[NRUNS], cycles5[NRUNS], cycles6[NRUNS], cycles7[NRUNS];
   uint16_t nonce = 0;
   unsigned char m1[PARAM_N], m2[PARAM_N];
   poly a, b;
@@ -121,6 +122,14 @@ int main(void) {
     cycles5[i] = cpucycles();
     poly_idgt_asm(a_dgt, a, invgj);  
     cycles5[i] = cpucycles() - cycles5[i];  
+
+    cycles6[i] = cpucycles();
+    poly_pmul_asm2(a_dgt, a, b);
+    cycles6[i] = cpucycles() - cycles6[i];
+
+    cycles7[i] = cpucycles();
+    poly_pmul_asm3(a, a_dgt, b);
+    cycles7[i] = cpucycles() - cycles7[i];
 }
 
   print_results("naive: ", cycles0, NRUNS);
@@ -129,6 +138,8 @@ int main(void) {
   print_results("poly_mul: ", cycles3, NRUNS);
   print_results("dgt_asm: ", cycles4, NRUNS);
   print_results("idgt_asm: ", cycles5, NRUNS);
+  print_results("poly_pmul_asm2: ", cycles6, NRUNS);
+  print_results("poly_pmul_asm3: ", cycles7, NRUNS);
 
   return 0;
 }

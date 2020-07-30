@@ -16,6 +16,8 @@ int32_t ZEROS[8]         __attribute__((aligned(32))) = {0, 0, 0, 0, 0, 0, 0, 0}
 int32_t MASK1[8]          __attribute__((aligned(32))) = {0, 0x80000000, 0, 0x80000000, 0, 0x80000000, 0, 0x80000000};
 int32_t MASK2[8]          __attribute__((aligned(32))) = {0x80000000, 0, 0x80000000, 0, 0x80000000, 0, 0x80000000, 0};
 int32_t PERM_MASK[8]     __attribute__((aligned(32))) = {1, 3, 5, 7, 0, 2, 4, 6};
+int32_t EXIT_MASK[8]     __attribute__((aligned(32))) = {1, 5, 3, 7, 0, 4, 2, 6};
+
 uint32_t PARAM_Qx4[8]    __attribute__((aligned(32))) = {PARAM_Q,    0, PARAM_Q,    0, PARAM_Q,    0, PARAM_Q,    0};
 uint32_t PARAM_Rx4[8]    __attribute__((aligned(32))) = {PARAM_R,    0, PARAM_R,    0, PARAM_R,    0, PARAM_R,    0};
 uint32_t PARAM_QINVx4[8] __attribute__((aligned(32))) = {PARAM_QINV, 0, PARAM_QINV, 0, PARAM_QINV, 0, PARAM_QINV, 0};
