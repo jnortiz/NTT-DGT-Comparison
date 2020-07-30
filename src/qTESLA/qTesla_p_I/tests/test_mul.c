@@ -84,7 +84,7 @@ int main(void) {
   unsigned char m1[PARAM_N], m2[PARAM_N];
   poly a, b;
   poly c1, c2;
-  poly a_dgt, b_dgt;
+  poly2x a_dgt, b_dgt;
 
   for(i = 0; i < NRUNS; ++i) {
 
@@ -103,7 +103,7 @@ int main(void) {
     cycles1[i] = cpucycles();
     poly_dgt(a_dgt, a);
     poly_dgt(b_dgt, b);
-    poly_mul(c2, a_dgt, b_dgt);
+    poly_mul(c2, a, b_dgt);
     cycles1[i] = cpucycles() - cycles1[i];
 
     cycles2[i] = cpucycles();
@@ -111,7 +111,7 @@ int main(void) {
     cycles2[i] = cpucycles() - cycles2[i];
 
     cycles3[i] = cpucycles();
-    poly_mul(b, a_dgt, b_dgt);  
+    poly_mul(b, a, b_dgt);  
     cycles3[i] = cpucycles() - cycles3[i];
 
     cycles4[i] = cpucycles();
