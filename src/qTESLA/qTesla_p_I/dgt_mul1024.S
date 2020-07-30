@@ -808,10 +808,6 @@ poly_pmul_asm2:
   vmovdqa      ymm14, YMMWORD PTR [PARAM_QINVx4+rip]
   mov          r10, 64                              
 loop_pmul2:
-  vpmovzxdq      ymm0, XMMWORD PTR [reg_p2+rax]                     // Load a[j]
-  vpmovzxdq      ymm1, XMMWORD PTR [reg_p2+rax+4*4]
-  vpmovzxdq      ymm2, XMMWORD PTR [reg_p2+rax+4*512]
-  vpmovzxdq      ymm3, XMMWORD PTR [reg_p2+rax+4*512+4*4]
   vmovdqa      ymm4, YMMWORD PTR [reg_p3+4*rax]
   vmovdqa      ymm5, YMMWORD PTR [reg_p3+4*rax+8*4]
   vmovdqa      ymm6, YMMWORD PTR [reg_p3+4*rax+8*8]
@@ -884,10 +880,10 @@ loop_pmul3:
   vmovdqa      ymm1, [reg_p2+4*rax+8*4]
   vmovdqa      ymm2, [reg_p2+4*rax+8*8]
   vmovdqa      ymm3, [reg_p2+4*rax+8*12]
-  vpmovzxdq      ymm4, XMMWORD PTR [reg_p3+2*rax]                     // Load invnthroots[j]
-  vpmovzxdq      ymm5, XMMWORD PTR [reg_p3+2*rax+4*4]
-  vpmovzxdq      ymm6, XMMWORD PTR [reg_p3+2*rax+4*8]
-  vpmovzxdq      ymm7, XMMWORD PTR [reg_p3+2*rax+4*12]
+  vmovdqa      ymm4, [reg_p3+2*rax]                     // Load invnthroots[j]
+  vmovdqa      ymm6, [reg_p3+2*rax+8*4]
+  vpsrlq       ymm5, ymm4, 32
+  vpsrlq       ymm7, ymm6, 32
   
   vpmuldq      ymm8, ymm0, ymm4
   vpmuldq      ymm9, ymm1, ymm5
@@ -937,6 +933,7 @@ loop_pmul3:
   vmovdqa      XMMWORD PTR [reg_p1+rax+4*4], xmm5
   vmovdqa      XMMWORD PTR [reg_p1+rax+4*512], xmm6
   vmovdqa      XMMWORD PTR [reg_p1+rax+4*512+4*4], xmm7
+
   add          rax, 4*8
   dec          r10
   jnz          loop_pmul3
@@ -1378,6 +1375,7 @@ loop_idgt6:
     jne         iround6loop
     
     xor         rax, rax 
+    vbroadcastss ymm12, DWORD PTR [reg_p3]
     mov         r10, 32
 loop_idgt789:
 /* Round 7  */
@@ -1417,14 +1415,13 @@ loop_idgt789:
     vpsubq      ymm2, ymm2, ymm6
     vpsubq      ymm3, ymm3, ymm7
     
-    vbroadcastss ymm12, DWORD PTR [reg_p3]
     vpmuldq     ymm4, ymm8, ymm12
-    vbroadcastss ymm12, DWORD PTR [reg_p3+4]
-    vpmuldq     ymm5, ymm9, ymm12
-    vbroadcastss ymm12, DWORD PTR [reg_p3+8]
-    vpmuldq     ymm6, ymm10, ymm12
-    vbroadcastss ymm12, DWORD PTR [reg_p3+12]
-    vpmuldq     ymm7, ymm11, ymm12
+    vbroadcastss ymm8, DWORD PTR [reg_p3+4]
+    vpmuldq     ymm5, ymm9, ymm8
+    vbroadcastss ymm9, DWORD PTR [reg_p3+8]
+    vpmuldq     ymm6, ymm10, ymm9
+    vbroadcastss ymm10, DWORD PTR [reg_p3+12]
+    vpmuldq     ymm7, ymm11, ymm10
     
     vpmuldq     ymm8, ymm4, ymm14 //mul = reduce(a * sub)
     vpmuldq     ymm9, ymm5, ymm14                    
@@ -1470,12 +1467,11 @@ loop_idgt789:
     vpsubq      ymm2, ymm2, ymm6
     vpsubq      ymm3, ymm3, ymm7
     
-    vbroadcastss ymm12, DWORD PTR [reg_p3]
     vpmuldq     ymm4, ymm8, ymm12
     vpmuldq     ymm6, ymm10, ymm12
-    vbroadcastss ymm12, DWORD PTR [reg_p3+4]
-    vpmuldq     ymm5, ymm9, ymm12
-    vpmuldq     ymm7, ymm11, ymm12
+    vbroadcastss ymm8, DWORD PTR [reg_p3+4]
+    vpmuldq     ymm5, ymm9, ymm8
+    vpmuldq     ymm7, ymm11, ymm8
     
     vpmuldq     ymm8, ymm4, ymm14 //mul = reduce(a * sub)
     vpmuldq     ymm9, ymm5, ymm14                    
@@ -1521,7 +1517,6 @@ loop_idgt789:
     vpsubq      ymm2, ymm2, ymm6
     vpsubq      ymm3, ymm3, ymm7
     
-    vbroadcastss ymm12, DWORD PTR [reg_p3]
     vpmuldq     ymm4, ymm8, ymm12
     vpmuldq     ymm6, ymm10, ymm12
     vpmuldq     ymm5, ymm9, ymm12
