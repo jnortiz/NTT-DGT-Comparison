@@ -810,14 +810,15 @@ poly_pmul_asm2:
   vmovdqa      ymm14, YMMWORD PTR [PARAM_QINVx4+rip]
   mov          r10, 64                              
 loop_pmul2:
-  vpmovzxdq      ymm0, XMMWORD PTR [reg_p2+rax]                     // Load a[j]
-  vpmovzxdq      ymm1, XMMWORD PTR [reg_p2+rax+4*4]
-  vpmovzxdq      ymm2, XMMWORD PTR [reg_p2+rax+4*512]
-  vpmovzxdq      ymm3, XMMWORD PTR [reg_p2+rax+4*512+4*4]
+  vmovdqa      ymm0, YMMWORD PTR [reg_p2+rax]                     // Load a[j]
+  vmovdqa      ymm2, YMMWORD PTR [reg_p2+rax+4*512]
   vmovdqa      ymm4, YMMWORD PTR [reg_p3+4*rax]
   vmovdqa      ymm5, YMMWORD PTR [reg_p3+4*rax+8*4]
   vmovdqa      ymm6, YMMWORD PTR [reg_p3+4*rax+8*8]
   vmovdqa      ymm7, YMMWORD PTR [reg_p3+4*rax+8*12]
+  
+  vpsrlq        ymm1, ymm0, 32
+  vpsrlq        ymm3, ymm2, 32
   
   vpunpcklqdq     ymm8, ymm4, ymm5
   vpunpckhqdq     ymm9, ymm4, ymm5
