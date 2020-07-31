@@ -740,14 +740,15 @@ poly_pmul_asm:
   vmovdqa      ymm14, YMMWORD PTR [PARAM_QINVx4+rip]
   mov          r10, 64                               
 loop_pmul:
-  vpmovzxdq      ymm0, XMMWORD PTR [reg_p2+rax]                     // Load a[j]
-  vpmovzxdq      ymm1, XMMWORD PTR [reg_p2+rax+4*4]
-  vpmovzxdq      ymm2, XMMWORD PTR [reg_p2+rax+4*512]
-  vpmovzxdq      ymm3, XMMWORD PTR [reg_p2+rax+4*512+4*4]
-  vpmovzxdq      ymm4, XMMWORD PTR [reg_p3+rax]                      
-  vpmovzxdq      ymm5, XMMWORD PTR [reg_p3+rax+4*4]
-  vpmovzxdq      ymm6, XMMWORD PTR [reg_p3+rax+4*512]
-  vpmovzxdq      ymm7, XMMWORD PTR [reg_p3+rax+4*512+4*4]
+  vmovdqa      ymm0, [reg_p2+rax]                     // Load a[j]
+  vmovdqa      ymm2, [reg_p2+rax+4*512]
+  vmovdqa      ymm4, [reg_p3+rax]                      
+  vmovdqa      ymm6, [reg_p3+rax+4*512]
+  
+  vpsrlq       ymm1, ymm0, 32
+  vpsrlq       ymm3, ymm2, 32
+  vpsrlq       ymm5, ymm4, 32
+  vpsrlq       ymm7, ymm6, 32
   
   vpmuldq      ymm8, ymm0, ymm4
   vpmuldq      ymm9, ymm1, ymm5
@@ -761,27 +762,29 @@ loop_pmul:
   vpsubq       ymm9, ymm9, ymm11
   vpaddq       ymm10, ymm0, ymm2
   vpaddq       ymm11, ymm1, ymm3
-  vpermq       ymm8, ymm8, 0b11011000
-  vpermq       ymm10, ymm10, 0b11011000
-  vpermq       ymm9, ymm9, 0b11011000
-  vpermq       ymm11, ymm11, 0b11011000
-  vpunpcklqdq     ymm12, ymm8, ymm10
-  vpunpckhqdq     ymm8, ymm8, ymm10
-  vpunpcklqdq     ymm10, ymm9, ymm11  
-  vpunpckhqdq     ymm9, ymm9, ymm11  
+  
+  vperm2i128   ymm0, ymm8, ymm9, 0x20
+  vperm2i128   ymm1, ymm8, ymm9, 0x31
+  vperm2i128   ymm2, ymm10, ymm11, 0x20
+  vperm2i128   ymm3, ymm10, ymm11, 0x31
 
-  vpmuldq      ymm4, ymm12, ymm14
-  vpmuldq      ymm5, ymm10, ymm14
-  vpmuldq      ymm6, ymm8, ymm14
-  vpmuldq      ymm7, ymm9, ymm14
+  vpunpcklqdq     ymm8, ymm0, ymm2
+  vpunpcklqdq     ymm9, ymm1, ymm3
+  vpunpckhqdq     ymm10, ymm0, ymm2
+  vpunpckhqdq     ymm11, ymm1, ymm3  
+
+  vpmuldq      ymm4, ymm8, ymm14
+  vpmuldq      ymm5, ymm9, ymm14
+  vpmuldq      ymm6, ymm10, ymm14
+  vpmuldq      ymm7, ymm11, ymm14
   vpmuludq     ymm4, ymm4, ymm15
   vpmuludq     ymm5, ymm5, ymm15
   vpmuludq     ymm6, ymm6, ymm15
   vpmuludq     ymm7, ymm7, ymm15
-  vpaddq       ymm4, ymm4, ymm12
-  vpaddq       ymm5, ymm5, ymm10
-  vpaddq       ymm6, ymm6, ymm8
-  vpaddq       ymm7, ymm7, ymm9
+  vpaddq       ymm4, ymm4, ymm8
+  vpaddq       ymm5, ymm5, ymm9
+  vpaddq       ymm6, ymm6, ymm10
+  vpaddq       ymm7, ymm7, ymm11
   vpsrlq       ymm4, ymm4, 32
   vpsrlq       ymm5, ymm5, 32
   vpsrlq       ymm6, ymm6, 32
