@@ -772,7 +772,6 @@ loop_pmul:
   vpunpcklqdq     ymm9, ymm1, ymm3
   vpunpckhqdq     ymm10, ymm0, ymm2
   vpunpckhqdq     ymm11, ymm1, ymm3  
-
   vpmuldq      ymm4, ymm8, ymm14
   vpmuldq      ymm5, ymm9, ymm14
   vpmuldq      ymm6, ymm10, ymm14
@@ -936,10 +935,10 @@ loop_pmul3:
   vpermd       ymm5, ymm12, ymm5
   vpermd       ymm6, ymm12, ymm6
   vpermd       ymm7, ymm12, ymm7
-  vmovdqa      XMMWORD PTR [reg_p1+rax], xmm4
-  vmovdqa      XMMWORD PTR [reg_p1+rax+4*4], xmm5
-  vmovdqa      XMMWORD PTR [reg_p1+rax+4*512], xmm6
-  vmovdqa      XMMWORD PTR [reg_p1+rax+4*512+4*4], xmm7
+  vperm2i128   ymm4, ymm4, ymm5, 0x20
+  vperm2i128   ymm6, ymm6, ymm7, 0x20
+  vmovdqa      [reg_p1+rax], ymm4
+  vmovdqa      [reg_p1+rax+4*512], ymm6
 
   add          rax, 4*8
   dec          r10
