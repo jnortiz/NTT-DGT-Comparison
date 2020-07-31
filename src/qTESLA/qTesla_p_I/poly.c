@@ -90,13 +90,11 @@ void dgt(poly x)
       j2 = j1 + distance - 1;
       for(j = j1; j <= j2; j += 2)
       {
-        temp_re = reduce((int64_t)gj[jtwiddle] * x[j + distance]) - 
-                  reduce((int64_t)gj[jtwiddle + 1] * x[j + distance + 1]);
-        temp_re += (temp_re >> (RADIX32-1)) & PARAM_Q;
+        temp_re = reduce((int64_t)gj[jtwiddle] * x[j + distance] - 
+                  (int64_t)gj[jtwiddle + 1] * x[j + distance + 1]);
 
-        temp_img = reduce((int64_t)gj[jtwiddle] * x[j + distance + 1]) + 
-                   reduce((int64_t)gj[jtwiddle + 1] * x[j + distance]) - PARAM_Q;
-        temp_img += (temp_img >> (RADIX32-1)) & PARAM_Q;
+        temp_img = reduce((int64_t)gj[jtwiddle] * x[j + distance + 1] + 
+                   (int64_t)gj[jtwiddle + 1] * x[j + distance]);
 
         x[j + distance] = x[j] - temp_re;
         x[j + distance] += (x[j + distance] >> (RADIX32-1)) & PARAM_Q;
@@ -124,7 +122,7 @@ void idgt(poly x)
 
   h = 0;
   distance = 2;
-  for(m = 512; m > 1; m >>= 1)
+  for(m = 512; m > 2; m >>= 1)
   {
     for(j1 = 0; j1 < distance; j1 += 2)
     {
@@ -150,7 +148,36 @@ void idgt(poly x)
     }
     h += m;
     distance <<= 1;    
-  }  
+  }
+  
+  distance = 512;
+  for(m = 2; m > 1; m >>= 1)
+  {
+    for(j1 = 0; j1 < distance; j1 += 2)
+    {
+      jtwiddle = h;
+      for(j = j1; j < PARAM_N; j += 2*distance)
+      {
+        temp_re = x[j];
+        temp_img = x[j + 1];
+
+        x[j] = barr_reduce(temp_re + x[j + distance]);
+        x[j + 1] = barr_reduce(temp_img + x[j + distance + 1]);
+
+        sum_re = temp_re - x[j + distance]; // Omit reduction (be lazy)
+        sum_img = temp_img - x[j + distance + 1]; // Omit reduction (be lazy)
+
+        x[j + distance] = reduce((int64_t)invgj[jtwiddle] * sum_re - 
+                                 (int64_t)invgj[jtwiddle + 1] * sum_img);
+        x[j + distance + 1] = reduce((int64_t)invgj[jtwiddle] * sum_img + 
+                                     (int64_t)invgj[jtwiddle + 1] * sum_re);
+
+        jtwiddle += 2;
+      }
+    }
+    h += m;
+    distance <<= 1;    
+  }
 }
 
 
@@ -160,45 +187,20 @@ void poly_pointwise(poly result, const poly x, const poly y)
   int i;
 
   for(i = 0; i < PARAM_N; i+=2) {             
-    result[i] = reduce((int64_t)x[i] * y[i] -
-                       (int64_t)x[i+1] * y[i+1]);
-    result[i+1] = reduce((int64_t)x[i] * y[i+1] + 
-                         (int64_t)x[i+1] * y[i]);
+    result[i] = reduce((int64_t)x[i] * y[i] - (int64_t)x[i+1] * y[i+1]);
+    result[i+1] = reduce((int64_t)x[i] * y[i+1] + (int64_t)x[i+1] * y[i]);
   }  
 }
 
 
 void poly_dgt(poly x_dgt, const poly x)
 {
-  int i, j;
-  j = 0;
-
-  for(i = 0; i < PARAM_N; i += 2) {             
-      x_dgt[i] = x[j];      
-      x_dgt[i+1] = x[j+512];
-      j++;
+  for(int i = 0; i < PARAM_N; i += 2) {             
+      x_dgt[i] = x[i/2];      
+      x_dgt[i+1] = x[i/2+512];
   } 
 
   dgt(x_dgt);
-}
-
-
-void poly_invdgt(poly result, const poly x)
-{
-  poly aux_mul;
-  int i, j;
-
-  for(i = 0; i < PARAM_N; ++i)
-    aux_mul[i] = x[i];
-
-  idgt(aux_mul);
-
-  i = 0;
-  for(j = 0; j < 512; j++) {
-      result[j] = aux_mul[i];
-      result[j+512] = aux_mul[i+1];
-      i += 2;
-  }
 }
 
 
@@ -210,11 +212,8 @@ void poly_mul(poly result, const poly x, const poly y)
 
   /* Calculating the point-wise multiplication of input signals */
   for(i = 0; i < PARAM_N; i+=2) {             
-    aux_mul[i] = barr_reduce(reduce((int64_t)x[i] * y[i]) -
-                 reduce((int64_t)x[i+1] * y[i+1]));
-
-    aux_mul[i+1] = barr_reduce(reduce((int64_t)x[i] * y[i+1]) + 
-                   reduce((int64_t)x[i+1] * y[i]));
+    aux_mul[i] = reduce((int64_t)x[i] * y[i] - (int64_t)x[i+1] * y[i+1]);
+    aux_mul[i+1] = reduce((int64_t)x[i] * y[i+1] + (int64_t)x[i+1] * y[i]);
   }
 
   /* Recovering the multiplication result in Z[x]/<x^n+1> */
