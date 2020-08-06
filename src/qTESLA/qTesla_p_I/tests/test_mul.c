@@ -8,7 +8,7 @@
 #include "../sample.h"
 #include "../params.h"
 #include "../sha3/fips202.h"
-  
+
 #if (OS_TARGET == OS_LINUX)
   #include <sys/types.h>
   #include <sys/stat.h>
@@ -76,7 +76,7 @@ static void print_results(const char *s, unsigned long long *t, size_t tlen)
 }
 
 extern const int32_t invgj[256];
-const int32_t invnthroots[1024] = { 0 };
+extern const int32_t invnthroots[1024];
 
 int main(void) {
   unsigned int i, j;
@@ -108,20 +108,20 @@ int main(void) {
     cycles1[i] = cpucycles() - cycles1[i];
 
     cycles2[i] = cpucycles();
-    poly_dgt(a_dgt, a);  
+    poly_dgt(a_dgt, a);
     cycles2[i] = cpucycles() - cycles2[i];
 
     cycles3[i] = cpucycles();
-    poly_mul(b, a, b_dgt);  
+    poly_mul(b, a, b_dgt);
     cycles3[i] = cpucycles() - cycles3[i];
 
     cycles4[i] = cpucycles();
-    poly_dgt_asm(a_dgt, a, invgj);  
+    poly_dgt_asm(a_dgt, a, invgj);
     cycles4[i] = cpucycles() - cycles4[i];
 
     cycles5[i] = cpucycles();
-    poly_idgt_asm(a_dgt, a, invgj);  
-    cycles5[i] = cpucycles() - cycles5[i];  
+    poly_idgt_asm(a_dgt, a, invgj);
+    cycles5[i] = cpucycles() - cycles5[i];
 
     cycles6[i] = cpucycles();
     poly_pmul_asm2(a_dgt, a, b);
@@ -143,4 +143,3 @@ int main(void) {
 
   return 0;
 }
-
