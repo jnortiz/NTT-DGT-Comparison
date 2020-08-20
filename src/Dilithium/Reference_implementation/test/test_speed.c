@@ -42,24 +42,6 @@ int main(void)
     bench_polymul();
   }
   print_results("bench_polymul:", t, NTESTS);
-  
-/*
-  unsigned int j;
-  polyvecl *vl = &mat[0];
-  for(i = 0; i < NTESTS; ++i) {
-    t[i] = cpucycles();
-    for(j = 0; j < L; ++j)
-      poly_uniform_eta(&vl->vec[j], seed, j);
-  }
-  print_results("polyvecl_uniform_eta:", t, NTESTS);
-
-  for(i = 0; i < NTESTS; ++i) {
-    t[i] = cpucycles();
-    for(j = 0; j < L; ++j)
-      poly_uniform_gamma1m1(&vl->vec[j], seed, j);
-  }
-  print_results("polyvecl_uniform_gamma1m1:", t, NTESTS);
-*/
 
   for(i = 0; i < NTESTS; ++i) {
     t[i] = cpucycles();

@@ -29,6 +29,16 @@
 #define NTESTS 10000
 
 
+static void bench_polymul(void) {
+  poly a, b, c;
+  poly a_dgt, b_dgt;
+
+  poly_dgt(a_dgt, a);
+  poly_dgt(b_dgt, b);
+  poly_mul(c, a_dgt, b_dgt);
+}
+
+
 static int cmp_llu(const void *a, const void*b)
 {
   if (*(unsigned long long *)a < *(unsigned long long *)b) return -1;
@@ -225,7 +235,14 @@ void test_functions()
     poly_mul(t, a, y_ntt);
     cycles0[i] = cpucycles() - cycles0[i];
   }
-  print_results("poly_mul: ", cycles0, NRUNS);  
+  print_results("poly_mul: ", cycles0, NRUNS);
+
+  for (i = 0; i < NRUNS; i++) {
+    cycles0[i] = cpucycles();
+    bench_polymul();
+    cycles0[i] = cpucycles() - cycles0[i];
+  }
+  print_results("bench_polymul: ", cycles0, NRUNS);   
 
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
