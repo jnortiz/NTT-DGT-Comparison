@@ -144,24 +144,25 @@ void idgt(poly result, poly poly)
   }
 
 //printf("invgjnth[] = {");
-	for(j = 0; j < PARAM_N/2; j += 2)
+	i = 0;
+	for(j = 0; j < PARAM_N/2; i++, j += 2)
 	{
 		//printf("%d %d %d\n", j, 2*j, j+distance);
-		result[j/2] = reduce(
+		result[i] = reduce(
 			(poly[j] + poly[j+distance]) * (int64_t)invnthroots[j] -
 			(poly[j+1] + poly[j+distance+1]) * (int64_t)invnthroots[j+1]
 		);
-        result[j/2+PARAM_N/2] = reduce(
+        result[i+PARAM_N/2] = reduce(
 			(poly[j] + poly[j+distance]) * (int64_t)invnthroots[j+1] +
 			(poly[j+1] + poly[j+distance+1]) * (int64_t)invnthroots[j]
 		);
 
 		//printf("%d, %d, ", reduce((int64_t)invgj[0] * invnthroots[j+distance]), reduce((int64_t)invgj[0] * invnthroots[j+distance+1]));
 
-		result[j/2+PARAM_N/4] = reduce(
+		result[i+PARAM_N/4] = reduce(
 			(poly[j] - poly[j+distance]) * (int64_t)invgjnth[j] -
 			(poly[j+1] - poly[j+distance+1]) * (int64_t)invgjnth[j+1]);
-        result[j/2+PARAM_N/4 +PARAM_N/2] = reduce(
+        result[i+PARAM_N/4 +PARAM_N/2] = reduce(
 			(poly[j] - poly[j+distance]) * (int64_t)invgjnth[j+1] +
 			(poly[j+1] - poly[j+distance+1]) * (int64_t)invgjnth[j]);
 	}
