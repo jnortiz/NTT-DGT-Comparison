@@ -25,8 +25,18 @@
 #endif
 
 #define MLEN 59
-#define NRUNS 5000
+#define NRUNS 10000
 #define NTESTS 10000
+
+
+static void bench_polymul(void) {
+  poly a, b, c;
+  poly a_ntt, b_ntt;
+
+  poly_ntt(a_ntt, a);
+  poly_ntt(b_ntt, b);
+  poly_mul(c, a_ntt, b_ntt);
+}
 
 
 static int cmp_llu(const void *a, const void*b)
@@ -226,6 +236,13 @@ void test_functions()
     cycles0[i] = cpucycles() - cycles0[i];
   }
   print_results("poly_mul: ", cycles0, NRUNS);
+
+  for (i = 0; i < NRUNS; i++) {
+    cycles0[i] = cpucycles();
+    bench_polymul();
+    cycles0[i] = cpucycles() - cycles0[i];
+  }
+  print_results("bench_polymul: ", cycles0, NRUNS);  
 
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();

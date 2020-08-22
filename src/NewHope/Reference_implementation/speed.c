@@ -6,6 +6,14 @@
 
 #define NTESTS 10000
 
+static void bench_polymul(void) {
+  poly ap, bp, cp;
+  poly_ntt(&ap);
+  poly_ntt(&bp);
+  poly_mul_pointwise(&cp, &ap, &bp);
+  poly_invntt(&cp);
+}
+
 static int cmp_llu(const void *a, const void*b)
 {
   if(*(unsigned long long *)a < *(unsigned long long *)b) return -1;
@@ -94,7 +102,14 @@ int main()
     t[i] = cpucycles();
     poly_mul_pointwise(&cp, &ap, &bp);
   }
-  print_results("poly_mul_pointwise:        ", t, NTESTS);   
+  print_results("poly_mul_pointwise:        ", t, NTESTS);  
+
+  for(i=0; i<NTESTS; i++)
+  {
+    t[i] = cpucycles();
+    bench_polymul();
+  }
+  print_results("bench_polymul:        ", t, NTESTS);    
 
   for(i=0; i<NTESTS; i++)
   {
