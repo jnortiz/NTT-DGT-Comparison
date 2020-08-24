@@ -11,7 +11,7 @@ typedef	int32_t poly_k[PARAM_N*PARAM_K];
 int32_t reduce(int64_t a);
 sdigit_t barr_reduce(sdigit_t a);
 int64_t barr_reduce64(int64_t a);
-void dgt(poly x);
+void dgt(poly x_dgt, const poly x);
 void idgt(poly result, poly x);
 void poly_dgt(poly x_dgt, const poly x);
 void poly_pointwise(poly result, const poly x, const poly y);
