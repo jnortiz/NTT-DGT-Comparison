@@ -83,7 +83,7 @@ sdigit_t barr_reduce(sdigit_t a)
 }
 
 
-void dgt(poly x_dgt, const poly x)
+inline void dgt(poly x_dgt, const poly x)
 {
   int m, distance;
   int i, j1, j2, j, k;
@@ -140,8 +140,8 @@ void dgt(poly x_dgt, const poly x)
   }
 }
 
-#include "assert.h"
-void idgt(poly result, const poly x, const poly y)
+
+inline void idgt(poly result, const poly x, const poly y)
 {
   int distance, j1, jtwiddle, i, j;
   int32_t sub_re, sub_img;
