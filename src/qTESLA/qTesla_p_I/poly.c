@@ -93,9 +93,6 @@ void dgt(poly x_dgt, const poly x)
   distance = 512;
   for(i = 0, j = 0; j < PARAM_N/2; i++, j+=2)
   {
-    temp_re = reduce((int64_t)x[i+PARAM_N/4] * gjnth[j] - (int64_t)x[i+PARAM_N/4+PARAM_N/2] * gjnth[j+1]);
-    temp_img = reduce((int64_t)x[i+PARAM_N/4] * gjnth[j+1] + (int64_t)x[i+PARAM_N/2+PARAM_N/4] * gjnth[j]);
-
     //printf("%d, %d, ", reduce((int64_t)gj[0] * nthroots[j+distance]), reduce((int64_t)gj[0] * nthroots[j+distance+1]));
 
     x_dgt[j+distance] = reduce((int64_t)x[i] * nthroots[j] - (int64_t)x[i + PARAM_N/2] * nthroots[j+1] +
