@@ -141,12 +141,46 @@ void dgt(poly x_dgt, const poly x)
 }
 
 #include "assert.h"
-void idgt(poly result, poly poly)
+void idgt(poly result, const poly x, const poly y)
 {
   int distance, j1, jtwiddle, i, j;
   int32_t sub_re, sub_img;
+  poly poly;
 
-  for(distance = 2; distance < PARAM_N/2; distance <<= 1)
+  /* Calculating the point-wise multiplication of input signals */
+  for(distance = 2; distance < 4; distance <<= 1)
+  {
+  jtwiddle = 0;
+  for(j = j1; j < PARAM_N; j += distance << 1)
+  {
+    sub_re = reduce(
+      (int64_t)x[j] * y[j] -
+      (int64_t)x[j+1] * y[j+1]
+    );
+    sub_img = reduce(
+      (int64_t)x[j] * y[j+1] +
+      (int64_t)x[j+1] * y[j]
+    );
+
+	poly[j+distance] = reduce(
+      (int64_t)x[j+distance] * y[j+distance] -
+      (int64_t)x[j+distance+1] * y[j+distance+1]
+    );
+
+    poly[j+distance+1] = reduce(
+      (int64_t)x[j+distance] * y[j+distance+1] +
+      (int64_t)x[j+distance+1] * y[j+distance]
+    );
+
+    poly[j] = barr_reduce(sub_re + poly[j+distance]);
+    poly[j+1] = barr_reduce(sub_img + poly[j+distance+1]);
+
+    poly[j+distance] = reduce((int64_t)invgj[jtwiddle] * (sub_re - poly[j+distance]));
+    poly[j+distance+1] = reduce((int64_t)invgj[jtwiddle++] * (sub_img - poly[j+distance+1]));
+  }
+  }
+
+  for(distance = 4; distance < PARAM_N/2; distance <<= 1)
   {
     for(j1 = 0; j1 < distance; j1 += 2)
     {
@@ -226,24 +260,8 @@ void poly_mul(poly result, const poly x, const poly y)
 { /* It is assumed that both signals are already in the DGT domain.
      The DGT counterpart of poly_b was computed in sign.c. */
 
-  poly aux_mul;
-  int i;
-
-  /* Calculating the point-wise multiplication of input signals */
-  for(i = 0; i < PARAM_N; i+=2) {
-    aux_mul[i] = reduce(
-      (int64_t)x[i] * y[i] -
-      (int64_t)x[i+1] * y[i+1]
-    );
-
-    aux_mul[i+1] = reduce(
-      (int64_t)x[i] * y[i+1] +
-      (int64_t)x[i+1] * y[i]
-    );
-  }
-
   /* Recovering the multiplication result in Z[x]/<x^n+1> */
-  idgt(result, aux_mul);
+  idgt(result, x, y);
 }
 
 
