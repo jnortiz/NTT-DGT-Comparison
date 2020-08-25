@@ -89,46 +89,29 @@ void dgt(poly x_dgt, const poly x)
   int i, j1, j2, j, k;
   int32_t a, temp_re, temp_img;
 
-  j = 0;
-  for(i = 0; i < PARAM_N/2; i+=2) {
-      x_dgt[i] = reduce(
-        (int64_t)x[j] * nthroots[i] -
-        (int64_t)x[j + PARAM_N/2] * nthroots[i+1]
-      );
-
-      x_dgt[i+1] = reduce(
-        (int64_t)x[j] * nthroots[i+1] +
-        (int64_t)x[j + PARAM_N/2] * nthroots[i]
-      );
-
-      ++j;
-  }
-  
   //printf("static int32_t gjnth[] = {");
   distance = 512;
   for(i = 0, j = 0; j < PARAM_N/2; i++, j+=2)
   {
     temp_re = reduce((int64_t)x[i+PARAM_N/4] * gjnth[j] - (int64_t)x[i+PARAM_N/4+PARAM_N/2] * gjnth[j+1]);
     temp_img = reduce((int64_t)x[i+PARAM_N/4] * gjnth[j+1] + (int64_t)x[i+PARAM_N/2+PARAM_N/4] * gjnth[j]);
-    
+
     //printf("%d, %d, ", reduce((int64_t)gj[0] * nthroots[j+distance]), reduce((int64_t)gj[0] * nthroots[j+distance+1]));
 
-    x_dgt[j+distance] = x_dgt[j] - temp_re;
-    x_dgt[j+distance] += (x_dgt[j+distance] >> (RADIX32-1)) & PARAM_Q;
+    x_dgt[j+distance] = reduce((int64_t)x[i] * nthroots[j] - (int64_t)x[i + PARAM_N/2] * nthroots[j+1] +
+		(int64_t)x[i+PARAM_N/4+PARAM_N/2] * gjnth[j+1] - (int64_t)x[i+PARAM_N/4] * gjnth[j]);
+    x_dgt[j+distance+1] = reduce((int64_t)x[i] * nthroots[j+1] + (int64_t)x[i + PARAM_N/2] * nthroots[j] -
+		(int64_t)x[i+PARAM_N/4] * gjnth[j+1] - (int64_t)x[i+PARAM_N/2+PARAM_N/4] * gjnth[j]);
 
-    x_dgt[j+distance+1] = x_dgt[j + 1] - temp_img;
-    x_dgt[j+distance+1] += (x_dgt[j+distance+1] >> (RADIX32-1)) & PARAM_Q;
-
-    x_dgt[j] = x_dgt[j] + temp_re - PARAM_Q;
-    x_dgt[j] += (x_dgt[j] >> (RADIX32-1)) & PARAM_Q;
-
-    x_dgt[j+1] = x_dgt[j + 1] + temp_img - PARAM_Q;
-    x_dgt[j+1] += (x_dgt[j+1] >> (RADIX32-1)) & PARAM_Q;
+    x_dgt[j] = reduce((int64_t)x[i] * nthroots[j] - (int64_t)x[i + PARAM_N/2] * nthroots[j+1] +
+	  (int64_t)x[i+PARAM_N/4] * gjnth[j] - (int64_t)x[i+PARAM_N/4+PARAM_N/2] * gjnth[j+1]);
+    x_dgt[j+1] = reduce((int64_t)x[i] * nthroots[j+1] + (int64_t)x[i + PARAM_N/2] * nthroots[j] +
+		(int64_t)x[i+PARAM_N/4] * gjnth[j+1] + (int64_t)x[i+PARAM_N/2+PARAM_N/4] * gjnth[j]);
   }
 //printf("};\n");
 //exit(0);
 
-  
+
   distance = 256;
   for(m = 2; m < 512; m <<= 1)
   {
