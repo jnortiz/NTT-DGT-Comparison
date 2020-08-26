@@ -78,14 +78,46 @@ sdigit_t barr_reduce(sdigit_t a)
 }
 
 
-void dgt(poly x)
+void dgt(poly p_ntt)
 {
   int m, distance;
-  int j1, j2, j, k;
-  int32_t a, temp_re, temp_img;
+  int i, j1, j2, j, k;
+  int32_t a, a_re, a_img, b_re, b_img;
+  int32_t p[PARAM_N];
 
-  distance = 1024;
-  for(m = 1; m < 1024; m <<= 1)
+  for(i = 0; i < PARAM_N; ++i)
+    p[i] = p_ntt[i];
+
+  i = 0;
+  for(j = 0; j < PARAM_N/2; j = j+2)
+  {
+    a_re = barr_reduce64(
+      reduce((int64_t)p[i+PARAM_N/4] * nthroots[j+PARAM_N/2]) - 
+      reduce((int64_t)p[i+PARAM_N/2+PARAM_N/4] * nthroots[j+PARAM_N/2+1])
+    );      
+    a_img = barr_reduce64(
+      reduce((int64_t)p[i+PARAM_N/4] * nthroots[j+PARAM_N/2+1]) + 
+      reduce((int64_t)p[i+PARAM_N/2+PARAM_N/4] * nthroots[j+PARAM_N/2])
+    );
+    b_re = barr_reduce64(
+      reduce((int64_t)p[i] * nthroots[j]) - 
+      reduce((int64_t)p[i+PARAM_N/2] * nthroots[j+1])
+    );      
+    b_img = barr_reduce64(
+      reduce((int64_t)p[i] * nthroots[j+1]) + 
+      reduce((int64_t)p[i+PARAM_N/2] * nthroots[j])
+    );
+    i++;     
+
+    p_ntt[j+PARAM_N/2] = b_re - a_re;
+    p_ntt[j+PARAM_N/2+1] = b_img - a_img;
+    
+    p_ntt[j] = barr_reduce64(b_re + a_re);
+    p_ntt[j+1] = barr_reduce64(b_img + a_img);
+  }
+  
+  distance = PARAM_N/4;
+  for(m = 2; m < PARAM_N/2; m <<= 1)
   {
     for(k = 0; k < m; ++k)
     {
@@ -95,46 +127,86 @@ void dgt(poly x)
       a = gj[k];
       for(j = j1; j <= j2; j = j+2)
       {
-        temp_re = reduce((int64_t)a * x[j+distance]);
-        temp_img = reduce((int64_t)a * x[j+distance+1]);
+        a_re = reduce((int64_t)a * p_ntt[j+distance]);
+        a_img = reduce((int64_t)a * p_ntt[j+distance+1]);
 
-        x[j+distance] = barr_reduce64(x[j] - temp_re);
-        x[j+distance+1] = barr_reduce64(x[j+1] - temp_img);
-
-        x[j] = barr_reduce64(x[j] + temp_re);
-        x[j+1] = barr_reduce64(x[j+1] + temp_img);
+        p_ntt[j+distance] = barr_reduce64(p_ntt[j] - a_re);
+        p_ntt[j+distance+1] = barr_reduce64(p_ntt[j+1] - a_img);
+        
+        p_ntt[j] = barr_reduce64(p_ntt[j] + a_re);
+        p_ntt[j+1] = barr_reduce64(p_ntt[j+1] + a_img);
       }
     }
     distance >>= 1;
   }
 }
 
-
-void idgt(poly poly)
+void idgt(poly x)
 {
-  int distance, j1, jtwiddle, j;
-  int32_t sub_re, sub_img;
-
-  for(distance = 2; distance < PARAM_N; distance <<= 1)
+  int m, distance;
+  int i, j1, j2, j, k;
+  int32_t a, sub_re, sub_img;
+  int32_t a_re, a_img;
+  int32_t p[PARAM_N];
+  
+  m = PARAM_N/4;
+  for(distance = 2; distance < PARAM_N/2; distance <<= 1)
   {
-    for(j1 = 0; j1 < distance; j1 += 2)
+    for(k = 0; k < m; ++k)
     {
-      jtwiddle = 0;
-      for(j = j1; j < PARAM_N; j += distance << 1)
+      j1 = 2 * k * distance;
+      j2 = j1 + distance - 1;
+
+      a = invgj[k];
+      for(j = j1; j <= j2; j += 2)
       {
-        sub_re = poly[j];
-        sub_img = poly[j+1];
+        sub_re = x[j] - x[j+distance];
+        sub_img = x[j+1] - x[j+distance+1];
+        
+        x[j] = barr_reduce64(x[j] + x[j+distance]);
+        x[j+1] = barr_reduce64(x[j+1] + x[j+distance+1]);
 
-        poly[j] = barr_reduce(sub_re + poly[j+distance]);
-        poly[j+1] = barr_reduce(sub_img + poly[j+distance+1]);
-
-        poly[j+distance] = reduce((int64_t)invgj[jtwiddle] * (sub_re - poly[j+distance]));
-        poly[j+distance+1] = reduce((int64_t)invgj[jtwiddle++] * (sub_img - poly[j+distance+1]));
+        x[j+distance] = reduce((int64_t)a * sub_re);
+        x[j+distance+1] = reduce((int64_t)a * sub_img);
       }
     }
+    m >>= 1;
+  }
+
+  for(j = 0; j < PARAM_N; ++j)
+    p[j] = x[j];
+
+  i = 0;
+  for(j = 0; j < PARAM_N/2; j += 2)
+  {
+    sub_re = p[j] - p[j+PARAM_N/2];
+    sub_img = p[j+1] - p[j+PARAM_N/2+1];
+    
+    a_re = barr_reduce64(p[j] + p[j+PARAM_N/2]);
+    a_img = barr_reduce64(p[j+1] + p[j+PARAM_N/2+1]);
+
+    x[i] = barr_reduce64(
+              reduce((int64_t)a_re * invnthroots[j]) - 
+              reduce((int64_t)a_img * invnthroots[j+1])
+              );
+
+    x[i+PARAM_N/2] = barr_reduce64(
+              reduce((int64_t)a_re * invnthroots[j+1]) + 
+              reduce((int64_t)a_img * invnthroots[j])
+              );    
+
+    x[i+PARAM_N/4] = barr_reduce64(
+              reduce((int64_t)sub_re * invnthroots[j+PARAM_N/2]) - 
+              reduce((int64_t)sub_img * invnthroots[j+PARAM_N/2+1])
+              );
+
+    x[i+PARAM_N/2+PARAM_N/4] = barr_reduce64(
+              reduce((int64_t)sub_re * invnthroots[j+PARAM_N/2+1]) + 
+              reduce((int64_t)sub_img * invnthroots[j+PARAM_N/2])
+              );
+    i++;
   }
 }
-
 
 void poly_pointwise(poly result, const poly x, const poly y)
 { // Pointwise polynomial multiplication result = x.y
@@ -157,21 +229,8 @@ void poly_pointwise(poly result, const poly x, const poly y)
 
 void poly_dgt(poly x_dgt, const poly x)
 {
-
-  int i, j;
-
-  j = 0;
-  for(i = 0; i < PARAM_N; i += 2) {             
-      x_dgt[i] = reduce(
-      (int64_t)x[j] * nthroots[i] - 
-      (int64_t)x[1024+j] * nthroots[i+1]
-      );      
-      x_dgt[i+1] = reduce(
-      (int64_t)x[j] * nthroots[i+1] + 
-      (int64_t)x[1024+j] * nthroots[i]
-      );
-      j++;
-  } 
+  for(int i = 0; i < PARAM_N; ++i)         
+    x_dgt[i] = x[i];
 
   dgt(x_dgt);
 }
@@ -179,65 +238,27 @@ void poly_dgt(poly x_dgt, const poly x)
 
 void poly_invdgt(poly result, const poly x)
 {
-
-  poly aux_mul;
-  int i, j;
+  for(int i = 0; i < PARAM_N; ++i)         
+    result[i] = x[i];
 
   idgt(result);
-
-  for(i = 0; i < PARAM_N; ++i)
-    aux_mul[i] = result[i];  
-
-  i = 0;
-  for(int j = 0; j < 1024; ++j) {
-      result[j] = reduce(
-               (int64_t)aux_mul[i] * invnthroots[i] -
-               (int64_t)aux_mul[i+1] * invnthroots[i+1]
-               );
-
-      result[j+1024] = reduce(
-               (int64_t)aux_mul[i] * invnthroots[i+1] + 
-               (int64_t)aux_mul[i+1] * invnthroots[i]
-               );
-      i += 2;
-  }
 }
 
 
 void poly_mul(poly result, const poly a, const poly b)
 {
-  
-  poly mul;
-  int i;
-
-  for(i = 0; i < PARAM_N; i += 2) {             
-    mul[i] = reduce(
+  for(int i = 0; i < PARAM_N; i += 2) {             
+    result[i] = reduce(
       (int64_t)a[i] * b[i] - 
       (int64_t)a[i+1] * b[i+1]
     ) - PARAM_Q;
-    mul[i+1] = reduce(
+    result[i+1] = reduce(
       (int64_t)a[i] * b[i+1] + 
       (int64_t)a[i+1] * b[i]
     ) - PARAM_Q;
   }
 
-  /* Recovering the multiplication result in Z[x]/<x^n+1> */
-  idgt(mul);
-
-  /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
-  i = 0;
-  for(int j = 0; j < 1024; ++j) {
-      result[j] = reduce(
-               (int64_t)mul[i] * invnthroots[i] -
-               (int64_t)mul[i+1] * invnthroots[i+1]
-               );
-
-      result[j+1024] = reduce(
-               (int64_t)mul[i] * invnthroots[i+1] + 
-               (int64_t)mul[i+1] * invnthroots[i]
-               );
-      i += 2;
-  }
+  idgt(result);
 }
 
 
