@@ -142,24 +142,19 @@ void poly_shiftl(poly *a) {
 **************************************************/
 void poly_dgt(poly *a) {
   DBENCH_START();
-
   unsigned int i, j;
   uint32_t copy[N];
 
   for(i = 0; i < N; ++i)
     copy[i] = a->coeffs[i];
 
-  j = 0;
-  for(i = 0; i < N; i += 2) {             
+  for(i = 0, j = 0; i < N; i += 2, ++j) {             
       a->coeffs[i] = montgomery_reduce((uint64_t)copy[j] * nthroots[i]) + (2*Q - 
-                    montgomery_reduce((uint64_t)copy[j+N/2] * nthroots[i+1]));      
-      a->coeffs[i+1] = montgomery_reduce((uint64_t)copy[j] * nthroots[i+1]) + 
-                    montgomery_reduce((uint64_t)copy[j+N/2] * nthroots[i]);
-      j++;
+                     montgomery_reduce((uint64_t)copy[j+N/2] * nthroots[i+1]));
+      a->coeffs[i+1] = montgomery_reduce((uint64_t)copy[j] * nthroots[i+1] + (uint64_t)copy[j+N/2] * nthroots[i]);
   }
 
   dgt(a->coeffs);
-
   DBENCH_STOP(*tmul);
 }
 
@@ -197,12 +192,9 @@ void poly_pointwise_montgomery(poly *c, const poly *a, const poly *b) {
 
   for(i = 0; i < N; i += 2) {
     aux_b = b->coeffs[i];
-    c->coeffs[i] = montgomery_reduce(
-                    (uint64_t)a->coeffs[i] * b->coeffs[i] + (2*Q - 
-                    (uint64_t)a->coeffs[i+1] * b->coeffs[i+1]));
-    c->coeffs[i+1] = montgomery_reduce(
-                  (uint64_t)a->coeffs[i] * b->coeffs[i+1] + 
-                  (uint64_t)a->coeffs[i+1] * aux_b);
+    c->coeffs[i] = montgomery_reduce((uint64_t)a->coeffs[i] * b->coeffs[i]) + (2*Q - 
+                   montgomery_reduce((uint64_t)a->coeffs[i+1] * b->coeffs[i+1]));
+    c->coeffs[i+1] = montgomery_reduce((uint64_t)a->coeffs[i] * b->coeffs[i+1] + (uint64_t)a->coeffs[i+1] * aux_b);
   }
 
   DBENCH_STOP(*tmul);

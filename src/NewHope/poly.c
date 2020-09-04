@@ -410,12 +410,8 @@ void poly_dgt(poly *r)
   for(i = 0; i < NEWHOPE_N; i += 2) 
   {
       r->coeffs[i]   = (montgomery_reduce((uint32_t)copy[j] * nthroots[i]) + (3*NEWHOPE_Q - 
-                        montgomery_reduce((uint32_t)copy[j+NEWHOPE_N/2] * nthroots[i+1]))) % NEWHOPE_Q;
-      
-      r->coeffs[i+1] = montgomery_reduce(
-                        (uint32_t)copy[j] * nthroots[i+1] + 
-                        (uint32_t)copy[j+NEWHOPE_N/2] * nthroots[i]
-                        );
+                        montgomery_reduce((uint32_t)copy[j+NEWHOPE_N/2] * nthroots[i+1]))) % NEWHOPE_Q;      
+      r->coeffs[i+1] = (montgomery_reduce((uint32_t)copy[j] * nthroots[i+1] + (uint32_t)copy[j+NEWHOPE_N/2] * nthroots[i])) % NEWHOPE_Q;
       j++;
   } 
 

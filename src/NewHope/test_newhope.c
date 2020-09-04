@@ -6,7 +6,7 @@
 #include <string.h>
 
 
-#define NTESTS 1000
+#define NTESTS 10000
 
 
 int test_keys()

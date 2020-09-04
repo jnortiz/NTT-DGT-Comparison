@@ -8,7 +8,7 @@
 #include "../packing.h"
 #include "../rng.h"
 
-#define NVECTORS 1000
+#define NVECTORS 10000
 
 int main(void) {
   unsigned int i, j, k, l;

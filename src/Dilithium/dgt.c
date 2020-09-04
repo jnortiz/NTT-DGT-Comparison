@@ -103,10 +103,10 @@ void invdgt_tomont(uint32_t x[N])
 
     x[a] = freeze(montgomery_reduce((uint64_t)a_re * invnthroots[j]) + (2*Q - 
                   montgomery_reduce((uint64_t)a_img * invnthroots[j+1])));
-    x[a+N/2] = montgomery_reduce((uint64_t)a_re * invnthroots[j+1] + (uint64_t)a_img * invnthroots[j]);    
+    x[a+N/2] = freeze(montgomery_reduce((uint64_t)a_re * invnthroots[j+1] + (uint64_t)a_img * invnthroots[j]));    
     x[a+N/4] = freeze(montgomery_reduce((uint64_t)sub_re * invnthroots[j+N/2]) + (2*Q - 
                       montgomery_reduce((uint64_t)sub_img * invnthroots[j+N/2+1])));
-    x[a+N/2+N/4] = montgomery_reduce((uint64_t)sub_re * invnthroots[j+N/2+1] + (uint64_t)sub_img * invnthroots[j+N/2]);
+    x[a+N/2+N/4] = freeze(montgomery_reduce((uint64_t)sub_re * invnthroots[j+N/2+1] + (uint64_t)sub_img * invnthroots[j+N/2]));
     
     a++;
   }

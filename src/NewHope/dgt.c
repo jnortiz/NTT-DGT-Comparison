@@ -23,8 +23,8 @@ void dgt(uint16_t *x)
   int j1, j2, j, k;
   uint16_t a, temp_re, temp_img;
   
-  distance = 256;
-  for(m = 1; m < 256; m <<= 1)
+  distance = NEWHOPE_N/2;
+  for(m = 1; m < NEWHOPE_N/2; m <<= 1)
   {
     // Even level
     for(k = 0; k < m; ++k)
@@ -101,7 +101,7 @@ void idgt(uint16_t *x)
     }
     m >>= 1;
     distance <<= 1;
-    if(distance < NEWHOPE_N/2)     {
+    if(distance < NEWHOPE_N/2) {
       for(k = 0; k < m; ++k)
       {
         j1 = 2 * k * distance;
@@ -136,9 +136,9 @@ void idgt(uint16_t *x)
     a_re = p[j] + p[j+NEWHOPE_N/2];
     a_img = p[j+1] + p[j+NEWHOPE_N/2+1];
 
-    x[i] = montgomery_reduce((uint32_t)a_re * invnthroots[j] + 3*NEWHOPE_Q - (uint32_t)a_img * invnthroots[j+1]);
+    x[i] = montgomery_reduce((uint32_t)a_re * invnthroots[j]) + 3*NEWHOPE_Q - montgomery_reduce((uint32_t)a_img * invnthroots[j+1]);
     x[i+NEWHOPE_N/2] = montgomery_reduce((uint32_t)a_re * invnthroots[j+1] + (uint32_t)a_img * invnthroots[j]);    
-    x[i+NEWHOPE_N/4] = montgomery_reduce((uint32_t)sub_re * invnthroots[j+NEWHOPE_N/2] + 3*NEWHOPE_Q - (uint32_t)sub_img * invnthroots[j+NEWHOPE_N/2+1]);
+    x[i+NEWHOPE_N/4] = montgomery_reduce((uint32_t)sub_re * invnthroots[j+NEWHOPE_N/2]) + 3*NEWHOPE_Q - montgomery_reduce((uint32_t)sub_img * invnthroots[j+NEWHOPE_N/2+1]);
     x[i+NEWHOPE_N/2+NEWHOPE_N/4] = montgomery_reduce((uint32_t)sub_re * invnthroots[j+NEWHOPE_N/2+1] + (uint32_t)sub_img * invnthroots[j+NEWHOPE_N/2]);
 
     i++;
@@ -153,8 +153,8 @@ void dgt(uint16_t *x)
   int j1, j2, j, k;
   uint16_t a, temp_re, temp_img;
   
-  distance = 512;
-  for(m = 1; m < 512; m <<= 1)
+  distance = NEWHOPE_N/2;
+  for(m = 1; m < NEWHOPE_N/2; m <<= 1)
   {
     // Even level
     for(k = 0; k < m; ++k)
@@ -267,9 +267,11 @@ void idgt(uint16_t *x)
     a_re = p[j] + p[j+NEWHOPE_N/2];
     a_img = p[j+1] + p[j+NEWHOPE_N/2+1];
 
-    x[i] = montgomery_reduce((uint32_t)a_re * invnthroots[j] + 3*NEWHOPE_Q - (uint32_t)a_img * invnthroots[j+1]);
+    x[i] = montgomery_reduce((uint32_t)a_re * invnthroots[j]) + (3*NEWHOPE_Q - 
+           montgomery_reduce((uint32_t)a_img * invnthroots[j+1]));
     x[i+NEWHOPE_N/2] = montgomery_reduce((uint32_t)a_re * invnthroots[j+1] + (uint32_t)a_img * invnthroots[j]);    
-    x[i+NEWHOPE_N/4] = montgomery_reduce((uint32_t)sub_re * invnthroots[j+NEWHOPE_N/2] + 3*NEWHOPE_Q - (uint32_t)sub_img * invnthroots[j+NEWHOPE_N/2+1]);
+    x[i+NEWHOPE_N/4] = montgomery_reduce((uint32_t)sub_re * invnthroots[j+NEWHOPE_N/2]) + (3*NEWHOPE_Q - 
+                       montgomery_reduce((uint32_t)sub_img * invnthroots[j+NEWHOPE_N/2+1]));
     x[i+NEWHOPE_N/2+NEWHOPE_N/4] = montgomery_reduce((uint32_t)sub_re * invnthroots[j+NEWHOPE_N/2+1] + (uint32_t)sub_img * invnthroots[j+NEWHOPE_N/2]);
     i++;
   }

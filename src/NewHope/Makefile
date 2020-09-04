@@ -7,7 +7,9 @@ SOURCES = poly.c reduce.c fips202.c verify.c cpapke.c dgt.c
 CCAKEM  = ccakem.c
 CPAKEM  = cpakem.c
 
-all:		PQCgenKAT_cpakem512 \
+all:		test_ccakem512 \
+			test_ccakem1024 \
+			#PQCgenKAT_cpakem512 \
 			PQCgenKAT_cpakem1024 \
 			PQCgenKAT_ccakem512 \
 			PQCgenKAT_ccakem1024 \
