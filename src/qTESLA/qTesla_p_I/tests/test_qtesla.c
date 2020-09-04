@@ -223,12 +223,14 @@ void test_functions()
   }
   print_results("poly_pointwise: ", cycles0, NRUNS);
 
+/*
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
     poly_invdgt(y_dgt, y);
     cycles0[i] = cpucycles() - cycles0[i];
   }
   print_results("poly_invdgt: ", cycles0, NRUNS);  
+*/
 
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();

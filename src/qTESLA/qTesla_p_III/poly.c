@@ -152,10 +152,10 @@ void idgt(poly x)
     a_re = p[j] + p[j+PARAM_N/2];
     a_img = p[j+1] + p[j+PARAM_N/2+1];
 
-    x[i] = reduce((int64_t)a_re * invnthroots[j] - (int64_t)a_img * invnthroots[j+1]);
-    x[i+PARAM_N/2] = reduce((int64_t)a_re * invnthroots[j+1] + (int64_t)a_img * invnthroots[j]);    
-    x[i+PARAM_N/4] = reduce((int64_t)sub_re * invnthroots[j+PARAM_N/2] - (int64_t)sub_img * invnthroots[j+PARAM_N/2+1]);
-    x[i+PARAM_N/2+PARAM_N/4] = reduce((int64_t)sub_re * invnthroots[j+PARAM_N/2+1] + (int64_t)sub_img * invnthroots[j+PARAM_N/2]);
+    x[i] = barr_reduce64(reduce((int64_t)a_re * invnthroots[j] - (int64_t)a_img * invnthroots[j+1]));
+    x[i+PARAM_N/2] = barr_reduce64(reduce((int64_t)a_re * invnthroots[j+1] + (int64_t)a_img * invnthroots[j]));    
+    x[i+PARAM_N/4] = barr_reduce64(reduce((int64_t)sub_re * invnthroots[j+PARAM_N/2] - (int64_t)sub_img * invnthroots[j+PARAM_N/2+1]));
+    x[i+PARAM_N/2+PARAM_N/4] =  barr_reduce64(reduce((int64_t)sub_re * invnthroots[j+PARAM_N/2+1] + (int64_t)sub_img * invnthroots[j+PARAM_N/2]));
   }
 }
 
