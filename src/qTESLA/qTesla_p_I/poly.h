@@ -14,7 +14,7 @@ sdigit_t barr_reduce(sdigit_t a);
 int64_t barr_reduce64(int64_t a);
 void poly_pmul_asm(poly2x t, poly x, int32_t *nth);
 void poly_dgt_asm(poly2x x_dgt, poly2x x, int32_t *gj);
-void poly_idgt_asm(poly2x t_dgt, poly2x x_dgt, int32_t *invgj);
+void poly_idgt_asm(poly2x t_dgt, poly2x x_dgt, int32_t *invgj, int32_t *invgjnth);
 void poly_dgt(poly2x x_dgt, const poly x);
 void poly_mul(poly result, const poly x, const poly2x y);
 void poly_add(poly result, const poly x, const poly y);

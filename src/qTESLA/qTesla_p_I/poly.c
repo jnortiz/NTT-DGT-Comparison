@@ -13,6 +13,7 @@ extern int32_t nth[1024];
 extern int32_t nthroots[1024];
 extern int32_t invnthroots[1024];
 extern int32_t invnthavx[1024];
+extern int32_t invgjnth[512];
 
 void poly_uniform(poly_k a, const unsigned char *seed)
 { // Generation of polynomials "a_i"
@@ -137,16 +138,68 @@ void poly_dgt(poly2x x_dgt, const poly x)
 }
 
 
+void idgt(poly result, poly poly)
+{
+  int distance, j1, jtwiddle, i, j;
+  int32_t sub_re, sub_img;
+
+  for(distance = 2; distance < PARAM_N/2; distance <<= 1)
+  {
+    for(j1 = 0; j1 < distance; j1 += 2)
+    {
+      jtwiddle = 0;
+      for(j = j1; j < PARAM_N; j += distance << 1)
+      {
+        sub_re = poly[j];
+        sub_img = poly[j+1];
+
+        poly[j] = barr_reduce(sub_re + poly[j+distance]);
+        poly[j+1] = barr_reduce(sub_img + poly[j+distance+1]);
+
+        poly[j+distance] = reduce((int64_t)invgj[jtwiddle] * (sub_re - poly[j+distance]));
+        poly[j+distance+1] = reduce((int64_t)invgj[jtwiddle++] * (sub_img - poly[j+distance+1]));
+      }
+    }
+  }
+
+//printf("static int32_t invgjnth[1024] = {");
+	i = 0;
+	for(j = 0; j < PARAM_N/2; i++, j += 2)
+	{
+		//printf("%ld, %ld,", invnthroots[j], invnthroots[j+1]);
+		//printf("%d %d\n", i, j);
+		result[i] = reduce(
+			(poly[j] + poly[j+distance]) * (int64_t)invgjnth[j] -
+			(poly[j+1] + poly[j+distance+1]) * (int64_t)invgjnth[j+1]
+		);
+        result[i+PARAM_N/2] = reduce(
+			(poly[j] + poly[j+distance]) * (int64_t)invgjnth[j+1] +
+			(poly[j+1] + poly[j+distance+1]) * (int64_t)invgjnth[j]
+		);
+
+		result[i+PARAM_N/4] = reduce(
+			(poly[j] - poly[j+distance]) * (int64_t)invgjnth[j+distance] -
+			(poly[j+1] - poly[j+distance+1]) * (int64_t)invgjnth[j+distance+1]);
+        result[i+PARAM_N/4 +PARAM_N/2] = reduce(
+			(poly[j] - poly[j+distance]) * (int64_t)invgjnth[j+distance+1] +
+			(poly[j+1] - poly[j+distance+1]) * (int64_t)invgjnth[j+distance]);
+	}
+//printf("};");
+//exit(0);
+  /* Removing the twisting factors and writing the result from the Gaussian integer to the polynomial form */
+}
+
 void poly_mul(poly result, const poly x, const poly2x y)
 { /* It is assumed that both signals are already in the DGT domain.
      The DGT counterpart of poly_b was computed in sign.c. */
+  int i;
+  poly2x t_dgt, r_dgt;
 
-  poly2x t_dgt;
   /* Calculating the point-wise multiplication of input signals */
   poly_pmul_asm2(t_dgt, x, y);
   /* Recovering the multiplication result in Z[x]/<x^n+1> */
-  poly_idgt_asm(t_dgt, t_dgt, invgj);
-  poly_pmul_asm3(result, t_dgt, invnthavx);
+  poly_idgt_asm(r_dgt, t_dgt, invgj, invgjnth);
+  for (i = 0; i < PARAM_N; i++) result[i] = r_dgt[i];
 }
 
 
