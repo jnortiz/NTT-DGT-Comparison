@@ -120,7 +120,7 @@ int main(void) {
     cycles4[i] = cpucycles() - cycles4[i];
 
     cycles5[i] = cpucycles();
-    poly_idgt_asm(a_dgt, a, invgj);
+    poly_idgt_asm(b_dgt, a_dgt, invgj, invnthroots);
     cycles5[i] = cpucycles() - cycles5[i];
 
     cycles6[i] = cpucycles();

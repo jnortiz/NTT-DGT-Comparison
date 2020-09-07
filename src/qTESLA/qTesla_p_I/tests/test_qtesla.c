@@ -14,7 +14,7 @@
 #include "../sample.h"
 #include "../params.h"
 #include "../sha3/fips202.h"
-  
+
 #if (OS_TARGET == OS_LINUX)
   #include <sys/types.h>
   #include <sys/stat.h>
@@ -77,7 +77,7 @@ extern unsigned long long ctr_keygen;
 extern unsigned long long ctr_sign;
 
 
-#ifdef STATS  
+#ifdef STATS
 
 int print_accrates()
 {
@@ -92,21 +92,21 @@ int print_accrates()
 
   // Print acceptance rate for keygen. The counter increased by PARAM_K for each try
   printf("Acceptance rate of Keygen : %.2f\n", (double)((PARAM_K+1)*NTESTS)/((double)rejctrkg)); fflush(stdout);
- 
+
   for (i=0; i<NTESTS; i++)
   {
     randombytes(mi, MLEN);
-    crypto_sign(sm, &smlen, mi, MLEN, sk);    
+    crypto_sign(sm, &smlen, mi, MLEN, sk);
     rejctr+=ctr_sign;
     rejw+=rejwctr;
     rejyz+=rejyzctr;
   }
-  
+
   printf("Acceptance rate of v\t  : %.2f\n",1/((rejw/NTESTS)+1));
   printf("Acceptance rate of z\t  : %.2f\n",1/((rejyz/(NTESTS+rejw))+1));
   printf("Acceptance rate of Signing: %.2f\n",(double)NTESTS/rejctr);
   printf("\n");
- 
+
   return 0;
 }
 
@@ -118,12 +118,12 @@ void test_functions()
   int nonce;
   poly t, a, s, e, y, v, z;
   poly2x y_dgt;
-  unsigned char randomness[CRYPTO_RANDOMBYTES]; 
+  unsigned char randomness[CRYPTO_RANDOMBYTES];
   unsigned char c[CRYPTO_C_BYTES], seed[2*CRYPTO_SEEDBYTES], randomness_extended[4*CRYPTO_SEEDBYTES];
   unsigned char hm[HM_BYTES], ss[PARAM_N];
   unsigned char sk[CRYPTO_SECRETKEYBYTES];
   uint32_t pos_list[PARAM_H];
-  int16_t sign_list[PARAM_H], ee[PARAM_N]; 
+  int16_t sign_list[PARAM_H], ee[PARAM_N];
   int32_t pk_t[PARAM_N];
 
   for (i = 0; i < NRUNS; i++) {
@@ -150,7 +150,7 @@ void test_functions()
   nonce = 0;
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
-    sample_gauss_poly(e, randomness, nonce++);     
+    sample_gauss_poly(e, randomness, nonce++);
     cycles0[i] = cpucycles() - cycles0[i];
   }
   print_results("GaussSampler: ", cycles0, NRUNS);
@@ -161,25 +161,25 @@ void test_functions()
     cycles0[i] = cpucycles() - cycles0[i];
   }
   print_results("GenA: ", cycles0, NRUNS);
-  
+
   nonce = 0;
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
-    sample_y(y, randomness, nonce++); 
+    sample_y(y, randomness, nonce++);
     cycles0[i] = cpucycles() - cycles0[i];
   }
   print_results("ySampler: ", cycles0, NRUNS);
-  
+
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
     hash_H(c, v, hm);
     cycles0[i] = cpucycles() - cycles0[i];
   }
   print_results("H: ", cycles0, NRUNS);
-  
+
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
-    encode_c(pos_list, sign_list, c); 
+    encode_c(pos_list, sign_list, c);
     cycles0[i] = cpucycles() - cycles0[i];
   }
   print_results("Enc: ", cycles0, NRUNS);
@@ -254,18 +254,18 @@ void test_functions()
     cycles0[i] = cpucycles() - cycles0[i];
   }
   print_results("Encode sig: ", cycles0, NRUNS);
-  
+
   randombytes(mi, MLEN);
   crypto_sign_keypair(pk, sk);
   crypto_sign(sm, &smlen, mi, MLEN, sk);
 
   for (i = 0; i < NRUNS; i++) {
     cycles0[i] = cpucycles();
-    decode_sig(c, z, sm); 
+    decode_sig(c, z, sm);
     cycles0[i] = cpucycles() - cycles0[i];
   }
   print_results("Decode sig: ", cycles0, NRUNS);
- 
+
   printf("\n");
 }
 
@@ -278,7 +278,7 @@ int main(void)
   unsigned char r;
   unsigned long long cycles0[NRUNS], cycles1[NRUNS], cycles2[NRUNS];
   int valid, response;
-    
+
   printf("\n");
   printf("===========================================================================================\n");
   printf("Testing signature scheme qTESLA, system %s, tests for %d iterations\n", CRYPTO_ALGNAME, NRUNS);
@@ -288,7 +288,7 @@ int main(void)
   printf("CRYPTO_SECRETKEY_BYTES: %d\n", (int)CRYPTO_SECRETKEYBYTES);
   printf("CRYPTO_SIGNATURE_BYTES: %d\n\n", CRYPTO_BYTES);
 
-#ifdef STATS  
+#ifdef STATS
   print_accrates();
   test_functions();
 #endif
@@ -307,7 +307,7 @@ int main(void)
     cycles2[i] = cpucycles();
     valid = crypto_sign_open(mo, &mlen, sm, smlen, pk);
     cycles2[i] = cpucycles() - cycles2[i];
-    
+
     if (valid != 0) {
       printf("Signature verification FAILED. \n");
       return -1;
@@ -323,7 +323,7 @@ int main(void)
       }
     }
 
-    // Change something in the signature somewhere    
+    // Change something in the signature somewhere
     randombytes(&r, 1);
     sm[r % (MLEN+CRYPTO_BYTES)] ^= 1;
     response = crypto_sign_open(mo, &mlen, sm, smlen, pk);
